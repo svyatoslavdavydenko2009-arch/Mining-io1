@@ -3,7 +3,7 @@ import { RESOURCES, type ResourceType, type User, PICKAXES } from "@shared/schem
 import { useGame } from "@/hooks/use-game";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pickaxe, Hammer } from "lucide-react";
+import { Pickaxe, Hammer, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 const TILE_SIZE = 48; // Size of each grid cell in pixels
 const VIEW_RADIUS = 8; // How many tiles to show in each direction
@@ -40,6 +40,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const { move, mine } = useGame();
   const { toast } = useToast();
   const [miningTarget, setMiningTarget] = useState<{x: number, y: number} | null>(null);
+  const [activeMobileButtons, setActiveMobileButtons] = useState<Set<string>>(new Set());
+  const mobileInputRef = useRef<NodeJS.Timeout>();
+
+  // Handle mobile D-pad button press
+  const handleMobileMove = (dx: number, dy: number) => {
+    setLocalPos(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+  };
 
   // Sync local pos with server user pos when it changes remotely (e.g. login)
   // but don't overwrite local movement immediately to prevent jitter
@@ -275,17 +282,70 @@ export function GameCanvas({ user }: GameCanvasProps) {
       <AnimatePresence>
         {miningTarget && (
           <motion.div 
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, scale: 0.5, rotate: 0 }}
+            animate={{ opacity: 1, scale: 1, rotate: 360 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
           >
-            <Pickaxe className="w-12 h-12 text-white animate-bounce" />
+            <Pickaxe className="w-12 h-12 text-accent drop-shadow-lg" />
           </motion.div>
         )}
       </AnimatePresence>
       
-      <div className="absolute bottom-4 right-4 text-xs font-pixel text-white/50 bg-black/50 p-2 rounded">
+      {/* Mobile D-Pad Controls */}
+      <div className="absolute bottom-24 left-4 md:hidden flex flex-col items-center gap-2">
+        <motion.button
+          whilePress={{ scale: 0.85 }}
+          onMouseDown={() => handleMobileMove(0, -1)}
+          onTouchStart={() => handleMobileMove(0, -1)}
+          className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
+          data-testid="button-move-up"
+        >
+          <ChevronUp className="w-6 h-6" />
+        </motion.button>
+        <div className="flex gap-2">
+          <motion.button
+            whilePress={{ scale: 0.85 }}
+            onMouseDown={() => handleMobileMove(-1, 0)}
+            onTouchStart={() => handleMobileMove(-1, 0)}
+            className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
+            data-testid="button-move-left"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </motion.button>
+          <motion.button
+            whilePress={{ scale: 0.85 }}
+            onMouseDown={() => handleMobileMove(0, 1)}
+            onTouchStart={() => handleMobileMove(0, 1)}
+            className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
+            data-testid="button-move-down"
+          >
+            <ChevronDown className="w-6 h-6" />
+          </motion.button>
+          <motion.button
+            whilePress={{ scale: 0.85 }}
+            onMouseDown={() => handleMobileMove(1, 0)}
+            onTouchStart={() => handleMobileMove(1, 0)}
+            className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
+            data-testid="button-move-right"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Mobile Mine Button */}
+      <motion.button
+        whilePress={{ scale: 0.9 }}
+        onClick={handleCanvasClick}
+        className="absolute bottom-4 right-4 md:hidden p-3 bg-accent/80 text-white rounded-lg hover:bg-accent transition-colors font-pixel text-sm"
+        data-testid="button-mine-mobile"
+      >
+        <Pickaxe className="w-5 h-5" />
+      </motion.button>
+      
+      <div className="absolute bottom-4 right-4 hidden md:block text-xs font-pixel text-white/50 bg-black/50 p-2 rounded">
         Use WASD to Move • Click Adjacent to Mine
       </div>
     </div>
