@@ -56,6 +56,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
   const [displayPos, setDisplayPos] = useState({ x: user.x, y: user.y }); // Smooth camera position
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
+  const lastMoveTime = useRef(Date.now());
   const { move, mine } = useGame();
   const { toast } = useToast();
   const [miningTarget, setMiningTarget] = useState<{x: number, y: number} | null>(null);
@@ -104,12 +105,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
     }
   }, [user.x, user.y]);
 
-  // Handle Input
+  // Handle Input with movement delay
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Prevent scrolling
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) {
         e.preventDefault();
+      }
+
+      // Movement debounce - 200ms delay between moves
+      const now = Date.now();
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"].includes(e.key)) {
+        if (now - lastMoveTime.current < 200) return; // Ignore if too soon
+        lastMoveTime.current = now;
       }
 
       setLocalPos(prev => {
@@ -198,8 +206,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Check distance - only adjacent (include diagonals)
     const dist = Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y));
     if (dist > 1) {
-      toast({ title: "Too far away!", variant: "destructive" });
-      return;
+      return; // Silent fail - too far away
     }
 
     // Skip if already fully mined
@@ -209,8 +216,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
     const resource = getTileAt(targetX, targetY);
     if (!resource) {
-      toast({ title: "Nothing to mine here!", variant: "default" });
-      return;
+      return; // Silent fail - nothing to mine
     }
 
     // Check requirements
@@ -371,9 +377,37 @@ export function GameCanvas({ user }: GameCanvasProps) {
           ctx.fillRect(sx + 24, sy + 16, 6, 6);
           ctx.fillRect(sx + 16, sy + 28, 8, 8);
 
-          // Draw Health Bar
+          // Draw cracks based on health damage
           const health = getTileHealth(wx, wy);
           const maxHealth = RESOURCE_HEALTH[resourceType];
+          const damagePercent = health > 0 ? (maxHealth - health) / maxHealth : 0;
+          
+          if (damagePercent > 0) {
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 2;
+            
+            // Draw increasing cracks as damage increases
+            if (damagePercent > 0.33) {
+              ctx.beginPath();
+              ctx.moveTo(sx + 8, sy + 8);
+              ctx.lineTo(sx + 20, sy + 24);
+              ctx.stroke();
+            }
+            if (damagePercent > 0.66) {
+              ctx.beginPath();
+              ctx.moveTo(sx + 24, sy + 8);
+              ctx.lineTo(sx + 12, sy + 24);
+              ctx.stroke();
+            }
+            if (damagePercent > 0.9) {
+              ctx.beginPath();
+              ctx.moveTo(sx + 16, sy + 6);
+              ctx.lineTo(sx + 16, sy + 26);
+              ctx.stroke();
+            }
+          }
+
+          // Draw Health Bar
           if (health > 0) {
             const healthPercent = health / maxHealth;
             const barWidth = TILE_SIZE - 8;
@@ -433,7 +467,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.life;
-      ctx.fillRect(screenX - 2, screenY - 2, 4, 4);
+      ctx.fillRect(screenX - 4, screenY - 4, 8, 8);
       ctx.globalAlpha = 1;
     });
 
