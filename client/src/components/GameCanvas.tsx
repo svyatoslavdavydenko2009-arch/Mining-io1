@@ -45,6 +45,7 @@ interface GameCanvasProps {
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
+  const [displayPos, setDisplayPos] = useState({ x: user.x, y: user.y }); // Smooth camera position
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const { move, mine } = useGame();
   const { toast } = useToast();
@@ -54,9 +55,24 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [tileHealth, setTileHealth] = useState<Record<string, number>>({});
   const [minedTiles, setMinedTiles] = useState<Set<string>>(new Set());
 
+  // Check if a tile can be walked through (has collision)
+  const hasCollision = (x: number, y: number): boolean => {
+    // Can't walk through unmined tiles with resources
+    if (isTileMined(x, y)) return false;
+    const resource = getTileAt(x, y);
+    return resource !== null;
+  };
+
   // Handle mobile D-pad button press
   const handleMobileMove = (dx: number, dy: number) => {
-    setLocalPos(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+    setLocalPos(prev => {
+      const nextX = prev.x + dx;
+      const nextY = prev.y + dy;
+      if (!hasCollision(nextX, nextY)) {
+        return { x: nextX, y: nextY };
+      }
+      return prev; // Don't move if there's collision
+    });
   };
 
   // Check if a tile has been mined
@@ -86,22 +102,22 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
       setLocalPos(prev => {
         let next = { ...prev };
-        if (e.key === "ArrowUp" || e.key === "w") next.y -= 1;
-        if (e.key === "ArrowDown" || e.key === "s") next.y += 1;
-        if (e.key === "ArrowLeft" || e.key === "a") next.x -= 1;
-        if (e.key === "ArrowRight" || e.key === "d") next.x += 1;
         
-        // Mining interaction
-        if (e.key === " ") {
-          // Attempt mine closest rock
-          // For simplicity, just check the tile we are ON, or adjacent? 
-          // Let's say we mine the tile we are attempting to move INTO if it's blocked? 
-          // Or just press space to mine current tile? 
-          // Standard: Space mines the tile you are standing on? Or nearest?
-          // Let's make Space mine the tile UNDER the player if there is one.
-          // Actually, usually you walk UP to a rock.
-          // Let's implement: "Walk into rock to mine it" style logic for simplicity?
-          // OR: click to mine.
+        if (e.key === "ArrowUp" || e.key === "w") {
+          const testPos = { x: prev.x, y: prev.y - 1 };
+          if (!hasCollision(testPos.x, testPos.y)) next.y -= 1;
+        }
+        if (e.key === "ArrowDown" || e.key === "s") {
+          const testPos = { x: prev.x, y: prev.y + 1 };
+          if (!hasCollision(testPos.x, testPos.y)) next.y += 1;
+        }
+        if (e.key === "ArrowLeft" || e.key === "a") {
+          const testPos = { x: prev.x - 1, y: prev.y };
+          if (!hasCollision(testPos.x, testPos.y)) next.x -= 1;
+        }
+        if (e.key === "ArrowRight" || e.key === "d") {
+          const testPos = { x: prev.x + 1, y: prev.y };
+          if (!hasCollision(testPos.x, testPos.y)) next.x += 1;
         }
 
         return next;
@@ -110,7 +126,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [minedTiles]); // Include minedTiles in dependency
 
   // Sync to server debounced
   useEffect(() => {
@@ -221,6 +237,20 @@ export function GameCanvas({ user }: GameCanvasProps) {
     }
   };
 
+  // Smooth camera animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDisplayPos(prev => {
+        const easing = 0.15; // Smooth interpolation factor
+        return {
+          x: prev.x + (localPos.x - prev.x) * easing,
+          y: prev.y + (localPos.y - prev.y) * easing,
+        };
+      });
+    }, 16); // ~60fps
+    return () => clearInterval(interval);
+  }, [localPos]);
+
   // Render Loop
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -240,19 +270,21 @@ export function GameCanvas({ user }: GameCanvasProps) {
     ctx.fillStyle = "#1a1a1a"; // Dark background
     ctx.fillRect(0, 0, rect.width, rect.height);
 
-    // Camera Center
+    // Camera Center (use smooth display position)
     const cx = rect.width / 2;
     const cy = rect.height / 2;
 
     // Draw Grid
     for (let dy = -VIEW_RADIUS; dy <= VIEW_RADIUS; dy++) {
       for (let dx = -VIEW_RADIUS; dx <= VIEW_RADIUS; dx++) {
-        const wx = localPos.x + dx;
-        const wy = localPos.y + dy;
+        const wx = Math.floor(displayPos.x) + dx;
+        const wy = Math.floor(displayPos.y) + dy;
 
-        // Screen coords
-        const sx = cx + dx * TILE_SIZE - TILE_SIZE/2;
-        const sy = cy + dy * TILE_SIZE - TILE_SIZE/2;
+        // Screen coords (with smooth offset)
+        const offsetX = (displayPos.x - Math.floor(displayPos.x)) * TILE_SIZE;
+        const offsetY = (displayPos.y - Math.floor(displayPos.y)) * TILE_SIZE;
+        const sx = cx + dx * TILE_SIZE - TILE_SIZE/2 - offsetX;
+        const sy = cy + dy * TILE_SIZE - TILE_SIZE/2 - offsetY;
 
         // Draw Floor
         ctx.fillStyle = (wx + wy) % 2 === 0 ? "#262626" : "#2a2a2a"; // Checker pattern floor
@@ -346,7 +378,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     ctx.textAlign = "center";
     ctx.fillText(`LVL ${user.pickaxeLevel}`, cx, py - 10);
 
-  }, [localPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles]); // Re-render when these change
+  }, [displayPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles]); // Re-render when these change
 
   return (
     <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl">
