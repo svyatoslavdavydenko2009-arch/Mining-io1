@@ -86,6 +86,8 @@ export default {
         sans: ["var(--font-sans)"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
+        pixel: ["'Press Start 2P'", "cursive"],
+        body: ["'VT323'", "monospace"],
       },
       keyframes: {
         "accordion-down": {
