@@ -42,6 +42,15 @@ interface GameCanvasProps {
   user: User;
 }
 
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  color: string;
+}
+
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
@@ -54,6 +63,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
   // Track tile health: "x,y" -> health value
   const [tileHealth, setTileHealth] = useState<Record<string, number>>({});
   const [minedTiles, setMinedTiles] = useState<Set<string>>(new Set());
+  
+  // Particle effects
+  const [particles, setParticles] = useState<Particle[]>([]);
 
   // Check if a tile can be walked through (has collision)
   const hasCollision = (x: number, y: number): boolean => {
@@ -145,6 +157,24 @@ export function GameCanvas({ user }: GameCanvasProps) {
   }, [localPos, user.x, user.y, move]);
 
 
+  // Create mining particles
+  const createParticles = (x: number, y: number, color: string) => {
+    const newParticles: Particle[] = [];
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 * i) / 8;
+      const speed = 2 + Math.random() * 2;
+      newParticles.push({
+        x: x + 0.5,
+        y: y + 0.5,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        color: color,
+      });
+    }
+    setParticles(prev => [...prev, ...newParticles]);
+  };
+
   // Handle Mining Click
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (!canvasRef.current) return;
@@ -174,12 +204,14 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
     // Skip if already fully mined
     if (isTileMined(targetX, targetY)) {
-      toast({ title: "Already mined!", variant: "default" });
       return;
     }
 
     const resource = getTileAt(targetX, targetY);
-    if (!resource) return;
+    if (!resource) {
+      toast({ title: "Nothing to mine here!", variant: "default" });
+      return;
+    }
 
     // Check requirements
     const resDef = RESOURCES[resource];
@@ -198,6 +230,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const currentHealth = getTileHealth(targetX, targetY);
     const maxHealth = RESOURCE_HEALTH[resource];
     const newHealth = currentHealth === 0 ? maxHealth - 1 : currentHealth - 1;
+
+    // Create particles on each hit
+    createParticles(targetX, targetY, RESOURCES[resource].color);
 
     // Update tile health
     setTileHealth(prev => ({
@@ -237,7 +272,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     }
   };
 
-  // Smooth camera animation
+  // Smooth camera animation & particle updates
   useEffect(() => {
     const interval = setInterval(() => {
       setDisplayPos(prev => {
@@ -246,6 +281,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
           x: prev.x + (localPos.x - prev.x) * easing,
           y: prev.y + (localPos.y - prev.y) * easing,
         };
+      });
+
+      // Update particles
+      setParticles(prev => {
+        return prev
+          .map(p => ({
+            ...p,
+            x: p.x + p.vx * 0.05,
+            y: p.y + p.vy * 0.05,
+            vy: p.vy + 0.1, // Gravity
+            life: p.life - 0.02,
+          }))
+          .filter(p => p.life > 0);
       });
     }, 16); // ~60fps
     return () => clearInterval(interval);
@@ -378,7 +426,18 @@ export function GameCanvas({ user }: GameCanvasProps) {
     ctx.textAlign = "center";
     ctx.fillText(`LVL ${user.pickaxeLevel}`, cx, py - 10);
 
-  }, [displayPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles]); // Re-render when these change
+    // Draw Particles
+    particles.forEach(p => {
+      const screenX = cx + (p.x - displayPos.x) * TILE_SIZE;
+      const screenY = cy + (p.y - displayPos.y) * TILE_SIZE;
+      
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.life;
+      ctx.fillRect(screenX - 2, screenY - 2, 4, 4);
+      ctx.globalAlpha = 1;
+    });
+
+  }, [displayPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles, particles]); // Re-render when these change
 
   return (
     <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl">
