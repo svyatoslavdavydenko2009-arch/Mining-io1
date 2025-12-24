@@ -1,7 +1,6 @@
 import { db } from "./db";
 import { users, type User, type InsertUser } from "@shared/schema";
 import { eq } from "drizzle-orm";
-
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
