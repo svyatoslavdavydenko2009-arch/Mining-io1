@@ -9,6 +9,15 @@ const TILE_SIZE = 48; // Size of each grid cell in pixels
 const VIEW_RADIUS = 8; // How many tiles to show in each direction
 const WORLD_SEED = 12345; // Fixed seed for consistent procedural gen
 
+// Health values for each resource type
+const RESOURCE_HEALTH: Record<ResourceType, number> = {
+  stone: 2,
+  copper_ore: 3,
+  iron_ore: 4,
+  gold_ore: 5,
+  diamond: 6,
+};
+
 // Simple PRNG
 function pseudoRandom(x: number, y: number) {
   const dot = x * 12.9898 + y * 78.233;
@@ -40,12 +49,22 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const { move, mine } = useGame();
   const { toast } = useToast();
   const [miningTarget, setMiningTarget] = useState<{x: number, y: number} | null>(null);
-  const [activeMobileButtons, setActiveMobileButtons] = useState<Set<string>>(new Set());
-  const mobileInputRef = useRef<NodeJS.Timeout>();
+  
+  // Track tile health: "x,y" -> health value
+  const [tileHealth, setTileHealth] = useState<Record<string, number>>({});
+  const [minedTiles, setMinedTiles] = useState<Set<string>>(new Set());
 
   // Handle mobile D-pad button press
   const handleMobileMove = (dx: number, dy: number) => {
     setLocalPos(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+  };
+
+  // Check if a tile has been mined
+  const isTileMined = (x: number, y: number) => minedTiles.has(`${x},${y}`);
+
+  // Get current health of a tile
+  const getTileHealth = (x: number, y: number) => {
+    return tileHealth[`${x},${y}`] || 0;
   };
 
   // Sync local pos with server user pos when it changes remotely (e.g. login)
@@ -137,6 +156,12 @@ export function GameCanvas({ user }: GameCanvasProps) {
       return;
     }
 
+    // Skip if already fully mined
+    if (isTileMined(targetX, targetY)) {
+      toast({ title: "Already mined!", variant: "default" });
+      return;
+    }
+
     const resource = getTileAt(targetX, targetY);
     if (!resource) return;
 
@@ -153,20 +178,47 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
     setMiningTarget({ x: targetX, y: targetY });
     
-    // Simulate mining delay visually?
-    mine.mutate(resource, {
-      onSuccess: (data) => {
-        toast({ 
-          title: `Mined ${resDef.name}!`, 
-          className: "bg-green-900 border-green-500 text-white font-pixel" 
-        });
-        setMiningTarget(null);
-      },
-      onError: (err) => {
-        toast({ title: "Failed to mine", description: err.message, variant: "destructive" });
-        setMiningTarget(null);
-      }
-    });
+    const key = `${targetX},${targetY}`;
+    const currentHealth = getTileHealth(targetX, targetY);
+    const maxHealth = RESOURCE_HEALTH[resource];
+    const newHealth = currentHealth === 0 ? maxHealth - 1 : currentHealth - 1;
+
+    // Update tile health
+    setTileHealth(prev => ({
+      ...prev,
+      [key]: newHealth
+    }));
+
+    if (newHealth === 0) {
+      // Tile is fully mined - mark as mined and send to server
+      setMinedTiles(prev => new Set([...prev, key]));
+      mine.mutate(resource, {
+        onSuccess: (data) => {
+          toast({ 
+            title: `Mined ${resDef.name}!`, 
+            className: "bg-green-900 border-green-500 text-white font-pixel" 
+          });
+          setMiningTarget(null);
+        },
+        onError: (err) => {
+          toast({ title: "Failed to mine", description: err.message, variant: "destructive" });
+          setMiningTarget(null);
+          // Undo the mining if server fails
+          setMinedTiles(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(key);
+            return newSet;
+          });
+          setTileHealth(prev => {
+            const newHealth = { ...prev };
+            delete newHealth[key];
+            return newHealth;
+          });
+        }
+      });
+    } else {
+      setMiningTarget(null);
+    }
   };
 
   // Render Loop
@@ -217,6 +269,11 @@ export function GameCanvas({ user }: GameCanvasProps) {
         // OR: add a 'mined' check if we had world state. 
         // We will make rocks flash when mining.
 
+        // Skip if tile has been fully mined
+        if (isTileMined(wx, wy)) {
+          continue;
+        }
+
         const resourceType = getTileAt(wx, wy);
         if (resourceType) {
           const res = RESOURCES[resourceType];
@@ -234,9 +291,31 @@ export function GameCanvas({ user }: GameCanvasProps) {
           ctx.fillRect(sx + 24, sy + 16, 6, 6);
           ctx.fillRect(sx + 16, sy + 28, 8, 8);
 
+          // Draw Health Bar
+          const health = getTileHealth(wx, wy);
+          const maxHealth = RESOURCE_HEALTH[resourceType];
+          if (health > 0) {
+            const healthPercent = health / maxHealth;
+            const barWidth = TILE_SIZE - 8;
+            const barHeight = 4;
+            
+            // Background
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+            ctx.fillRect(sx + 4, sy + 2, barWidth, barHeight);
+            
+            // Health
+            ctx.fillStyle = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#eab308" : "#ef4444";
+            ctx.fillRect(sx + 4, sy + 2, barWidth * healthPercent, barHeight);
+            
+            // Border
+            ctx.strokeStyle = "#fff";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(sx + 4, sy + 2, barWidth, barHeight);
+          }
+
           // Mining Overlay
           if (miningTarget?.x === wx && miningTarget?.y === wy) {
-             ctx.fillStyle = "rgba(255, 255, 255, 0.5)";
+             ctx.fillStyle = "rgba(255, 100, 100, 0.4)";
              ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
           }
         }
@@ -267,7 +346,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     ctx.textAlign = "center";
     ctx.fillText(`LVL ${user.pickaxeLevel}`, cx, py - 10);
 
-  }, [localPos, miningTarget, user.pickaxeLevel]); // Re-render when these change
+  }, [localPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles]); // Re-render when these change
 
   return (
     <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl">
@@ -297,7 +376,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       </AnimatePresence>
       
       {/* Mobile D-Pad Controls */}
-      <div className="absolute bottom-24 left-4 md:hidden flex flex-col items-center gap-2">
+      <div className="absolute bottom-4 left-4 md:hidden flex flex-col items-center gap-2">
         <motion.button
           whilePress={{ scale: 0.85 }}
           onTouchStart={(e) => { e.preventDefault(); handleMobileMove(0, -1); }}
@@ -333,16 +412,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
           </motion.button>
         </div>
       </div>
-
-      {/* Mobile Mine Button */}
-      <motion.button
-        whilePress={{ scale: 0.9 }}
-        onClick={handleCanvasClick}
-        className="absolute bottom-4 right-4 md:hidden p-3 bg-accent/80 text-white rounded-lg hover:bg-accent transition-colors font-pixel text-sm"
-        data-testid="button-mine-mobile"
-      >
-        <Pickaxe className="w-5 h-5" />
-      </motion.button>
       
       <div className="absolute bottom-4 right-4 hidden md:block text-xs font-pixel text-white/50 bg-black/50 p-2 rounded">
         Use WASD to Move • Click Adjacent to Mine
