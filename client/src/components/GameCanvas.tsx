@@ -114,22 +114,25 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Get click position in CSS pixels
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
 
     // Convert screen coords to grid coords relative to player center
-    const centerX = canvasRef.current.width / 2;
-    const centerY = canvasRef.current.height / 2;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
     
-    const relX = Math.floor((clickX - centerX + (TILE_SIZE/2)) / TILE_SIZE);
-    const relY = Math.floor((clickY - centerY + (TILE_SIZE/2)) / TILE_SIZE);
+    const relX = Math.round((clickX - centerX) / TILE_SIZE);
+    const relY = Math.round((clickY - centerY) / TILE_SIZE);
 
     const targetX = localPos.x + relX;
     const targetY = localPos.y + relY;
 
-    // Check distance - only adjacent
-    const dist = Math.abs(targetX - localPos.x) + Math.abs(targetY - localPos.y);
-    if (dist > 1.5) { // 1 diagonal or adjacent
+    // Check distance - only adjacent (include diagonals)
+    const dist = Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y));
+    if (dist > 1) {
       toast({ title: "Too far away!", variant: "destructive" });
       return;
     }
@@ -297,8 +300,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       <div className="absolute bottom-24 left-4 md:hidden flex flex-col items-center gap-2">
         <motion.button
           whilePress={{ scale: 0.85 }}
-          onMouseDown={() => handleMobileMove(0, -1)}
-          onTouchStart={() => handleMobileMove(0, -1)}
+          onTouchStart={(e) => { e.preventDefault(); handleMobileMove(0, -1); }}
           className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
           data-testid="button-move-up"
         >
@@ -307,8 +309,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
         <div className="flex gap-2">
           <motion.button
             whilePress={{ scale: 0.85 }}
-            onMouseDown={() => handleMobileMove(-1, 0)}
-            onTouchStart={() => handleMobileMove(-1, 0)}
+            onTouchStart={(e) => { e.preventDefault(); handleMobileMove(-1, 0); }}
             className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
             data-testid="button-move-left"
           >
@@ -316,8 +317,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
           </motion.button>
           <motion.button
             whilePress={{ scale: 0.85 }}
-            onMouseDown={() => handleMobileMove(0, 1)}
-            onTouchStart={() => handleMobileMove(0, 1)}
+            onTouchStart={(e) => { e.preventDefault(); handleMobileMove(0, 1); }}
             className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
             data-testid="button-move-down"
           >
@@ -325,8 +325,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
           </motion.button>
           <motion.button
             whilePress={{ scale: 0.85 }}
-            onMouseDown={() => handleMobileMove(1, 0)}
-            onTouchStart={() => handleMobileMove(1, 0)}
+            onTouchStart={(e) => { e.preventDefault(); handleMobileMove(1, 0); }}
             className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
             data-testid="button-move-right"
           >
