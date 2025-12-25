@@ -284,15 +284,15 @@ export function GameCanvas({ user }: GameCanvasProps) {
       
       // Smooth wind-up and strike animation with easing
       let angle;
-      if (progress < 0.55) { // Wind-up phase (55% of time) - slower, smooth pull back
-        const p = progress / 0.55;
+      if (progress < 0.75) { // Wind-up phase (75% of time) - slower, smooth pull back
+        const p = progress / 0.75;
         // Ease-in-out for smooth wind-up
         const eased = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
         angle = eased * -55; // Pull pickaxe back 55 degrees smoothly
-      } else { // Strike phase (45% of time) - smooth swing forward
-        const p = (progress - 0.55) / 0.45;
-        // Ease-out quadratic for smooth but forceful strike
-        const eased = 1 - Math.pow(1 - p, 2);
+      } else { // Strike phase (25% of time) - much faster swing forward
+        const p = (progress - 0.75) / 0.25;
+        // Ease-out cubic for a snappier strike
+        const eased = 1 - Math.pow(1 - p, 3);
         angle = -55 + (eased * 120); // Strike forward 120 degrees total swing
       }
       
