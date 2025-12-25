@@ -356,13 +356,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       const dt = time - lastTime;
       lastTime = time;
 
-      setDisplayPos(prev => {
-        const easing = 0.15;
-        const dx = (localPos.x - prev.x) * easing;
-        const dy = (localPos.y - prev.y) * easing;
-        if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return localPos;
-        return { x: prev.x + dx, y: prev.y + dy };
-      });
+      setDisplayPos(localPos);
 
       // Update particles
       setParticles(prev => {
