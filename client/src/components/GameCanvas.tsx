@@ -596,7 +596,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.globalAlpha = 1;
     });
 
-  }, [localPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles, particles]); // Re-render when these change
+  }, [localPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles, particles, miningRotation]); // Re-render when these change
 
   return (
     <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl">
