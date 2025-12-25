@@ -96,23 +96,30 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [visualHealth, setVisualHealth] = useState<Record<string, number>>({});
   const [lastHitTime, setLastHitTime] = useState<Record<string, number>>({});
 
-  // Update visual health for smooth animations
+  // Update visual health for smooth, uniform animations
   useEffect(() => {
     const interval = setInterval(() => {
       setVisualHealth(prev => {
         const next = { ...prev };
         let changed = false;
         
-        Object.entries(tileHealth).forEach(([key, actual]) => {
+        // Use all keys that were in visualHealth or are in tileHealth
+        const allKeys = new Set([...Object.keys(prev), ...Object.keys(tileHealth)]);
+        
+        allKeys.forEach(key => {
+          const actual = tileHealth[key] ?? 0;
           const current = prev[key] ?? actual;
-          if (Math.abs(current - actual) > 0.01) {
-            next[key] = current + (actual - current) * 0.15;
+          
+          if (current > actual) {
+            // Uniform linear decrease
+            const step = 0.025; 
+            next[key] = Math.max(actual, current - step);
             changed = true;
-          } else if (actual === 0 && prev[key] !== undefined) {
-            delete next[key];
-            changed = true;
-          } else if (next[key] !== actual) {
+          } else if (current < actual) {
             next[key] = actual;
+            changed = true;
+          } else if (actual === 0 && prev[key] !== undefined && prev[key] <= 0.01) {
+            delete next[key];
             changed = true;
           }
         });
@@ -499,49 +506,52 @@ export function GameCanvas({ user }: GameCanvasProps) {
           ctx.fillRect(sx + 24, sy + 16, 6, 6);
           ctx.fillRect(sx + 16, sy + 28, 8, 8);
 
-          // Health Bar (Matches Cooldown Bar Style Exactly)
+          // Health Bar (Enhanced sliding animation)
           const actualHealth = getTileHealth(wx, wy);
           const key = `${wx},${wy}`;
           const currentHealth = visualHealth[key] ?? actualHealth;
           const maxHealth = RESOURCE_HEALTH[resourceType];
           const hitTime = lastHitTime[key] || 0;
           const elapsedSinceHit = now - hitTime;
-          const isRecentlyHit = elapsedSinceHit < 500;
+          const isRecentlyHit = elapsedSinceHit < 800;
           
           if (actualHealth > 0 || currentHealth > 0.05) {
             const healthPercent = Math.max(0, currentHealth / maxHealth);
-            const barWidth = 32; // Longer width as requested
-            const barHeight = 4; // Slightly thicker
+            const barWidth = 40; // Even longer for better visibility
+            const barHeight = 6; // Thicker for better visibility
             const bx = sx + (TILE_SIZE - barWidth) / 2;
-            let by = sy + TILE_SIZE - 10; // Base position
+            let by = sy + TILE_SIZE - 8; 
             
-            // "Fall down" and fade animation on hit
-            let alpha = 0.8;
+            // "Soft move down" and gentle fade
+            let alpha = 0.9;
             if (isRecentlyHit) {
-              const progress = elapsedSinceHit / 500;
-              const dropOffset = progress * 8; // Falls down up to 8px
+              const progress = Math.min(elapsedSinceHit / 800, 1);
+              const dropOffset = progress * 6; // Moves down smoothly
               by += dropOffset;
-              alpha = 0.8 * (1 - progress); // Fades out as it falls
+              // Fade only at the very end of the 800ms
+              if (progress > 0.7) {
+                alpha = 0.9 * (1 - (progress - 0.7) / 0.3);
+              }
             }
 
-            // Container
+            // Container (Pill Style)
             ctx.globalAlpha = alpha;
-            ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
             ctx.beginPath();
             ctx.roundRect(bx, by, barWidth, barHeight, barHeight / 2);
             ctx.fill();
             
             // Border
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
             ctx.lineWidth = 1;
             ctx.stroke();
             
-            // Progress
+            // Progress Bar
             if (healthPercent > 0) {
-              const color = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#eab308" : "#ef4444";
+              const color = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#facc15" : "#ef4444";
               ctx.fillStyle = color;
               ctx.beginPath();
-              ctx.roundRect(bx, by, barWidth * healthPercent, barHeight, barHeight / 2);
+              ctx.roundRect(bx + 1, by + 1, (barWidth - 2) * healthPercent, barHeight - 2, (barHeight - 2) / 2);
               ctx.fill();
             }
             ctx.globalAlpha = 1.0;
