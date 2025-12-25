@@ -51,6 +51,16 @@ interface Particle {
   color: string;
 }
 
+// Pickaxe color mapping
+const PICKAXE_COLORS: Record<number, string> = {
+  1: "#8B4513", // Wood (Brown)
+  2: "#808080", // Stone (Gray)
+  3: "#D2691E", // Copper (Orange-ish)
+  4: "#C0C0C0", // Iron (Silver)
+  5: "#FFD700", // Gold (Yellow)
+  6: "#00BFFF", // Diamond (Deep Sky Blue)
+};
+
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
@@ -495,7 +505,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
             transition={{ duration: 0.6 }}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
           >
-            <Pickaxe className="w-12 h-12 text-accent drop-shadow-lg" />
+            <Pickaxe 
+              className="w-12 h-12 drop-shadow-lg" 
+              style={{ color: PICKAXE_COLORS[user.pickaxeLevel] || "#fff" }}
+            />
           </motion.div>
         )}
       </AnimatePresence>
