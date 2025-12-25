@@ -276,6 +276,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     setMiningTarget({ x: targetX, y: targetY });
 
     const animDuration = 1000; // Wind-up + strike duration (slower for realistic feel)
+    const returnDuration = 400; // Return animation duration
     let animStartTime = performance.now();
     
     const animateMining = (time: number) => {
@@ -302,9 +303,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
       if (progress < 1) {
         requestAnimationFrame(animateMining);
       } else {
-        setIsMining(false);
-        setMiningRotation(0);
-        
         // --- STRIKE EFFECT ---
         const key = `${targetX},${targetY}`;
         const currentHealth = getTileHealth(targetX, targetY);
@@ -343,17 +341,41 @@ export function GameCanvas({ user }: GameCanvasProps) {
           setMiningTarget(null);
         }
 
-        // --- START COOLDOWN AFTER STRIKE ---
-        lastMineTime.current = Date.now();
-        setCooldownProgress(0);
-        const cooldownStartTime = Date.now();
-        const updateCooldown = () => {
-          const elapsed = Date.now() - cooldownStartTime;
-          const cp = Math.min(elapsed / cooldown, 1);
-          setCooldownProgress(cp);
-          if (cp < 1) requestAnimationFrame(updateCooldown);
+        // --- START RETURN ANIMATION ---
+        const strikeEndAngle = 65; // The angle at the end of strike phase
+        const returnStartTime = performance.now();
+        
+        const animateReturn = (returnTime: number) => {
+          const returnElapsed = returnTime - returnStartTime;
+          const returnProgress = Math.min(returnElapsed / returnDuration, 1);
+          
+          // Ease-out cubic for smooth return
+          const eased = 1 - Math.pow(1 - returnProgress, 3);
+          const returnAngle = strikeEndAngle - (eased * strikeEndAngle); // Return to 0
+          
+          setMiningRotation(returnAngle);
+          
+          if (returnProgress < 1) {
+            requestAnimationFrame(animateReturn);
+          } else {
+            setIsMining(false);
+            setMiningRotation(0);
+            
+            // --- START COOLDOWN AFTER RETURN COMPLETES ---
+            lastMineTime.current = Date.now();
+            setCooldownProgress(0);
+            const cooldownStartTime = Date.now();
+            const updateCooldown = () => {
+              const elapsed = Date.now() - cooldownStartTime;
+              const cp = Math.min(elapsed / cooldown, 1);
+              setCooldownProgress(cp);
+              if (cp < 1) requestAnimationFrame(updateCooldown);
+            };
+            requestAnimationFrame(updateCooldown);
+          }
         };
-        requestAnimationFrame(updateCooldown);
+        
+        requestAnimationFrame(animateReturn);
       }
     };
     requestAnimationFrame(animateMining);
