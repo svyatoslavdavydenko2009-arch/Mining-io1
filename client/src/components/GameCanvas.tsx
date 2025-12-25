@@ -253,21 +253,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Mining cooldown based on level
     const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
     const now = Date.now();
-    if (now - lastMineTime.current < cooldown) return;
-    lastMineTime.current = now;
-
-    // Update cooldown bar
-    setCooldownProgress(0);
-    const cooldownStartTime = now;
-    const updateCooldown = () => {
-      const elapsed = Date.now() - cooldownStartTime;
-      const progress = Math.min(elapsed / cooldown, 1);
-      setCooldownProgress(progress);
-      if (progress < 1) {
-        requestAnimationFrame(updateCooldown);
-      }
-    };
-    requestAnimationFrame(updateCooldown);
+    if (isMining || now - lastMineTime.current < cooldown) return;
 
     // Check requirements
     const resDef = RESOURCES[resource];
@@ -280,25 +266,25 @@ export function GameCanvas({ user }: GameCanvasProps) {
       return;
     }
 
-    // Trigger mining animation with requestAnimationFrame for smoothness
+    // Start mining sequence
     setIsMining(true);
-    let startTime = performance.now();
-    const duration = cooldown * 0.8; // Linked to mining speed (80% of cooldown for the swing)
+    setMiningTarget({ x: targetX, y: targetY });
+
+    const animDuration = 400; // Fixed duration for realistic feel
+    let animStartTime = performance.now();
     
     const animateMining = (time: number) => {
-      const elapsed = time - startTime;
-      const progress = Math.min(elapsed / duration, 1);
+      const elapsed = time - animStartTime;
+      const progress = Math.min(elapsed / animDuration, 1);
       
-      // Wind up (first 30% of animation) then strike
+      // Real wind-up and strike
       let angle;
-      if (progress < 0.3) {
-        // Wind up: swing back slightly
-        const p = progress / 0.3;
-        angle = p * -30;
-      } else {
-        // Strike: swing forward rapidly
-        const p = (progress - 0.3) / 0.7;
-        angle = -30 + (p * 110); // Swing through to +80 degrees
+      if (progress < 0.6) { // Wind up (60% of time)
+        const p = progress / 0.6;
+        angle = p * -45; // Swing back further
+      } else { // Strike (40% of time)
+        const p = (progress - 0.6) / 0.4;
+        angle = -45 + (p * 135); // Rapid strike to +90
       }
       
       setMiningRotation(angle);
@@ -308,62 +294,59 @@ export function GameCanvas({ user }: GameCanvasProps) {
       } else {
         setIsMining(false);
         setMiningRotation(0);
+        
+        // --- STRIKE EFFECT ---
+        const key = `${targetX},${targetY}`;
+        const currentHealth = getTileHealth(targetX, targetY);
+        const maxHealth = RESOURCE_HEALTH[resource];
+        const newHealth = currentHealth === 0 ? maxHealth - 1 : currentHealth - 1;
+
+        // Update tile health
+        setTileHealth(prev => ({ ...prev, [key]: newHealth }));
+
+        if (newHealth === 0) {
+          createParticles(targetX, targetY, RESOURCES[resource].color);
+          mine.mutate(resource, {
+            onSuccess: () => {
+              const id = Date.now();
+              setMiningNotifications(prev => [...prev, { id, resource, x: targetX, y: targetY }]);
+              setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
+              setMiningTarget(null);
+            },
+            onError: (err) => {
+              toast({ title: "Failed to mine", description: err.message, variant: "destructive" });
+              setMiningTarget(null);
+              setMinedTiles(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(key);
+                return newSet;
+              });
+              setTileHealth(prev => {
+                const h = { ...prev };
+                delete h[key];
+                return h;
+              });
+            }
+          });
+          setMinedTiles(prev => new Set(Array.from(prev).concat(key)));
+        } else {
+          setMiningTarget(null);
+        }
+
+        // --- START COOLDOWN AFTER STRIKE ---
+        lastMineTime.current = Date.now();
+        setCooldownProgress(0);
+        const cooldownStartTime = Date.now();
+        const updateCooldown = () => {
+          const elapsed = Date.now() - cooldownStartTime;
+          const cp = Math.min(elapsed / cooldown, 1);
+          setCooldownProgress(cp);
+          if (cp < 1) requestAnimationFrame(updateCooldown);
+        };
+        requestAnimationFrame(updateCooldown);
       }
     };
     requestAnimationFrame(animateMining);
-
-    setMiningTarget({ x: targetX, y: targetY });
-    
-    const key = `${targetX},${targetY}`;
-    const currentHealth = getTileHealth(targetX, targetY);
-    const maxHealth = RESOURCE_HEALTH[resource];
-    const newHealth = currentHealth === 0 ? maxHealth - 1 : currentHealth - 1;
-
-    // Create particles on each hit
-    // createParticles(targetX, targetY, RESOURCES[resource].color); // Moved to destruction only
-
-    // Update tile health
-    setTileHealth(prev => ({
-      ...prev,
-      [key]: newHealth
-    }));
-
-    if (newHealth === 0) {
-      // Create particles only on destruction
-      createParticles(targetX, targetY, RESOURCES[resource].color);
-
-      // Tile is fully mined - mark as mined and send to server
-      setMinedTiles(prev => new Set(Array.from(prev).concat(key)));
-      mine.mutate(resource, {
-        onSuccess: (data) => {
-          // Add notification
-          const id = Date.now();
-          setMiningNotifications(prev => [...prev, { id, resource, x: targetX, y: targetY }]);
-          setTimeout(() => {
-            setMiningNotifications(prev => prev.filter(n => n.id !== id));
-          }, 2000);
-          
-          setMiningTarget(null);
-        },
-        onError: (err) => {
-          toast({ title: "Failed to mine", description: err.message, variant: "destructive" });
-          setMiningTarget(null);
-          // Undo the mining if server fails
-          setMinedTiles(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(key);
-            return newSet;
-          });
-          setTileHealth(prev => {
-            const newHealth = { ...prev };
-            delete newHealth[key];
-            return newHealth;
-          });
-        }
-      });
-    } else {
-      setMiningTarget(null);
-    }
   };
 
   // Smooth camera animation & particle updates
@@ -471,38 +454,40 @@ export function GameCanvas({ user }: GameCanvasProps) {
           const damagePercent = health > 0 ? (maxHealth - health) / maxHealth : 0;
           
           if (damagePercent > 0) {
-            ctx.strokeStyle = "rgba(40, 40, 40, 0.95)"; // Darker, more "rocky" color
-            ctx.lineWidth = 3;
-            ctx.lineCap = "butt"; // More jagged look
+            ctx.strokeStyle = "rgba(20, 20, 20, 0.95)";
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = "butt";
             ctx.lineJoin = "miter";
             
-            // Texture based on the photo: Sharp, jagged, branching lines
-            const crackCount = Math.floor(damagePercent * 20);
+            // Texture: Cracks always from center, longer lines
+            const crackCount = Math.floor(damagePercent * 18);
             ctx.beginPath();
             for (let i = 0; i < crackCount; i++) {
               const seed = (wx * 11 + wy * 19 + i * 23) % 100 / 100;
-              const angle = (i / crackCount) * Math.PI * 2 + (seed * 0.8);
-              const length = 12 + seed * 30 * damagePercent;
+              const angle = (i / crackCount) * Math.PI * 2 + (seed * 0.4);
+              const totalLength = 18 + seed * 40 * damagePercent; // Much longer lines
               
-              let curX = sx + TILE_SIZE/2 + (seed - 0.5) * 8;
-              let curY = sy + TILE_SIZE/2 + (seed - 0.5) * 8;
+              // Always start from exact center
+              let curX = sx + TILE_SIZE/2;
+              let curY = sy + TILE_SIZE/2;
               
               ctx.moveTo(curX, curY);
               
-              // Segmented jagged lines (3 segments per crack)
-              for(let j = 0; j < 3; j++) {
-                const segAngle = angle + (Math.sin(j * seed * 10) * 0.5);
-                const segLen = (length / 3);
+              // Jagged lines with multiple segments
+              const segments = 4;
+              for(let j = 0; j < segments; j++) {
+                const segAngle = angle + (Math.sin(j * seed * 15) * 0.4);
+                const segLen = totalLength / segments;
                 curX += Math.cos(segAngle) * segLen;
                 curY += Math.sin(segAngle) * segLen;
                 ctx.lineTo(curX, curY);
                 
-                // Occasional 90-degree branches like in the photo
-                if (seed > 0.7 && j === 1) {
-                  const branchAngle = segAngle + (seed > 0.85 ? Math.PI/2 : -Math.PI/2);
+                // Branches
+                if (damagePercent > 0.5 && j === 2) {
+                  const branchAngle = segAngle + (seed > 0.5 ? Math.PI/2.5 : -Math.PI/2.5);
                   ctx.moveTo(curX, curY);
-                  ctx.lineTo(curX + Math.cos(branchAngle) * 10, curY + Math.sin(branchAngle) * 10);
-                  ctx.moveTo(curX, curY); // Return to main crack
+                  ctx.lineTo(curX + Math.cos(branchAngle) * 12, curY + Math.sin(branchAngle) * 12);
+                  ctx.moveTo(curX, curY);
                 }
               }
             }
@@ -563,21 +548,21 @@ export function GameCanvas({ user }: GameCanvasProps) {
     
     // Pickaxe Head - Curved Arc (Moved much higher)
     ctx.beginPath();
-    ctx.arc(0, -12, 14, Math.PI + 0.3, -0.3);
+    ctx.arc(0, -18, 14, Math.PI + 0.3, -0.3);
     ctx.strokeStyle = pickaxeColor;
     ctx.stroke();
     
     // Pickaxe Handle - Directly connected to the head
     ctx.beginPath();
-    ctx.moveTo(0, -12); 
-    ctx.lineTo(0, 12);
+    ctx.moveTo(0, -18); 
+    ctx.lineTo(0, 6);
     ctx.strokeStyle = "#5D4037";
     ctx.lineWidth = 4;
     ctx.stroke();
 
     // Small sleeve connecting the two
     ctx.fillStyle = "#3e2723";
-    ctx.fillRect(-4, -14, 8, 4);
+    ctx.fillRect(-4, -20, 8, 4);
     
     ctx.restore();
 
