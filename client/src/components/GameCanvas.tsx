@@ -357,7 +357,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
         // If it's the very first hit, initialize visual state immediately
         if (actualHealth === undefined) {
           setVisualHealth(prev => ({ ...prev, [key]: maxHealth }));
-          setAppearingBars(prev => ({ ...prev, [key]: 0.1 }));
+          setAppearingBars(prev => ({ ...prev, [key]: 0.3 })); // Start slightly higher to avoid "thin line"
         }
 
         const currentHP = actualHealth ?? maxHealth;
@@ -539,8 +539,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
             // Animating dimensions for "pleasant appearance" (like CD bar scale up)
             const targetWidth = 40;
             const targetHeight = 6;
-            const barWidth = targetWidth * (0.5 + appearProgress * 0.5); // Starts at 50% scale
-            const barHeight = targetHeight * appearProgress;
+            // Snappier scale: start from 0.8 instead of 0.5, and height shouldn't be so thin
+            const barWidth = targetWidth * (0.8 + appearProgress * 0.2); 
+            const barHeight = targetHeight * (0.4 + appearProgress * 0.6); 
             
             const bx = sx + (TILE_SIZE - barWidth) / 2;
             let by = sy + TILE_SIZE - 8; 
