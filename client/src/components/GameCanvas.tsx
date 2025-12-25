@@ -275,7 +275,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     setIsMining(true);
     setMiningTarget({ x: targetX, y: targetY });
 
-    const animDuration = 600; // Wind-up + strike duration (slightly longer for smoothness)
+    const animDuration = 1000; // Wind-up + strike duration (slower for realistic feel)
     let animStartTime = performance.now();
     
     const animateMining = (time: number) => {
@@ -284,16 +284,16 @@ export function GameCanvas({ user }: GameCanvasProps) {
       
       // Smooth wind-up and strike animation with easing
       let angle;
-      if (progress < 0.5) { // Wind-up phase (50% of time) - ease in for smooth pull back
-        const p = progress / 0.5;
+      if (progress < 0.55) { // Wind-up phase (55% of time) - slower, smooth pull back
+        const p = progress / 0.55;
         // Ease-in-out for smooth wind-up
         const eased = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
-        angle = eased * -50; // Pull pickaxe back 50 degrees smoothly
-      } else { // Strike phase (50% of time) - fast swing forward with smooth easing
-        const p = (progress - 0.5) / 0.5;
-        // Ease-out for snappy but smooth strike
-        const eased = 1 - Math.pow(1 - p, 3);
-        angle = -50 + (eased * 110); // Strike forward 110 degrees total swing
+        angle = eased * -55; // Pull pickaxe back 55 degrees smoothly
+      } else { // Strike phase (45% of time) - smooth swing forward
+        const p = (progress - 0.55) / 0.45;
+        // Ease-out quadratic for smooth but forceful strike
+        const eased = 1 - Math.pow(1 - p, 2);
+        angle = -55 + (eased * 120); // Strike forward 120 degrees total swing
       }
       
       setMiningRotation(angle);
@@ -413,19 +413,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Smooth interpolation for display position based on movement
     const now = Date.now();
     const timeSinceMove = now - lastMoveTimeForInterp.current;
-    const interpDuration = 150; // Smooth movement over 150ms
+    const interpDuration = 250; // Smooth movement over 250ms for fluid camera
     const interpProgress = Math.min(timeSinceMove / interpDuration, 1);
     
-    // Smooth easing for movement (ease-out cubic)
-    const eased = 1 - Math.pow(1 - interpProgress, 3);
+    // Smooth easing for movement (ease-out quadratic)
+    const eased = 1 - Math.pow(1 - interpProgress, 2);
     
     setDisplayPos(prev => {
       const dx = localPos.x - prev.x;
       const dy = localPos.y - prev.y;
       if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
         return {
-          x: prev.x + dx * eased * 0.5,
-          y: prev.y + dy * eased * 0.5
+          x: prev.x + dx * eased,
+          y: prev.y + dy * eased
         };
       }
       return localPos;
