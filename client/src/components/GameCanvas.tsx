@@ -283,14 +283,24 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Trigger mining animation with requestAnimationFrame for smoothness
     setIsMining(true);
     let startTime = performance.now();
-    const duration = 300; // ms
+    const duration = cooldown * 0.8; // Linked to mining speed (80% of cooldown for the swing)
     
     const animateMining = (time: number) => {
       const elapsed = time - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Swing back and forth with easing
-      const angle = Math.sin(progress * Math.PI) * 50;
+      // Wind up (first 30% of animation) then strike
+      let angle;
+      if (progress < 0.3) {
+        // Wind up: swing back slightly
+        const p = progress / 0.3;
+        angle = p * -30;
+      } else {
+        // Strike: swing forward rapidly
+        const p = (progress - 0.3) / 0.7;
+        angle = -30 + (p * 110); // Swing through to +80 degrees
+      }
+      
       setMiningRotation(angle);
       
       if (progress < 1) {
@@ -461,35 +471,39 @@ export function GameCanvas({ user }: GameCanvasProps) {
           const damagePercent = health > 0 ? (maxHealth - health) / maxHealth : 0;
           
           if (damagePercent > 0) {
-            ctx.strokeStyle = "rgba(0, 0, 0, 0.9)";
-            ctx.lineWidth = 2;
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
+            ctx.strokeStyle = "rgba(40, 40, 40, 0.95)"; // Darker, more "rocky" color
+            ctx.lineWidth = 3;
+            ctx.lineCap = "butt"; // More jagged look
+            ctx.lineJoin = "miter";
             
-            // Larger and more volume destruction texture
-            const crackCount = Math.floor(damagePercent * 16);
+            // Texture based on the photo: Sharp, jagged, branching lines
+            const crackCount = Math.floor(damagePercent * 20);
             ctx.beginPath();
             for (let i = 0; i < crackCount; i++) {
-              const seed = (wx * 7 + wy * 13 + i * 17) % 100 / 100;
-              const angle = (i / crackCount) * Math.PI * 2 + (seed * 0.5);
-              const length = 8 + seed * 25 * damagePercent; // Longer lines
+              const seed = (wx * 11 + wy * 19 + i * 23) % 100 / 100;
+              const angle = (i / crackCount) * Math.PI * 2 + (seed * 0.8);
+              const length = 12 + seed * 30 * damagePercent;
               
-              const startX = sx + TILE_SIZE/2 + (seed - 0.5) * 4;
-              const startY = sy + TILE_SIZE/2 + (seed - 0.5) * 4;
-              const endX = startX + Math.cos(angle) * length;
-              const endY = startY + Math.sin(angle) * length;
+              let curX = sx + TILE_SIZE/2 + (seed - 0.5) * 8;
+              let curY = sy + TILE_SIZE/2 + (seed - 0.5) * 8;
               
-              ctx.moveTo(startX, startY);
-              ctx.lineTo(endX, endY);
+              ctx.moveTo(curX, curY);
               
-              // More complex branching
-              if (damagePercent > 0.4) {
-                const subAngle1 = angle + 0.5 + seed;
-                const subAngle2 = angle - 0.5 - seed;
-                ctx.moveTo(endX, endY);
-                ctx.lineTo(endX + Math.cos(subAngle1) * 8, endY + Math.sin(subAngle1) * 8);
-                ctx.moveTo(endX, endY);
-                ctx.lineTo(endX + Math.cos(subAngle2) * 8, endY + Math.sin(subAngle2) * 8);
+              // Segmented jagged lines (3 segments per crack)
+              for(let j = 0; j < 3; j++) {
+                const segAngle = angle + (Math.sin(j * seed * 10) * 0.5);
+                const segLen = (length / 3);
+                curX += Math.cos(segAngle) * segLen;
+                curY += Math.sin(segAngle) * segLen;
+                ctx.lineTo(curX, curY);
+                
+                // Occasional 90-degree branches like in the photo
+                if (seed > 0.7 && j === 1) {
+                  const branchAngle = segAngle + (seed > 0.85 ? Math.PI/2 : -Math.PI/2);
+                  ctx.moveTo(curX, curY);
+                  ctx.lineTo(curX + Math.cos(branchAngle) * 10, curY + Math.sin(branchAngle) * 10);
+                  ctx.moveTo(curX, curY); // Return to main crack
+                }
               }
             }
             ctx.stroke();
@@ -547,23 +561,23 @@ export function GameCanvas({ user }: GameCanvasProps) {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     
-    // Pickaxe Head - Curved Arc (Moved slightly higher)
+    // Pickaxe Head - Curved Arc (Moved much higher)
     ctx.beginPath();
-    ctx.arc(0, -4, 14, Math.PI + 0.3, -0.3);
+    ctx.arc(0, -12, 14, Math.PI + 0.3, -0.3);
     ctx.strokeStyle = pickaxeColor;
     ctx.stroke();
     
     // Pickaxe Handle - Directly connected to the head
     ctx.beginPath();
-    ctx.moveTo(0, -4); 
-    ctx.lineTo(0, 20);
+    ctx.moveTo(0, -12); 
+    ctx.lineTo(0, 12);
     ctx.strokeStyle = "#5D4037";
     ctx.lineWidth = 4;
     ctx.stroke();
 
     // Small sleeve connecting the two
     ctx.fillStyle = "#3e2723";
-    ctx.fillRect(-4, -6, 8, 4);
+    ctx.fillRect(-4, -14, 8, 4);
     
     ctx.restore();
 
