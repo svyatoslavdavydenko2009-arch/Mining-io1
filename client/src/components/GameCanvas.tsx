@@ -247,18 +247,27 @@ export function GameCanvas({ user }: GameCanvasProps) {
       return;
     }
 
-    // Trigger mining animation
+    // Trigger mining animation with requestAnimationFrame for smoothness
     setIsMining(true);
-    let angle = 0;
-    const animInterval = setInterval(() => {
-      angle += 0.5;
-      setMiningRotation(Math.sin(angle) * 45);
-      if (angle >= Math.PI) {
-        clearInterval(animInterval);
+    let startTime = performance.now();
+    const duration = 300; // ms
+    
+    const animateMining = (time: number) => {
+      const elapsed = time - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Swing back and forth with easing
+      const angle = Math.sin(progress * Math.PI) * 50;
+      setMiningRotation(angle);
+      
+      if (progress < 1) {
+        requestAnimationFrame(animateMining);
+      } else {
         setIsMining(false);
         setMiningRotation(0);
       }
-    }, 30);
+    };
+    requestAnimationFrame(animateMining);
 
     setMiningTarget({ x: targetX, y: targetY });
     
@@ -482,28 +491,35 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
     ctx.save();
     ctx.translate(px + pSize, py + pSize / 2);
-    ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180)); // Base angle + animation
+    // Base angle + smoother animation oscillation
+    ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
     
-    // Draw pickaxe shape (simplified icon style to match Lucide icon)
-    ctx.lineWidth = 4;
+    // Draw pickaxe shape to match the Lucide icon/image exactly
+    ctx.lineWidth = 5;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     
-    // Pickaxe Head (curved arc)
+    // Pickaxe Head (the curved metal part)
     ctx.beginPath();
-    ctx.arc(0, -8, 12, Math.PI + 0.2, -0.2); 
+    // Slightly more pronounced curve to match the image
+    ctx.arc(0, -10, 14, Math.PI + 0.3, -0.3);
     ctx.strokeStyle = pickaxeColor;
     ctx.stroke();
     
+    // The handle sleeve (the dark part where head meets handle)
+    ctx.fillStyle = "#3e2723";
+    ctx.fillRect(-4, -12, 8, 6);
+    
     // Pickaxe Handle
     ctx.beginPath();
-    ctx.moveTo(0, -8);
-    ctx.lineTo(0, 12);
+    ctx.moveTo(0, -10);
+    ctx.lineTo(0, 14);
     ctx.strokeStyle = "#5D4037"; // Dark brown handle
+    ctx.lineWidth = 4;
     ctx.stroke();
     
     ctx.restore();
-    
+
     // Eyes
     ctx.fillStyle = "black";
     ctx.fillRect(px + 8, py + 10, 6, 6);
@@ -514,6 +530,16 @@ export function GameCanvas({ user }: GameCanvasProps) {
     ctx.fillStyle = "white";
     ctx.textAlign = "center";
     ctx.fillText(`LVL ${user.pickaxeLevel}`, cx, py - 10);
+
+    // Draw Lighting System (Radial Gradient / Vignette)
+    const gradient = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
+    gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+    gradient.addColorStop(1, "rgba(0, 0, 0, 0.9)");
+    
+    ctx.globalCompositeOperation = "multiply";
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    ctx.globalCompositeOperation = "source-over";
 
     // Draw Particles
     particles.forEach(p => {
