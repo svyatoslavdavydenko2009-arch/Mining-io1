@@ -434,19 +434,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const cy = rect.height / 2;
 
     // Smooth interpolation for display position based on movement
-    const now = Date.now();
-    const timeSinceMove = now - lastMoveTimeForInterp.current;
-    const interpDuration = 400; // Smooth movement over 400ms for very fluid camera
-    const interpProgress = Math.min(timeSinceMove / interpDuration, 1);
-    
-    // Smooth easing for movement (ease-out cubic for even smoother motion)
-    const eased = 1 - Math.pow(1 - interpProgress, 3);
-    
     const dx = localPos.x - smoothedPos.current.x;
     const dy = localPos.y - smoothedPos.current.y;
-    if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
-      smoothedPos.current.x += dx * eased;
-      smoothedPos.current.y += dy * eased;
+    
+    // Smooth easing for camera following (0.1 means 10% toward target per frame)
+    if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) {
+      smoothedPos.current.x += dx * 0.1;
+      smoothedPos.current.y += dy * 0.1;
     } else {
       smoothedPos.current = { x: localPos.x, y: localPos.y };
     }
