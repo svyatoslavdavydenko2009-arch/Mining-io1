@@ -90,6 +90,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [isMining, setIsMining] = useState(false);
   const [miningRotation, setMiningRotation] = useState(0);
+  const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
+  const [cooldownProgress, setCooldownProgress] = useState(1); // 0 to 1
 
   // Check if a tile can be walked through (has collision)
   const hasCollision = (x: number, y: number): boolean => {
@@ -237,6 +239,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
     if (now - lastMineTime.current < cooldown) return;
     lastMineTime.current = now;
 
+    // Update cooldown bar
+    setCooldownProgress(0);
+    const cooldownStartTime = now;
+    const updateCooldown = () => {
+      const elapsed = Date.now() - cooldownStartTime;
+      const progress = Math.min(elapsed / cooldown, 1);
+      setCooldownProgress(progress);
+      if (progress < 1) {
+        requestAnimationFrame(updateCooldown);
+      }
+    };
+    requestAnimationFrame(updateCooldown);
+
     // Check distance - only adjacent (include diagonals)
     const dist = Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y));
     if (dist > 1) {
@@ -307,10 +322,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
       setMinedTiles(prev => new Set(Array.from(prev).concat(key)));
       mine.mutate(resource, {
         onSuccess: (data) => {
-          toast({ 
-            title: `Mined ${resDef.name}!`, 
-            className: "bg-green-900 border-green-500 text-white font-pixel" 
-          });
+          // Add notification
+          const id = Date.now();
+          setMiningNotifications(prev => [...prev, { id, resource, x: targetX, y: targetY }]);
+          setTimeout(() => {
+            setMiningNotifications(prev => prev.filter(n => n.id !== id));
+          }, 2000);
+          
           setMiningTarget(null);
         },
         onError: (err) => {
@@ -518,19 +536,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
     
     // Pickaxe Head (the curved metal part)
     ctx.beginPath();
-    // Move head down so it's not "in the air"
-    ctx.arc(0, 0, 14, Math.PI + 0.3, -0.3);
+    // Move head even lower
+    ctx.arc(0, 6, 14, Math.PI + 0.3, -0.3);
     ctx.strokeStyle = pickaxeColor;
     ctx.stroke();
     
     // The handle sleeve (the dark part where head meets handle)
     ctx.fillStyle = "#3e2723";
-    ctx.fillRect(-4, -4, 8, 6);
+    ctx.fillRect(-4, 2, 8, 6);
     
     // Pickaxe Handle
     ctx.beginPath();
-    ctx.moveTo(0, -4);
-    ctx.lineTo(0, 20);
+    ctx.moveTo(0, 2);
+    ctx.lineTo(0, 26);
     ctx.strokeStyle = "#5D4037"; // Dark brown handle
     ctx.lineWidth = 4;
     ctx.stroke();
@@ -582,6 +600,37 @@ export function GameCanvas({ user }: GameCanvasProps) {
       {/* HUD Overlay */}
       <div className="absolute top-4 left-4 font-pixel text-white text-xs opacity-70">
         X: {localPos.x} Y: {localPos.y}
+      </div>
+
+      {/* Mining Cooldown Bar */}
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-48 h-4 bg-black/50 border-2 border-secondary rounded overflow-hidden">
+        <motion.div 
+          className="h-full bg-primary"
+          initial={{ width: "100%" }}
+          animate={{ width: `${cooldownProgress * 100}%` }}
+          transition={{ duration: 0.1 }}
+        />
+      </div>
+
+      {/* Mining Notifications */}
+      <div className="absolute top-4 right-4 flex flex-col gap-2 items-end pointer-events-none">
+        <AnimatePresence>
+          {miningNotifications.map((notif) => (
+            <motion.div
+              key={notif.id}
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 50, opacity: 0 }}
+              className="flex items-center gap-2 bg-black/70 p-2 border-2 border-primary rounded font-pixel text-xs text-white"
+            >
+              <span>+1</span>
+              <div 
+                className="w-4 h-4 rounded-sm" 
+                style={{ backgroundColor: RESOURCES[notif.resource].color }}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
       
       <AnimatePresence>
