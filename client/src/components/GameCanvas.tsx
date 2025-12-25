@@ -67,6 +67,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [displayPos, setDisplayPos] = useState({ x: user.x, y: user.y }); // Smooth camera position
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
+  const lastMineTime = useRef(Date.now());
   const { move, mine } = useGame();
   const { toast } = useToast();
   const [miningTarget, setMiningTarget] = useState<{x: number, y: number} | null>(null);
@@ -219,6 +220,11 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
     const targetX = localPos.x + relX;
     const targetY = localPos.y + relY;
+
+    // Mining debounce - 400ms delay between hits
+    const now = Date.now();
+    if (now - lastMineTime.current < 400) return;
+    lastMineTime.current = now;
 
     // Check distance - only adjacent (include diagonals)
     const dist = Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y));
@@ -508,12 +514,12 @@ export function GameCanvas({ user }: GameCanvasProps) {
     
     // The handle sleeve (the dark part where head meets handle)
     ctx.fillStyle = "#3e2723";
-    ctx.fillRect(-4, -12, 8, 6);
+    ctx.fillRect(-4, -6, 8, 6);
     
     // Pickaxe Handle
     ctx.beginPath();
-    ctx.moveTo(0, -10);
-    ctx.lineTo(0, 14);
+    ctx.moveTo(0, -6);
+    ctx.lineTo(0, 18);
     ctx.strokeStyle = "#5D4037"; // Dark brown handle
     ctx.lineWidth = 4;
     ctx.stroke();
