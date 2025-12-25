@@ -535,6 +535,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     ctx.fillStyle = "#fbbf24"; // Goldish player
     
     // Character shape - position relative to smooth camera
+    // Player is ALWAYS at their logical grid position, camera follows them
     const px = cx + (localPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
     const py = cy + (localPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
     const pSize = TILE_SIZE - 16;
