@@ -94,6 +94,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
   const [cooldownProgress, setCooldownProgress] = useState(1); // 0 to 1
   const [visualHealth, setVisualHealth] = useState<Record<string, number>>({});
+  const [lastHitTime, setLastHitTime] = useState<Record<string, number>>({});
 
   // Update visual health for smooth animations
   useEffect(() => {
@@ -335,6 +336,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
         
         // --- STRIKE EFFECT ---
         const key = `${targetX},${targetY}`;
+        setLastHitTime(prev => ({ ...prev, [key]: Date.now() }));
         const currentHealth = getTileHealth(targetX, targetY);
         const maxHealth = RESOURCE_HEALTH[resource];
         const newHealth = currentHealth === 0 ? maxHealth - 1 : currentHealth - 1;
@@ -497,61 +499,52 @@ export function GameCanvas({ user }: GameCanvasProps) {
           ctx.fillRect(sx + 24, sy + 16, 6, 6);
           ctx.fillRect(sx + 16, sy + 28, 8, 8);
 
-          // Health Bar
+          // Health Bar (Matches Cooldown Bar Style Exactly)
           const actualHealth = getTileHealth(wx, wy);
-          const currentHealth = visualHealth[`${wx},${wy}`] ?? actualHealth;
+          const key = `${wx},${wy}`;
+          const currentHealth = visualHealth[key] ?? actualHealth;
           const maxHealth = RESOURCE_HEALTH[resourceType];
+          const hitTime = lastHitTime[key] || 0;
+          const elapsedSinceHit = now - hitTime;
+          const isRecentlyHit = elapsedSinceHit < 500;
           
           if (actualHealth > 0 || currentHealth > 0.05) {
             const healthPercent = Math.max(0, currentHealth / maxHealth);
-            const barWidth = TILE_SIZE - 12;
-            const barHeight = 8;
-            const bx = sx + 6;
-            const by = sy + 2;
+            const barWidth = 12; // Exactly matches CD bar width
+            const barHeight = 2; // Thin like CD bar
+            const bx = sx + (TILE_SIZE - barWidth) / 2;
+            let by = sy + TILE_SIZE - 6; // Positioned near bottom
             
-            // Outer container shadow
-            ctx.shadowBlur = 6;
-            ctx.shadowColor = "rgba(0,0,0,0.8)";
-            
-            // Background / Border
-            ctx.fillStyle = "#0f172a";
-            ctx.beginPath();
-            ctx.roundRect(bx - 2, by - 2, barWidth + 4, barHeight + 4, 4);
-            ctx.fill();
-            
-            ctx.strokeStyle = "#334155";
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            // Background of the bar
-            ctx.fillStyle = "#1e293b";
-            ctx.beginPath();
-            ctx.roundRect(bx, by, barWidth, barHeight, 2);
-            ctx.fill();
-
-            // Progress Bar with Gradient
-            if (healthPercent > 0) {
-              const gradient = ctx.createLinearGradient(bx, by, bx, by + barHeight);
-              const color = healthPercent > 0.5 ? "#10b981" : healthPercent > 0.25 ? "#f59e0b" : "#ef4444";
-              gradient.addColorStop(0, color);
-              gradient.addColorStop(0.5, color);
-              gradient.addColorStop(1, "#065f46"); // Darker bottom for depth
-              
-              ctx.fillStyle = gradient;
-              ctx.beginPath();
-              ctx.roundRect(bx, by, barWidth * healthPercent, barHeight, 2);
-              ctx.fill();
-              
-              // Glossy highlight
-              ctx.fillStyle = "rgba(255,255,255,0.15)";
-              ctx.fillRect(bx, by, barWidth * healthPercent, barHeight / 2.5);
-              
-              // Subtle white separator at the end of progress
-              ctx.fillStyle = "rgba(255,255,255,0.4)";
-              ctx.fillRect(bx + (barWidth * healthPercent) - 1, by, 1, barHeight);
+            // "Fall down" and fade animation on hit
+            let alpha = 0.8;
+            if (isRecentlyHit) {
+              const progress = elapsedSinceHit / 500;
+              const dropOffset = progress * 6; // Falls down up to 6px
+              by += dropOffset;
+              alpha = 0.8 * (1 - progress); // Fades out as it falls
             }
+
+            // Container (Matches Cooldown Bar Style)
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.beginPath();
+            ctx.roundRect(bx, by, barWidth, barHeight, barHeight / 2);
+            ctx.fill();
             
-            ctx.shadowBlur = 0;
+            // Border
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.2)"; // Approximate secondary border
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            
+            // Progress
+            if (healthPercent > 0) {
+              const color = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#eab308" : "#ef4444";
+              ctx.fillStyle = color;
+              ctx.beginPath();
+              ctx.roundRect(bx, by, barWidth * healthPercent, barHeight, barHeight / 2);
+              ctx.fill();
+            }
+            ctx.globalAlpha = 1.0;
           }
         }
       }
