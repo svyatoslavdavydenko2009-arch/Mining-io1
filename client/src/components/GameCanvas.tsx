@@ -408,15 +408,14 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const cx = rect.width / 2;
     const cy = rect.height / 2;
 
-    // Draw Grid
+    // Draw Grid based on actual player position, but render with smooth camera offset
     for (let dy = -VIEW_RADIUS; dy <= VIEW_RADIUS; dy++) {
       for (let dx = -VIEW_RADIUS; dx <= VIEW_RADIUS; dx++) {
-        const wx = Math.floor(displayPos.x) + dx;
-        const wy = Math.floor(displayPos.y) + dy;
+        // Use actual player position for grid calculation
+        const wx = localPos.x + dx;
+        const wy = localPos.y + dy;
 
-        // Screen coords - convert world position to screen position
-        // Player is always at screen center (cx, cy)
-        // So tile at world (wx, wy) appears at screen position relative to camera
+        // Calculate screen position using smooth camera position for visual smoothing
         const sx = cx + (wx - displayPos.x) * TILE_SIZE;
         const sy = cy + (wy - displayPos.y) * TILE_SIZE;
 
