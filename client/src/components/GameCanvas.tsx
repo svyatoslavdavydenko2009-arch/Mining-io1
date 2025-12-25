@@ -535,9 +535,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.closePath();
       ctx.fillStyle = pickaxeColor;
       ctx.fill();
+      // Pickaxe Handle - Slightly shorter to avoid overlapping with the head
       ctx.beginPath();
       ctx.moveTo(0, headY); 
-      ctx.lineTo(0, 4);
+      ctx.lineTo(0, 0); 
       ctx.strokeStyle = "#5D4037";
       ctx.lineWidth = 4;
       ctx.stroke();
