@@ -410,196 +410,159 @@ export function GameCanvas({ user }: GameCanvasProps) {
     return () => cancelAnimationFrame(frameId);
   }, []);
 
-  // Render Loop
+  // Render loop using requestAnimationFrame for maximum smoothness
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Handle HiDPI
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    ctx.imageSmoothingEnabled = false;
-
-    // Clear
-    ctx.fillStyle = "#1a1a1a"; // Dark background
-    ctx.fillRect(0, 0, rect.width, rect.height);
-
-    // Smooth interpolation for camera follow
-    // Update camera position EVERY frame before drawing anything
-    const lerpFactor = 0.1; // 10% movement per frame
-    smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * lerpFactor;
-    smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * lerpFactor;
+    let frameId: number;
     
-    const displayPos = smoothedPos.current;
+    const render = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        frameId = requestAnimationFrame(render);
+        return;
+      }
+      
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        frameId = requestAnimationFrame(render);
+        return;
+      }
 
-    // Camera Center
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
+      // Handle HiDPI
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+      }
+      
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = false;
 
-    // Draw Grid
-    // We draw tiles around the logical position but use smooth display position for screen coords
-    const drawRadius = VIEW_RADIUS + 2;
-    for (let dy = -drawRadius; dy <= drawRadius; dy++) {
-      for (let dx = -drawRadius; dx <= drawRadius; dx++) {
-        const wx = localPos.x + dx;
-        const wy = localPos.y + dy;
+      // Update camera position EVERY frame
+      const lerpFactor = 0.1;
+      smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * lerpFactor;
+      smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * lerpFactor;
+      const displayPos = smoothedPos.current;
 
-        // Screen coords: start from center, then offset by the logical tile index
-        // but subtract the smooth display position to get the smooth scroll effect
-        const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
-        const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+      // Clear
+      ctx.fillStyle = "#1a1a1a";
+      ctx.fillRect(0, 0, rect.width, rect.height);
 
-        // Draw Floor
-        ctx.fillStyle = (wx + wy) % 2 === 0 ? "#262626" : "#2a2a2a";
-        ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
 
-        // Draw Resource
-        if (isTileMined(wx, wy)) {
-          continue;
-        }
+      // Draw Grid
+      const drawRadius = VIEW_RADIUS + 2;
+      for (let dy = -drawRadius; dy <= drawRadius; dy++) {
+        for (let dx = -drawRadius; dx <= drawRadius; dx++) {
+          const wx = Math.round(localPos.x) + dx;
+          const wy = Math.round(localPos.y) + dy;
 
-        const resourceType = getTileAt(wx, wy);
-        if (resourceType) {
-          const res = RESOURCES[resourceType];
-          
-          // Draw Rock Base
-          ctx.fillStyle = "#444";
-          ctx.beginPath();
-          ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4);
-          ctx.fill();
+          const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
+          const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
 
-          // Draw Ore bits
-          ctx.fillStyle = res.color;
-          // Random ore spots
-          ctx.fillRect(sx + 10, sy + 10, 8, 8);
-          ctx.fillRect(sx + 24, sy + 16, 6, 6);
-          ctx.fillRect(sx + 16, sy + 28, 8, 8);
+          ctx.fillStyle = (wx + wy) % 2 === 0 ? "#262626" : "#2a2a2a";
+          ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
 
-          // Health Bar
-          const health = getTileHealth(wx, wy);
-          const maxHealth = RESOURCE_HEALTH[resourceType];
-          
-          if (health > 0 && health < maxHealth) {
-            const healthPercent = health / maxHealth;
-            const barWidth = TILE_SIZE - 8;
-            const barHeight = 5;
-            const bx = sx + 4;
-            const by = sy + TILE_SIZE - 8;
-            const cornerRadius = 2;
-            
-            // Shadow glow effect
-            ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-            
-            // Background with rounded corners
-            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-            ctx.beginPath();
-            ctx.roundRect(bx, by, barWidth, barHeight, cornerRadius);
-            ctx.fill();
-            
-            // Border
-            ctx.strokeStyle = "rgba(100, 100, 100, 0.6)";
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-            
-            // Health bar with glow
-            const fillColor = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#eab308" : "#ef4444";
-            ctx.fillStyle = fillColor;
-            ctx.shadowColor = fillColor;
-            ctx.shadowBlur = 6;
-            ctx.beginPath();
-            ctx.roundRect(bx, by, barWidth * healthPercent, barHeight, cornerRadius);
-            ctx.fill();
-            
-            ctx.shadowColor = "transparent";
-            ctx.shadowBlur = 0;
+          if (!isTileMined(wx, wy)) {
+            const resourceType = getTileAt(wx, wy);
+            if (resourceType) {
+              const res = RESOURCES[resourceType];
+              ctx.fillStyle = "#444";
+              ctx.beginPath();
+              ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4);
+              ctx.fill();
+
+              ctx.fillStyle = res.color;
+              ctx.fillRect(sx + 10, sy + 10, 8, 8);
+              ctx.fillRect(sx + 24, sy + 16, 6, 6);
+              ctx.fillRect(sx + 16, sy + 28, 8, 8);
+
+              const health = getTileHealth(wx, wy);
+              const maxHealth = RESOURCE_HEALTH[resourceType];
+              if (health > 0 && health < maxHealth) {
+                const healthPercent = health / maxHealth;
+                const barWidth = TILE_SIZE - 8;
+                const barHeight = 5;
+                const bx = sx + 4;
+                const by = sy + TILE_SIZE - 8;
+                ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+                ctx.beginPath();
+                ctx.roundRect(bx, by, barWidth, barHeight, 2);
+                ctx.fill();
+                const fillColor = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#eab308" : "#ef4444";
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.roundRect(bx, by, barWidth * healthPercent, barHeight, 2);
+                ctx.fill();
+              }
+            }
           }
         }
       }
-    }
 
-    // Draw Player
-    ctx.fillStyle = "#fbbf24"; // Goldish player
-    
-    // Character shape - position relative to smooth camera
-    // Player is ALWAYS at their logical grid position, camera follows them
-    const px = cx + (localPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
-    const py = cy + (localPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
-    const pSize = TILE_SIZE - 16;
-    
-    ctx.fillRect(px, py, pSize, pSize);
+      // Draw Player
+      ctx.fillStyle = "#fbbf24";
+      const px = cx + (localPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
+      const py = cy + (localPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
+      const pSize = TILE_SIZE - 16;
+      ctx.fillRect(px, py, pSize, pSize);
 
-    // Draw Held Pickaxe
-    const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
-    ctx.save();
-    ctx.translate(px + pSize, py + pSize / 2);
-    // Base angle + smoother animation oscillation
-    ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
-    
-    ctx.lineWidth = 5;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    
-    // Pickaxe Head - Sharp stylized shape (Moved much higher)
-    const headY = -24;
-    ctx.beginPath();
-    ctx.moveTo(-16, headY + 8);
-    ctx.quadraticCurveTo(0, headY - 12, 16, headY + 8); // Top curve
-    ctx.lineTo(12, headY + 10);
-    ctx.quadraticCurveTo(0, headY, -12, headY + 10); // Bottom inner curve
-    ctx.closePath();
-    
-    ctx.fillStyle = pickaxeColor;
-    ctx.fill();
-    
-    // Pickaxe Handle - Directly connected to the head
-    ctx.beginPath();
-    ctx.moveTo(0, headY); 
-    ctx.lineTo(0, 4);
-    ctx.strokeStyle = "#5D4037";
-    ctx.lineWidth = 4;
-    ctx.stroke();
+      // Draw Held Pickaxe
+      const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
+      ctx.save();
+      ctx.translate(px + pSize, py + pSize / 2);
+      ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
+      ctx.lineWidth = 5;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      const headY = -24;
+      ctx.beginPath();
+      ctx.moveTo(-16, headY + 8);
+      ctx.quadraticCurveTo(0, headY - 12, 16, headY + 8);
+      ctx.lineTo(12, headY + 10);
+      ctx.quadraticCurveTo(0, headY, -12, headY + 10);
+      ctx.closePath();
+      ctx.fillStyle = pickaxeColor;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0, headY); 
+      ctx.lineTo(0, 4);
+      ctx.strokeStyle = "#5D4037";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.restore();
 
-    // Small sleeve connecting the two
-    ctx.fillStyle = "#3e2723";
-    ctx.fillRect(-3, headY - 2, 6, 6);
-    
-    ctx.restore();
+      // Eyes
+      ctx.fillStyle = "black";
+      ctx.fillRect(px + 8, py + 10, 6, 6);
+      ctx.fillRect(px + 20, py + 10, 6, 6);
 
-    // Eyes
-    ctx.fillStyle = "black";
-    ctx.fillRect(px + 8, py + 10, 6, 6);
-    ctx.fillRect(px + 20, py + 10, 6, 6);
+      // Vignette
+      const gradient = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
+      gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+      gradient.addColorStop(1, "rgba(0, 0, 0, 0.9)");
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, rect.width, rect.height);
+      ctx.globalCompositeOperation = "source-over";
 
-    // Draw Lighting System (Radial Gradient / Vignette)
-    const gradient = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
-    gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
-    gradient.addColorStop(1, "rgba(0, 0, 0, 0.9)");
-    
-    ctx.globalCompositeOperation = "multiply";
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, rect.width, rect.height);
-    ctx.globalCompositeOperation = "source-over";
+      // Particles
+      particles.forEach(p => {
+        const screenX = cx + (p.x - displayPos.x) * TILE_SIZE;
+        const screenY = cy + (p.y - displayPos.y) * TILE_SIZE;
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.fillRect(screenX - 2, screenY - 2, 4, 4);
+        ctx.globalAlpha = 1;
+      });
 
-    // Draw Particles
-    particles.forEach(p => {
-      const screenX = cx + (p.x - displayPos.x) * TILE_SIZE;
-      const screenY = cy + (p.y - displayPos.y) * TILE_SIZE;
-      
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = p.life;
-      ctx.fillRect(screenX - 2, screenY - 2, 4, 4); // Smaller particles (4x4 instead of 8x8)
-      ctx.globalAlpha = 1;
-    });
+      frameId = requestAnimationFrame(render);
+    };
 
-  }, [localPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles, particles, miningRotation]); // Re-render when these change
+    frameId = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(frameId);
+  }, [localPos, user.pickaxeLevel, tileHealth, minedTiles, particles, miningRotation]);
 
   return (
     <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl">
