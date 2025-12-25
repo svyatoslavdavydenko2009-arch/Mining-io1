@@ -595,8 +595,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
           <motion.div 
             initial={ { opacity: 0, scale: 0.8 } }
             animate={ { opacity: 1, scale: 1 } }
-            exit={ { opacity: 0, scale: 1.1, filter: "blur(10px)" } }
-            className="absolute top-[calc(50%+24px)] left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 border border-secondary rounded-full overflow-hidden pointer-events-none shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+            exit={ { 
+              opacity: 0, 
+              scale: 1.1, 
+              filter: "blur(10px)",
+              transition: { duration: 0.8, ease: "easeOut" } 
+            } }
+            className="absolute top-[calc(50%+32px)] left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 border border-secondary rounded-full overflow-hidden pointer-events-none shadow-[0_0_10px_rgba(0,0,0,0.5)]"
           >
             <motion.div 
               className="h-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"
