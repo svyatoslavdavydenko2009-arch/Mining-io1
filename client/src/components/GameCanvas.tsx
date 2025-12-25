@@ -414,11 +414,11 @@ export function GameCanvas({ user }: GameCanvasProps) {
         const wx = Math.floor(displayPos.x) + dx;
         const wy = Math.floor(displayPos.y) + dy;
 
-        // Screen coords (with smooth offset)
-        const offsetX = (displayPos.x - Math.floor(displayPos.x)) * TILE_SIZE;
-        const offsetY = (displayPos.y - Math.floor(displayPos.y)) * TILE_SIZE;
-        const sx = cx + dx * TILE_SIZE - TILE_SIZE/2 - offsetX;
-        const sy = cy + dy * TILE_SIZE - TILE_SIZE/2 - offsetY;
+        // Screen coords - convert world position to screen position
+        // Player is always at screen center (cx, cy)
+        // So tile at world (wx, wy) appears at screen position relative to camera
+        const sx = cx + (wx - displayPos.x) * TILE_SIZE;
+        const sy = cy + (wy - displayPos.y) * TILE_SIZE;
 
         // Draw Floor
         ctx.fillStyle = (wx + wy) % 2 === 0 ? "#262626" : "#2a2a2a"; // Checker pattern floor
