@@ -269,21 +269,23 @@ export function GameCanvas({ user }: GameCanvasProps) {
     setIsMining(true);
     setMiningTarget({ x: targetX, y: targetY });
 
-    const animDuration = 400; // Fixed duration for realistic feel
+    const animDuration = 500; // Wind-up + strike duration
     let animStartTime = performance.now();
     
     const animateMining = (time: number) => {
       const elapsed = time - animStartTime;
       const progress = Math.min(elapsed / animDuration, 1);
       
-      // Real wind-up and strike
+      // Dramatic wind-up and strike animation
       let angle;
-      if (progress < 0.6) { // Wind up (60% of time)
-        const p = progress / 0.6;
-        angle = p * -45; // Swing back further
-      } else { // Strike (40% of time)
-        const p = (progress - 0.6) / 0.4;
-        angle = -45 + (p * 135); // Rapid strike to +90
+      if (progress < 0.55) { // Wind-up phase (55% of time) - slower pull back
+        const p = progress / 0.55;
+        angle = p * -60; // Pull pickaxe back 60 degrees
+      } else { // Strike phase (45% of time) - fast swing forward
+        const p = (progress - 0.55) / 0.45;
+        // Use easing for snappy feel: ease-out cubic for impact
+        const eased = 1 - Math.pow(1 - p, 2);
+        angle = -60 + (eased * 120); // Strike forward 120 degrees total swing
       }
       
       setMiningRotation(angle);
