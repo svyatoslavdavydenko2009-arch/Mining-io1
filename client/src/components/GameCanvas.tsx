@@ -74,7 +74,8 @@ const MINING_COOLDOWNS: Record<number, number> = {
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
-  const displayPlayerPos = useRef({ x: user.x, y: user.y }); // Smooth player position for rendering
+  const [lookDir, setLookDir] = useState({ dx: 0, dy: 0 }); // Direction player is looking
+  const displayPlayerPos = useRef({ x: user.x, y: user.y });
   const smoothedPos = useRef({ x: user.x, y: user.y }); // Smooth camera position
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
@@ -151,6 +152,12 @@ export function GameCanvas({ user }: GameCanvasProps) {
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"].includes(e.key)) {
         if (now - lastMoveTime.current < 250) return; // Ignore if too soon
         lastMoveTime.current = now;
+        
+        // Update looking direction
+        if (e.key === "ArrowUp" || e.key === "w") setLookDir({ dx: 0, dy: -1 });
+        if (e.key === "ArrowDown" || e.key === "s") setLookDir({ dx: 0, dy: 1 });
+        if (e.key === "ArrowLeft" || e.key === "a") setLookDir({ dx: -1, dy: 0 });
+        if (e.key === "ArrowRight" || e.key === "d") setLookDir({ dx: 1, dy: 0 });
       }
 
       setLocalPos(prev => {
@@ -444,16 +451,15 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
       // Cancel mining if moved
       if (isMining && miningTarget) {
-        const distToTarget = Math.max(
-          Math.abs(miningTarget.x - localPos.x),
-          Math.abs(miningTarget.y - localPos.y)
-        );
-        if (distToTarget > 1) {
+        // Use logical position for distance check to ensure accuracy
+        const dx = Math.abs(miningTarget.x - localPos.x);
+        const dy = Math.abs(miningTarget.y - localPos.y);
+        
+        // If distance is greater than 1 tile (including diagonals), cancel
+        if (dx > 1 || dy > 1) {
           setIsMining(false);
           setMiningTarget(null);
           setMiningRotation(0);
-          // Note: We don't reset lastMineTime here so the cooldown still applies
-          // to prevent "mining-dash" exploits, or we can reset it if preferred.
         }
       }
 
@@ -565,11 +571,16 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
       // Eyes - Circles
       ctx.fillStyle = "black";
+      
+      // Calculate eye offset based on look direction
+      const eyeOffsetX = lookDir.dx * 3;
+      const eyeOffsetY = lookDir.dy * 3;
+      
       ctx.beginPath();
-      ctx.arc(px + 10, py + 13, 3, 0, Math.PI * 2);
+      ctx.arc(px + 10 + eyeOffsetX, py + 13 + eyeOffsetY, 3, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(px + 22, py + 13, 3, 0, Math.PI * 2);
+      ctx.arc(px + 22 + eyeOffsetX, py + 13 + eyeOffsetY, 3, 0, Math.PI * 2);
       ctx.fill();
 
       // Vignette
