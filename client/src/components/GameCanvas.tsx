@@ -74,7 +74,7 @@ const MINING_COOLDOWNS: Record<number, number> = {
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
-  const [displayPos, setDisplayPos] = useState({ x: user.x, y: user.y }); // Smooth camera position
+  const smoothedPos = useRef({ x: user.x, y: user.y }); // Smooth camera position - using ref to avoid render loops
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
   const lastMineTime = useRef(Date.now());
@@ -113,6 +113,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       const nextX = prev.x + dx;
       const nextY = prev.y + dy;
       if (!hasCollision(nextX, nextY)) {
+        lastMoveTimeForInterp.current = now;
         return { x: nextX, y: nextY };
       }
       return prev; // Don't move if there's collision
@@ -441,17 +442,16 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Smooth easing for movement (ease-out cubic for even smoother motion)
     const eased = 1 - Math.pow(1 - interpProgress, 3);
     
-    setDisplayPos(prev => {
-      const dx = localPos.x - prev.x;
-      const dy = localPos.y - prev.y;
-      if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
-        return {
-          x: prev.x + dx * eased,
-          y: prev.y + dy * eased
-        };
-      }
-      return localPos;
-    });
+    const dx = localPos.x - smoothedPos.current.x;
+    const dy = localPos.y - smoothedPos.current.y;
+    if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
+      smoothedPos.current.x += dx * eased;
+      smoothedPos.current.y += dy * eased;
+    } else {
+      smoothedPos.current = { x: localPos.x, y: localPos.y };
+    }
+    
+    const displayPos = smoothedPos.current;
 
     // Draw Grid
     for (let dy = -VIEW_RADIUS; dy <= VIEW_RADIUS; dy++) {
@@ -609,7 +609,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.globalAlpha = 1;
     });
 
-  }, [localPos, displayPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles, particles, miningRotation]); // Re-render when these change
+  }, [localPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles, particles, miningRotation]); // Re-render when these change
 
   return (
     <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl">
