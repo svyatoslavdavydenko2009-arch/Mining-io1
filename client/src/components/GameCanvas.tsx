@@ -439,9 +439,24 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = false;
 
-      // Update positions EVERY frame
+      // Update camera position EVERY frame
       const lerpFactor = 0.1;
-      
+
+      // Cancel mining if moved
+      if (isMining && miningTarget) {
+        const distToTarget = Math.max(
+          Math.abs(miningTarget.x - localPos.x),
+          Math.abs(miningTarget.y - localPos.y)
+        );
+        if (distToTarget > 1) {
+          setIsMining(false);
+          setMiningTarget(null);
+          setMiningRotation(0);
+          // Note: We don't reset lastMineTime here so the cooldown still applies
+          // to prevent "mining-dash" exploits, or we can reset it if preferred.
+        }
+      }
+
       // Smooth camera follows logical position
       smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * lerpFactor;
       smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * lerpFactor;
@@ -548,10 +563,14 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.stroke();
       ctx.restore();
 
-      // Eyes
+      // Eyes - Circles
       ctx.fillStyle = "black";
-      ctx.fillRect(px + 8, py + 10, 6, 6);
-      ctx.fillRect(px + 20, py + 10, 6, 6);
+      ctx.beginPath();
+      ctx.arc(px + 10, py + 13, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(px + 22, py + 13, 3, 0, Math.PI * 2);
+      ctx.fill();
 
       // Vignette
       const gradient = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
