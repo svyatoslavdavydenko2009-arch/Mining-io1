@@ -93,6 +93,34 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [miningRotation, setMiningRotation] = useState(0);
   const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
   const [cooldownProgress, setCooldownProgress] = useState(1); // 0 to 1
+  const [visualHealth, setVisualHealth] = useState<Record<string, number>>({});
+
+  // Update visual health for smooth animations
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisualHealth(prev => {
+        const next = { ...prev };
+        let changed = false;
+        
+        Object.entries(tileHealth).forEach(([key, actual]) => {
+          const current = prev[key] ?? actual;
+          if (Math.abs(current - actual) > 0.01) {
+            next[key] = current + (actual - current) * 0.15;
+            changed = true;
+          } else if (actual === 0 && prev[key] !== undefined) {
+            delete next[key];
+            changed = true;
+          } else if (next[key] !== actual) {
+            next[key] = actual;
+            changed = true;
+          }
+        });
+        
+        return changed ? next : prev;
+      });
+    }, 16);
+    return () => clearInterval(interval);
+  }, [tileHealth]);
 
   // Check if a tile can be walked through (has collision)
   const hasCollision = (x: number, y: number): boolean => {
@@ -470,22 +498,60 @@ export function GameCanvas({ user }: GameCanvasProps) {
           ctx.fillRect(sx + 16, sy + 28, 8, 8);
 
           // Health Bar
-          const health = getTileHealth(wx, wy);
+          const actualHealth = getTileHealth(wx, wy);
+          const currentHealth = visualHealth[`${wx},${wy}`] ?? actualHealth;
           const maxHealth = RESOURCE_HEALTH[resourceType];
-          if (health > 0) {
-            const healthPercent = health / maxHealth;
-            const barWidth = TILE_SIZE - 8;
-            const barHeight = 4;
+          
+          if (actualHealth > 0 || currentHealth > 0.05) {
+            const healthPercent = Math.max(0, currentHealth / maxHealth);
+            const barWidth = TILE_SIZE - 12;
+            const barHeight = 8;
+            const bx = sx + 6;
+            const by = sy + 2;
             
-            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-            ctx.fillRect(sx + 4, sy + 2, barWidth, barHeight);
+            // Outer container shadow
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = "rgba(0,0,0,0.8)";
             
-            ctx.fillStyle = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#eab308" : "#ef4444";
-            ctx.fillRect(sx + 4, sy + 2, barWidth * healthPercent, barHeight);
+            // Background / Border
+            ctx.fillStyle = "#0f172a";
+            ctx.beginPath();
+            ctx.roundRect(bx - 2, by - 2, barWidth + 4, barHeight + 4, 4);
+            ctx.fill();
             
-            ctx.strokeStyle = "#fff";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(sx + 4, sy + 2, barWidth, barHeight);
+            ctx.strokeStyle = "#334155";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Background of the bar
+            ctx.fillStyle = "#1e293b";
+            ctx.beginPath();
+            ctx.roundRect(bx, by, barWidth, barHeight, 2);
+            ctx.fill();
+
+            // Progress Bar with Gradient
+            if (healthPercent > 0) {
+              const gradient = ctx.createLinearGradient(bx, by, bx, by + barHeight);
+              const color = healthPercent > 0.5 ? "#10b981" : healthPercent > 0.25 ? "#f59e0b" : "#ef4444";
+              gradient.addColorStop(0, color);
+              gradient.addColorStop(0.5, color);
+              gradient.addColorStop(1, "#065f46"); // Darker bottom for depth
+              
+              ctx.fillStyle = gradient;
+              ctx.beginPath();
+              ctx.roundRect(bx, by, barWidth * healthPercent, barHeight, 2);
+              ctx.fill();
+              
+              // Glossy highlight
+              ctx.fillStyle = "rgba(255,255,255,0.15)";
+              ctx.fillRect(bx, by, barWidth * healthPercent, barHeight / 2.5);
+              
+              // Subtle white separator at the end of progress
+              ctx.fillStyle = "rgba(255,255,255,0.4)";
+              ctx.fillRect(bx + (barWidth * healthPercent) - 1, by, 1, barHeight);
+            }
+            
+            ctx.shadowBlur = 0;
           }
         }
       }
@@ -601,7 +667,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
               filter: "blur(10px)",
               transition: { duration: 0.8, ease: "easeOut" } 
             } }
-            className="absolute top-[calc(50%+32px)] left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 border border-secondary rounded-full overflow-hidden pointer-events-none shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+            className="absolute top-[calc(50%+28px)] left-1/2 -translate-x-[60%] w-12 h-1.5 bg-black/50 border border-secondary rounded-full overflow-hidden pointer-events-none shadow-[0_0_10px_rgba(0,0,0,0.5)]"
           >
             <motion.div 
               className="h-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"
