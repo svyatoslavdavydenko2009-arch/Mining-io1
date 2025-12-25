@@ -77,6 +77,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
   
   // Particle effects
   const [particles, setParticles] = useState<Particle[]>([]);
+  const [isMining, setIsMining] = useState(false);
+  const [miningRotation, setMiningRotation] = useState(0);
 
   // Check if a tile can be walked through (has collision)
   const hasCollision = (x: number, y: number): boolean => {
@@ -244,6 +246,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
       });
       return;
     }
+
+    // Trigger mining animation
+    setIsMining(true);
+    let angle = 0;
+    const animInterval = setInterval(() => {
+      angle += 0.5;
+      setMiningRotation(Math.sin(angle) * 45);
+      if (angle >= Math.PI) {
+        clearInterval(animInterval);
+        setIsMining(false);
+        setMiningRotation(0);
+      }
+    }, 30);
 
     setMiningTarget({ x: targetX, y: targetY });
     
@@ -467,22 +482,25 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
     ctx.save();
     ctx.translate(px + pSize, py + pSize / 2);
-    ctx.rotate(Math.PI / 4); // Angle for holding
+    ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180)); // Base angle + animation
     
-    // Draw pickaxe shape (simplified icon style)
-    ctx.fillStyle = pickaxeColor;
-    ctx.shadowBlur = 0;
-    
-    // Pickaxe Head
-    ctx.beginPath();
-    ctx.arc(0, -8, 12, Math.PI + 0.2, -0.2); // Curved head
+    // Draw pickaxe shape (simplified icon style to match Lucide icon)
     ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    
+    // Pickaxe Head (curved arc)
+    ctx.beginPath();
+    ctx.arc(0, -8, 12, Math.PI + 0.2, -0.2); 
     ctx.strokeStyle = pickaxeColor;
     ctx.stroke();
     
     // Pickaxe Handle
-    ctx.fillStyle = "#5D4037"; // Dark brown handle
-    ctx.fillRect(-2, -8, 4, 16);
+    ctx.beginPath();
+    ctx.moveTo(0, -8);
+    ctx.lineTo(0, 12);
+    ctx.strokeStyle = "#5D4037"; // Dark brown handle
+    ctx.stroke();
     
     ctx.restore();
     
