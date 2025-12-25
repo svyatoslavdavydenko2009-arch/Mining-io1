@@ -74,7 +74,8 @@ const MINING_COOLDOWNS: Record<number, number> = {
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
-  const smoothedPos = useRef({ x: user.x, y: user.y }); // Smooth camera position - using ref to avoid render loops
+  const displayPlayerPos = useRef({ x: user.x, y: user.y }); // Smooth player position for rendering
+  const smoothedPos = useRef({ x: user.x, y: user.y }); // Smooth camera position
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
   const lastMineTime = useRef(Date.now());
@@ -438,11 +439,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = false;
 
-      // Update camera position EVERY frame
+      // Update positions EVERY frame
       const lerpFactor = 0.1;
+      
+      // Smooth camera follows logical position
       smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * lerpFactor;
       smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * lerpFactor;
+      
+      // Smooth player follows logical position (independent of camera)
+      displayPlayerPos.current.x += (localPos.x - displayPlayerPos.current.x) * lerpFactor;
+      displayPlayerPos.current.y += (localPos.y - displayPlayerPos.current.y) * lerpFactor;
+      
       const displayPos = smoothedPos.current;
+      const playerPos = displayPlayerPos.current;
 
       // Clear
       ctx.fillStyle = "#1a1a1a";
@@ -503,8 +512,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
       // Draw Player
       ctx.fillStyle = "#fbbf24";
-      const px = cx + (localPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
-      const py = cy + (localPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
+      const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
+      const py = cy + (playerPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const pSize = TILE_SIZE - 16;
       ctx.fillRect(px, py, pSize, pSize);
 
