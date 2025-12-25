@@ -454,14 +454,17 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const displayPos = smoothedPos.current;
 
     // Draw Grid
-    const startX = Math.floor(displayPos.x) - VIEW_RADIUS - 1;
-    const endX = Math.floor(displayPos.x) + VIEW_RADIUS + 1;
-    const startY = Math.floor(displayPos.y) - VIEW_RADIUS - 1;
-    const endY = Math.floor(displayPos.y) + VIEW_RADIUS + 1;
+    // Use logical localPos as the grid anchor to prevent "jumping"
+    const startX = localPos.x - VIEW_RADIUS - 1;
+    const endX = localPos.x + VIEW_RADIUS + 1;
+    const startY = localPos.y - VIEW_RADIUS - 1;
+    const endY = localPos.y + VIEW_RADIUS + 1;
 
     for (let wy = startY; wy <= endY; wy++) {
       for (let wx = startX; wx <= endX; wx++) {
-        // Use EXACT grid coordinates for resources, only smooth the screen position
+        // Calculate screen position: 
+        // Relative to player center (cx, cy)
+        // Offset by the difference between tile coordinate and SMOOTH display position
         const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
         const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
 
