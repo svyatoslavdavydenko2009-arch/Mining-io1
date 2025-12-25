@@ -74,9 +74,11 @@ const MINING_COOLDOWNS: Record<number, number> = {
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
+  const [displayPos, setDisplayPos] = useState({ x: user.x, y: user.y }); // Smooth camera position
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
   const lastMineTime = useRef(Date.now());
+  const lastMoveTimeForInterp = useRef(Date.now()); // Track move time for interpolation
   const { move, mine } = useGame();
   const { toast } = useToast();
   const [miningTarget, setMiningTarget] = useState<{x: number, y: number} | null>(null);
@@ -169,6 +171,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
           if (!hasCollision(testPos.x, testPos.y)) next.x += 1;
         }
 
+        // Update move time for smooth interpolation
+        if (next.x !== prev.x || next.y !== prev.y) {
+          lastMoveTimeForInterp.current = Date.now();
+        }
         return next;
       });
     };
@@ -269,26 +275,29 @@ export function GameCanvas({ user }: GameCanvasProps) {
     setIsMining(true);
     setMiningTarget({ x: targetX, y: targetY });
 
-    const animDuration = 500; // Wind-up + strike duration
+    const animDuration = 600; // Wind-up + strike duration (slightly longer for smoothness)
     let animStartTime = performance.now();
     
     const animateMining = (time: number) => {
       const elapsed = time - animStartTime;
       const progress = Math.min(elapsed / animDuration, 1);
       
-      // Dramatic wind-up and strike animation
+      // Smooth wind-up and strike animation with easing
       let angle;
-      if (progress < 0.55) { // Wind-up phase (55% of time) - slower pull back
-        const p = progress / 0.55;
-        angle = p * -60; // Pull pickaxe back 60 degrees
-      } else { // Strike phase (45% of time) - fast swing forward
-        const p = (progress - 0.55) / 0.45;
-        // Use easing for snappy feel: ease-out cubic for impact
-        const eased = 1 - Math.pow(1 - p, 2);
-        angle = -60 + (eased * 120); // Strike forward 120 degrees total swing
+      if (progress < 0.5) { // Wind-up phase (50% of time) - ease in for smooth pull back
+        const p = progress / 0.5;
+        // Ease-in-out for smooth wind-up
+        const eased = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+        angle = eased * -50; // Pull pickaxe back 50 degrees smoothly
+      } else { // Strike phase (50% of time) - fast swing forward with smooth easing
+        const p = (progress - 0.5) / 0.5;
+        // Ease-out for snappy but smooth strike
+        const eased = 1 - Math.pow(1 - p, 3);
+        angle = -50 + (eased * 110); // Strike forward 110 degrees total swing
       }
       
       setMiningRotation(angle);
+      lastMoveTimeForInterp.current = time;
       
       if (progress < 1) {
         requestAnimationFrame(animateMining);
@@ -401,15 +410,36 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const cx = rect.width / 2;
     const cy = rect.height / 2;
 
+    // Smooth interpolation for display position based on movement
+    const now = Date.now();
+    const timeSinceMove = now - lastMoveTimeForInterp.current;
+    const interpDuration = 150; // Smooth movement over 150ms
+    const interpProgress = Math.min(timeSinceMove / interpDuration, 1);
+    
+    // Smooth easing for movement (ease-out cubic)
+    const eased = 1 - Math.pow(1 - interpProgress, 3);
+    
+    setDisplayPos(prev => {
+      const dx = localPos.x - prev.x;
+      const dy = localPos.y - prev.y;
+      if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
+        return {
+          x: prev.x + dx * eased * 0.5,
+          y: prev.y + dy * eased * 0.5
+        };
+      }
+      return localPos;
+    });
+
     // Draw Grid
     for (let dy = -VIEW_RADIUS; dy <= VIEW_RADIUS; dy++) {
       for (let dx = -VIEW_RADIUS; dx <= VIEW_RADIUS; dx++) {
-        const wx = Math.floor(localPos.x) + dx;
-        const wy = Math.floor(localPos.y) + dy;
+        const wx = Math.floor(displayPos.x) + dx;
+        const wy = Math.floor(displayPos.y) + dy;
 
-        // Screen coords
-        const offsetX = (localPos.x - Math.floor(localPos.x)) * TILE_SIZE;
-        const offsetY = (localPos.y - Math.floor(localPos.y)) * TILE_SIZE;
+        // Screen coords with smooth display position
+        const offsetX = (displayPos.x - Math.floor(displayPos.x)) * TILE_SIZE;
+        const offsetY = (displayPos.y - Math.floor(displayPos.y)) * TILE_SIZE;
         const sx = cx + dx * TILE_SIZE - TILE_SIZE/2 - offsetX;
         const sy = cy + dy * TILE_SIZE - TILE_SIZE/2 - offsetY;
 
@@ -587,8 +617,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
     // Draw Particles
     particles.forEach(p => {
-      const screenX = cx + (p.x - localPos.x) * TILE_SIZE;
-      const screenY = cy + (p.y - localPos.y) * TILE_SIZE;
+      const screenX = cx + (p.x - displayPos.x) * TILE_SIZE;
+      const screenY = cy + (p.y - displayPos.y) * TILE_SIZE;
       
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.life;
@@ -596,7 +626,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.globalAlpha = 1;
     });
 
-  }, [localPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles, particles, miningRotation]); // Re-render when these change
+  }, [localPos, displayPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles, particles, miningRotation]); // Re-render when these change
 
   return (
     <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl">
