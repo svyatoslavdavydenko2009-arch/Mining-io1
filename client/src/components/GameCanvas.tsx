@@ -454,19 +454,20 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const displayPos = smoothedPos.current;
 
     // Draw Grid
-    for (let dy = -VIEW_RADIUS; dy <= VIEW_RADIUS; dy++) {
-      for (let dx = -VIEW_RADIUS; dx <= VIEW_RADIUS; dx++) {
-        const wx = Math.floor(displayPos.x) + dx;
-        const wy = Math.floor(displayPos.y) + dy;
+    const startX = Math.floor(displayPos.x) - VIEW_RADIUS;
+    const endX = Math.floor(displayPos.x) + VIEW_RADIUS;
+    const startY = Math.floor(displayPos.y) - VIEW_RADIUS;
+    const endY = Math.floor(displayPos.y) + VIEW_RADIUS;
 
-        // Screen coords with smooth display position
-        const offsetX = (displayPos.x - Math.floor(displayPos.x)) * TILE_SIZE;
-        const offsetY = (displayPos.y - Math.floor(displayPos.y)) * TILE_SIZE;
-        const sx = cx + dx * TILE_SIZE - TILE_SIZE/2 - offsetX;
-        const sy = cy + dy * TILE_SIZE - TILE_SIZE/2 - offsetY;
+    for (let wy = startY; wy <= endY; wy++) {
+      for (let wx = startX; wx <= endX; wx++) {
+        // Screen coords: calculate relative to center, then offset by tile size
+        // This ensures the grid is always aligned with the smooth camera
+        const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
+        const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
 
         // Draw Floor
-        ctx.fillStyle = (wx + wy) % 2 === 0 ? "#262626" : "#2a2a2a"; // Checker pattern floor
+        ctx.fillStyle = (wx + wy) % 2 === 0 ? "#262626" : "#2a2a2a";
         ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
 
         // Draw Resource
