@@ -510,30 +510,30 @@ export function GameCanvas({ user }: GameCanvasProps) {
           
           if (actualHealth > 0 || currentHealth > 0.05) {
             const healthPercent = Math.max(0, currentHealth / maxHealth);
-            const barWidth = 12; // Exactly matches CD bar width
-            const barHeight = 2; // Thin like CD bar
+            const barWidth = 32; // Longer width as requested
+            const barHeight = 4; // Slightly thicker
             const bx = sx + (TILE_SIZE - barWidth) / 2;
-            let by = sy + TILE_SIZE - 6; // Positioned near bottom
+            let by = sy + TILE_SIZE - 10; // Base position
             
             // "Fall down" and fade animation on hit
             let alpha = 0.8;
             if (isRecentlyHit) {
               const progress = elapsedSinceHit / 500;
-              const dropOffset = progress * 6; // Falls down up to 6px
+              const dropOffset = progress * 8; // Falls down up to 8px
               by += dropOffset;
               alpha = 0.8 * (1 - progress); // Fades out as it falls
             }
 
-            // Container (Matches Cooldown Bar Style)
+            // Container
             ctx.globalAlpha = alpha;
-            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
             ctx.beginPath();
             ctx.roundRect(bx, by, barWidth, barHeight, barHeight / 2);
             ctx.fill();
             
             // Border
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.2)"; // Approximate secondary border
-            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+            ctx.lineWidth = 1;
             ctx.stroke();
             
             // Progress
