@@ -53,7 +53,7 @@ interface Particle {
 
 // Pickaxe color mapping
 const PICKAXE_COLORS: Record<number, string> = {
-  1: "#8B4513", // Wood (Brown)
+  1: "#5D4037", // Wooden Pickaxe - matching the handle color for a primitive look
   2: "#808080", // Stone (Gray)
   3: "#D2691E", // Copper (Orange-ish)
   4: "#C0C0C0", // Iron (Silver)
@@ -525,12 +525,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.lineWidth = 5;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
+      // Pickaxe Head - Sharper, thinner stylized shape
       const headY = -24;
       ctx.beginPath();
-      ctx.moveTo(-16, headY + 8);
-      ctx.quadraticCurveTo(0, headY - 12, 16, headY + 8);
-      ctx.lineTo(12, headY + 10);
-      ctx.quadraticCurveTo(0, headY, -12, headY + 10);
+      ctx.moveTo(-14, headY + 4); // Thinner width
+      ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); // Thinner top curve
+      ctx.lineTo(10, headY + 6); // Sharper point
+      ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); // Thinner bottom curve
       ctx.closePath();
       ctx.fillStyle = pickaxeColor;
       ctx.fill();
