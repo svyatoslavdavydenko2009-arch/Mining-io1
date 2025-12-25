@@ -103,16 +103,11 @@ export function GameCanvas({ user }: GameCanvasProps) {
       setVisualHealth(prev => {
         const next = { ...prev };
         let changed = false;
-        
-        // Use all keys that were in visualHealth or are in tileHealth
         const allKeys = new Set([...Object.keys(prev), ...Object.keys(tileHealth)]);
-        
         allKeys.forEach(key => {
           const actual = tileHealth[key] ?? 0;
           const current = prev[key] ?? actual;
-          
           if (current > actual) {
-            // Uniform linear decrease
             const step = 0.025; 
             next[key] = Math.max(actual, current - step);
             changed = true;
@@ -124,17 +119,16 @@ export function GameCanvas({ user }: GameCanvasProps) {
             changed = true;
           }
         });
-        
         return changed ? next : prev;
       });
 
-      // Update appearing bars opacity
+      // Update appearing bars progress (for scale/fade)
       setAppearingBars(prev => {
         const next = { ...prev };
         let changed = false;
-        Object.entries(prev).forEach(([key, opacity]) => {
-          if (opacity < 1) {
-            next[key] = Math.min(1, opacity + 0.05);
+        Object.entries(prev).forEach(([key, progress]) => {
+          if (progress < 1) {
+            next[key] = Math.min(1, progress + 0.08); // Slightly faster for snappier feel
             changed = true;
           }
         });
@@ -534,13 +528,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
           
           if (actualHealth > 0 || currentHealth > 0.05) {
             const healthPercent = Math.max(0, currentHealth / maxHealth);
-            const barWidth = 40; // Even longer for better visibility
-            const barHeight = 6; // Thicker for better visibility
+            const appearProgress = appearingBars[key] ?? 1;
+            
+            // Animating dimensions for "pleasant appearance" (like CD bar scale up)
+            const targetWidth = 40;
+            const targetHeight = 6;
+            const barWidth = targetWidth * (0.5 + appearProgress * 0.5); // Starts at 50% scale
+            const barHeight = targetHeight * appearProgress;
+            
             const bx = sx + (TILE_SIZE - barWidth) / 2;
             let by = sy + TILE_SIZE - 8; 
             
             // "Soft move down" and gentle fade
-            let alpha = appearingBars[key] ?? 1;
+            let alpha = appearProgress; // Fade in based on progress
             if (isRecentlyHit) {
               const progress = Math.min(elapsedSinceHit / 800, 1);
               const dropOffset = progress * 6; // Moves down smoothly
@@ -568,7 +568,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
               const color = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#facc15" : "#ef4444";
               ctx.fillStyle = color;
               ctx.beginPath();
-              ctx.roundRect(bx + 1, by + 1, (barWidth - 2) * healthPercent, barHeight - 2, (barHeight - 2) / 2);
+              ctx.roundRect(bx + 1, by + 1, Math.max(0, (barWidth - 2) * healthPercent), Math.max(0, barHeight - 2), Math.max(0, (barHeight - 2) / 2));
               ctx.fill();
             }
             ctx.globalAlpha = 1.0;
