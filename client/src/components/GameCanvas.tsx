@@ -349,20 +349,15 @@ export function GameCanvas({ user }: GameCanvasProps) {
     requestAnimationFrame(animateMining);
   };
 
-  // Smooth camera animation & particle updates
+  // Particle updates (camera now follows instantly)
   useEffect(() => {
     let lastTime = performance.now();
     const update = (time: number) => {
       const dt = time - lastTime;
       lastTime = time;
 
-      setDisplayPos(prev => {
-        const easing = 0.15;
-        const dx = (localPos.x - prev.x) * easing;
-        const dy = (localPos.y - prev.y) * easing;
-        if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return localPos;
-        return { x: prev.x + dx, y: prev.y + dy };
-      });
+      // Camera follows player instantly, no smoothing
+      setDisplayPos(localPos);
 
       // Update particles
       setParticles(prev => {
