@@ -258,7 +258,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
     if (newHealth === 0) {
       // Tile is fully mined - mark as mined and send to server
-      setMinedTiles(prev => new Set([...prev, key]));
+      setMinedTiles(prev => new Set(Array.from(prev).concat(key)));
       mine.mutate(resource, {
         onSuccess: (data) => {
           toast({ 
@@ -516,7 +516,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       {/* Mobile D-Pad Controls */}
       <div className="absolute bottom-4 left-4 md:hidden flex flex-col items-center gap-2">
         <motion.button
-          whilePress={{ scale: 0.85 }}
+          whileTap={{ scale: 0.85 }}
           onTouchStart={(e) => { e.preventDefault(); handleMobileMove(0, -1); }}
           className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
           data-testid="button-move-up"
@@ -525,7 +525,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
         </motion.button>
         <div className="flex gap-2">
           <motion.button
-            whilePress={{ scale: 0.85 }}
+            whileTap={{ scale: 0.85 }}
             onTouchStart={(e) => { e.preventDefault(); handleMobileMove(-1, 0); }}
             className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
             data-testid="button-move-left"
@@ -533,7 +533,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
             <ChevronLeft className="w-6 h-6" />
           </motion.button>
           <motion.button
-            whilePress={{ scale: 0.85 }}
+            whileTap={{ scale: 0.85 }}
             onTouchStart={(e) => { e.preventDefault(); handleMobileMove(0, 1); }}
             className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
             data-testid="button-move-down"
@@ -541,7 +541,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
             <ChevronDown className="w-6 h-6" />
           </motion.button>
           <motion.button
-            whilePress={{ scale: 0.85 }}
+            whileTap={{ scale: 0.85 }}
             onTouchStart={(e) => { e.preventDefault(); handleMobileMove(1, 0); }}
             className="p-2 bg-primary/80 text-black rounded-lg hover:bg-primary transition-colors"
             data-testid="button-move-right"
