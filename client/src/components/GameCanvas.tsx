@@ -536,19 +536,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
     
     // Pickaxe Head (the curved metal part)
     ctx.beginPath();
-    // Move head even lower
-    ctx.arc(0, 6, 14, Math.PI + 0.3, -0.3);
+    // Move head down so it's not "in the air"
+    ctx.arc(0, 0, 14, Math.PI + 0.3, -0.3);
     ctx.strokeStyle = pickaxeColor;
     ctx.stroke();
     
     // The handle sleeve (the dark part where head meets handle)
     ctx.fillStyle = "#3e2723";
-    ctx.fillRect(-4, 2, 8, 6);
+    ctx.fillRect(-4, -4, 8, 6);
     
     // Pickaxe Handle
     ctx.beginPath();
-    ctx.moveTo(0, 2);
-    ctx.lineTo(0, 26);
+    ctx.moveTo(0, -4);
+    ctx.lineTo(0, 20);
     ctx.strokeStyle = "#5D4037"; // Dark brown handle
     ctx.lineWidth = 4;
     ctx.stroke();
@@ -603,9 +603,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
       </div>
 
       {/* Mining Cooldown Bar */}
-      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-48 h-4 bg-black/50 border-2 border-secondary rounded overflow-hidden">
+      <div className="absolute top-[calc(50%+24px)] left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 border border-secondary rounded-full overflow-hidden pointer-events-none">
         <motion.div 
-          className="h-full bg-primary"
+          className="h-full bg-purple-500"
           initial={{ width: "100%" }}
           animate={{ width: `${cooldownProgress * 100}%` }}
           transition={{ duration: 0.1 }}
