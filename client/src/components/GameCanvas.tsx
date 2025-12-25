@@ -198,9 +198,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
   // Create mining particles
   const createParticles = (x: number, y: number, color: string) => {
     const newParticles: Particle[] = [];
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 * i) / 8;
-      const speed = 2 + Math.random() * 2;
+    for (let i = 0; i < 12; i++) {
+      const angle = (Math.PI * 2 * i) / 12;
+      const speed = 1 + Math.random() * 2;
       newParticles.push({
         x: x + 0.5,
         y: y + 0.5,
@@ -370,8 +370,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
             ...p,
             x: p.x + p.vx * 0.05,
             y: p.y + p.vy * 0.05,
-            vy: p.vy + 0.1, // Gravity
-            life: p.life - 0.02,
+            vy: p.vy + 0.15, // Slightly more gravity
+            life: p.life - 0.04, // Faster decay for smaller bits
           }))
           .filter(p => p.life > 0);
       });
@@ -457,26 +457,32 @@ export function GameCanvas({ user }: GameCanvasProps) {
           const damagePercent = health > 0 ? (maxHealth - health) / maxHealth : 0;
           
           if (damagePercent > 0) {
-            ctx.strokeStyle = "#333";
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.9)";
+            ctx.lineWidth = 4; // Much thicker and darker cracks
             
-            // Draw increasing cracks as damage increases
-            if (damagePercent > 0.33) {
+            // Draw more prominent cracks
+            if (damagePercent > 0.2) {
               ctx.beginPath();
-              ctx.moveTo(sx + 8, sy + 8);
-              ctx.lineTo(sx + 20, sy + 24);
+              ctx.moveTo(sx + 6, sy + 6);
+              ctx.lineTo(sx + 42, sy + 42);
               ctx.stroke();
             }
-            if (damagePercent > 0.66) {
+            if (damagePercent > 0.4) {
               ctx.beginPath();
-              ctx.moveTo(sx + 24, sy + 8);
-              ctx.lineTo(sx + 12, sy + 24);
+              ctx.moveTo(sx + 42, sy + 6);
+              ctx.lineTo(sx + 6, sy + 42);
               ctx.stroke();
             }
-            if (damagePercent > 0.9) {
+            if (damagePercent > 0.6) {
               ctx.beginPath();
-              ctx.moveTo(sx + 16, sy + 6);
-              ctx.lineTo(sx + 16, sy + 26);
+              ctx.moveTo(sx + 24, sy + 4);
+              ctx.lineTo(sx + 24, sy + 44);
+              ctx.stroke();
+            }
+            if (damagePercent > 0.8) {
+              ctx.beginPath();
+              ctx.moveTo(sx + 4, sy + 24);
+              ctx.lineTo(sx + 44, sy + 24);
               ctx.stroke();
             }
           }
@@ -529,29 +535,27 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Base angle + smoother animation oscillation
     ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
     
-    // Draw pickaxe shape to match the Lucide icon/image exactly
     ctx.lineWidth = 5;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     
-    // Pickaxe Head (the curved metal part)
+    // Pickaxe Head - Curved Arc
     ctx.beginPath();
-    // Move head down so it's not "in the air"
-    ctx.arc(0, 10, 14, Math.PI + 0.3, -0.3);
+    ctx.arc(0, 0, 14, Math.PI + 0.3, -0.3);
     ctx.strokeStyle = pickaxeColor;
     ctx.stroke();
     
-    // The handle sleeve (the dark part where head meets handle)
-    ctx.fillStyle = "#3e2723";
-    ctx.fillRect(-4, 6, 8, 6);
-    
-    // Pickaxe Handle
+    // Pickaxe Handle - Directly connected to the head (arc center)
     ctx.beginPath();
-    ctx.moveTo(0, 6);
-    ctx.lineTo(0, 30);
-    ctx.strokeStyle = "#5D4037"; // Dark brown handle
+    ctx.moveTo(0, 0); // Start exactly at the head center
+    ctx.lineTo(0, 24);
+    ctx.strokeStyle = "#5D4037";
     ctx.lineWidth = 4;
     ctx.stroke();
+
+    // Small sleeve connecting the two
+    ctx.fillStyle = "#3e2723";
+    ctx.fillRect(-4, -2, 8, 4);
     
     ctx.restore();
 
@@ -583,7 +587,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.life;
-      ctx.fillRect(screenX - 4, screenY - 4, 8, 8);
+      ctx.fillRect(screenX - 2, screenY - 2, 4, 4); // Smaller particles (4x4 instead of 8x8)
       ctx.globalAlpha = 1;
     });
 
