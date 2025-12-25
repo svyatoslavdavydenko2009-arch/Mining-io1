@@ -116,6 +116,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
       const nextY = prev.y + dy;
       if (!hasCollision(nextX, nextY)) {
         lastMoveTimeForInterp.current = now;
+        setLookDir({ dx, dy });
+        
+        // Cancel mining immediately
+        setIsMining(false);
+        setMiningTarget(null);
+        setMiningRotation(0);
+        
         return { x: nextX, y: nextY };
       }
       return prev; // Don't move if there's collision
@@ -163,26 +170,47 @@ export function GameCanvas({ user }: GameCanvasProps) {
       setLocalPos(prev => {
         let next = { ...prev };
         
+        let dx = 0;
+        let dy = 0;
+
         if (e.key === "ArrowUp" || e.key === "w") {
           const testPos = { x: prev.x, y: prev.y - 1 };
-          if (!hasCollision(testPos.x, testPos.y)) next.y -= 1;
+          if (!hasCollision(testPos.x, testPos.y)) {
+            next.y -= 1;
+            dy = -1;
+          }
         }
         if (e.key === "ArrowDown" || e.key === "s") {
           const testPos = { x: prev.x, y: prev.y + 1 };
-          if (!hasCollision(testPos.x, testPos.y)) next.y += 1;
+          if (!hasCollision(testPos.x, testPos.y)) {
+            next.y += 1;
+            dy = 1;
+          }
         }
         if (e.key === "ArrowLeft" || e.key === "a") {
           const testPos = { x: prev.x - 1, y: prev.y };
-          if (!hasCollision(testPos.x, testPos.y)) next.x -= 1;
+          if (!hasCollision(testPos.x, testPos.y)) {
+            next.x -= 1;
+            dx = -1;
+          }
         }
         if (e.key === "ArrowRight" || e.key === "d") {
           const testPos = { x: prev.x + 1, y: prev.y };
-          if (!hasCollision(testPos.x, testPos.y)) next.x += 1;
+          if (!hasCollision(testPos.x, testPos.y)) {
+            next.x += 1;
+            dx = 1;
+          }
         }
 
-        // Update move time for smooth interpolation
+        // Update looking direction and cancel mining if moved
         if (next.x !== prev.x || next.y !== prev.y) {
+          setLookDir({ dx, dy });
           lastMoveTimeForInterp.current = Date.now();
+          
+          // Cancel mining immediately on logical move
+          setIsMining(false);
+          setMiningTarget(null);
+          setMiningRotation(0);
         }
         return next;
       });
@@ -446,22 +474,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = false;
 
-      // Update camera position EVERY frame
+      // Update positions EVERY frame
       const lerpFactor = 0.1;
-
-      // Cancel mining if moved
-      if (isMining && miningTarget) {
-        // Use logical position for distance check to ensure accuracy
-        const dx = Math.abs(miningTarget.x - localPos.x);
-        const dy = Math.abs(miningTarget.y - localPos.y);
-        
-        // If distance is greater than 1 tile (including diagonals), cancel
-        if (dx > 1 || dy > 1) {
-          setIsMining(false);
-          setMiningTarget(null);
-          setMiningRotation(0);
-        }
-      }
 
       // Smooth camera follows logical position
       smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * lerpFactor;
@@ -572,9 +586,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
       // Eyes - Circles
       ctx.fillStyle = "black";
       
+      // Look direction from lookDir state
+      const lookX = lookDir.dx;
+      const lookY = lookDir.dy;
+      
       // Calculate eye offset based on look direction
-      const eyeOffsetX = lookDir.dx * 3;
-      const eyeOffsetY = lookDir.dy * 3;
+      const eyeOffsetX = lookX * 4; // Slightly more pronounced
+      const eyeOffsetY = lookY * 4;
       
       ctx.beginPath();
       ctx.arc(px + 10 + eyeOffsetX, py + 13 + eyeOffsetY, 3, 0, Math.PI * 2);
