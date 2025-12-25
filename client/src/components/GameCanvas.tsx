@@ -75,6 +75,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
   const [lookDir, setLookDir] = useState({ dx: 0, dy: 0 }); // Direction player is looking
+  const smoothLookDir = useRef({ dx: 0, dy: 0 }); // Smoothly interpolated look direction
   const displayPlayerPos = useRef({ x: user.x, y: user.y });
   const smoothedPos = useRef({ x: user.x, y: user.y }); // Smooth camera position
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
@@ -476,6 +477,11 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
       // Update positions EVERY frame
       const lerpFactor = 0.1;
+      const lookLerpFactor = 0.15;
+
+      // Smooth look direction
+      smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * lookLerpFactor;
+      smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * lookLerpFactor;
 
       // Smooth camera follows logical position
       smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * lerpFactor;
@@ -558,8 +564,17 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
       // Draw Held Pickaxe
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
+      const isLookingLeft = lookDir.dx < 0;
+      
       ctx.save();
-      ctx.translate(px + pSize, py + pSize / 2);
+      // Position pickaxe based on looking direction
+      if (isLookingLeft) {
+        ctx.translate(px, py + pSize / 2); // Left hand
+        ctx.scale(-1, 1); // Flip horizontally
+      } else {
+        ctx.translate(px + pSize, py + pSize / 2); // Right hand
+      }
+      
       ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
       ctx.lineWidth = 5;
       ctx.lineCap = "round";
@@ -586,9 +601,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
       // Eyes - Circles
       ctx.fillStyle = "black";
       
-      // Look direction from lookDir state
-      const lookX = lookDir.dx;
-      const lookY = lookDir.dy;
+      // Look direction from smoothLookDir ref for smooth animation
+      const lookX = smoothLookDir.current.dx;
+      const lookY = smoothLookDir.current.dy;
       
       // Calculate eye offset based on look direction
       const eyeOffsetX = lookX * 4; // Slightly more pronounced
