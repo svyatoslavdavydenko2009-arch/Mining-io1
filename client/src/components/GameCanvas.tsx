@@ -435,11 +435,11 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Smooth interpolation for display position based on movement
     const now = Date.now();
     const timeSinceMove = now - lastMoveTimeForInterp.current;
-    const interpDuration = 250; // Smooth movement over 250ms for fluid camera
+    const interpDuration = 400; // Smooth movement over 400ms for very fluid camera
     const interpProgress = Math.min(timeSinceMove / interpDuration, 1);
     
-    // Smooth easing for movement (ease-out quadratic)
-    const eased = 1 - Math.pow(1 - interpProgress, 2);
+    // Smooth easing for movement (ease-out cubic for even smoother motion)
+    const eased = 1 - Math.pow(1 - interpProgress, 3);
     
     setDisplayPos(prev => {
       const dx = localPos.x - prev.x;
@@ -568,8 +568,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
     
     ctx.fillStyle = pickaxeColor;
     ctx.fill();
-    ctx.strokeStyle = "rgba(0,0,0,0.3)";
-    ctx.stroke();
     
     // Pickaxe Handle - Directly connected to the head
     ctx.beginPath();
