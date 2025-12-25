@@ -93,6 +93,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [miningRotation, setMiningRotation] = useState(0);
   const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
   const [cooldownProgress, setCooldownProgress] = useState(1); // 0 to 1
+  const displayPosRef = useRef({ x: user.x, y: user.y }); // Use ref for smooth camera
 
   // Check if a tile can be walked through (has collision)
   const hasCollision = (x: number, y: number): boolean => {
@@ -104,9 +105,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
   // Handle mobile D-pad button press
   const handleMobileMove = (dx: number, dy: number) => {
-    // Movement debounce - 150ms delay for smoother feel
+    // Movement debounce - 120ms delay for smoother feel
     const now = Date.now();
-    if (now - lastMoveTime.current < 150) return;
+    if (now - lastMoveTime.current < 120) return;
     lastMoveTime.current = now;
 
     setLocalPos(prev => {
@@ -144,10 +145,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
         e.preventDefault();
       }
 
-      // Movement debounce - 150ms delay between moves for smoother feel
+      // Movement debounce - 120ms delay between moves for smoother feel
       const now = Date.now();
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"].includes(e.key)) {
-        if (now - lastMoveTime.current < 150) return; // Ignore if too soon
+        if (now - lastMoveTime.current < 120) return; // Ignore if too soon
         lastMoveTime.current = now;
       }
 
@@ -381,7 +382,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     requestAnimationFrame(animateMining);
   };
 
-  // Particle updates
+  // Particle updates + Camera smooth interpolation
   useEffect(() => {
     let lastTime = performance.now();
     const update = (time: number) => {
@@ -402,12 +403,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
           .filter(p => p.life > 0);
       });
 
+      // Smooth camera interpolation using lerp
+      const speed = 0.15; // Smooth easing factor (0-1, higher = faster) - increased for more responsiveness
+      displayPosRef.current.x += (localPos.x - displayPosRef.current.x) * speed;
+      displayPosRef.current.y += (localPos.y - displayPosRef.current.y) * speed;
+      
+      setDisplayPos({ ...displayPosRef.current });
+
       requestAnimationFrame(update);
     };
     
     const frameId = requestAnimationFrame(update);
     return () => cancelAnimationFrame(frameId);
-  }, []);
+  }, [localPos]);
 
   // Render Loop
   useEffect(() => {
@@ -431,27 +439,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Camera Center (use smooth display position)
     const cx = rect.width / 2;
     const cy = rect.height / 2;
-
-    // Smooth interpolation for display position based on movement
-    const now = Date.now();
-    const timeSinceMove = now - lastMoveTimeForInterp.current;
-    const interpDuration = 500; // Smooth movement over 500ms for ultra fluid camera
-    const interpProgress = Math.min(timeSinceMove / interpDuration, 1);
-    
-    // Smooth easing for movement (ease-out cubic for even smoother motion)
-    const eased = 1 - Math.pow(1 - interpProgress, 3);
-    
-    setDisplayPos(prev => {
-      const dx = localPos.x - prev.x;
-      const dy = localPos.y - prev.y;
-      if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) {
-        return {
-          x: prev.x + dx * eased,
-          y: prev.y + dy * eased
-        };
-      }
-      return localPos;
-    });
 
     // Draw Grid
     for (let dy = -VIEW_RADIUS; dy <= VIEW_RADIUS; dy++) {
