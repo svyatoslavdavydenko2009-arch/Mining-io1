@@ -429,23 +429,17 @@ export function GameCanvas({ user }: GameCanvasProps) {
     ctx.fillStyle = "#1a1a1a"; // Dark background
     ctx.fillRect(0, 0, rect.width, rect.height);
 
-    // Camera Center (use smooth display position)
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
-
-    // Smooth interpolation for display position based on movement
-    const dx = localPos.x - smoothedPos.current.x;
-    const dy = localPos.y - smoothedPos.current.y;
-    
-    // Smooth easing for camera following (0.1 means 10% toward target per frame)
-    if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) {
-      smoothedPos.current.x += dx * 0.1;
-      smoothedPos.current.y += dy * 0.1;
-    } else {
-      smoothedPos.current = { x: localPos.x, y: localPos.y };
-    }
+    // Smooth interpolation for camera follow
+    // Update camera position EVERY frame before drawing anything
+    const lerpFactor = 0.1; // 10% movement per frame
+    smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * lerpFactor;
+    smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * lerpFactor;
     
     const displayPos = smoothedPos.current;
+
+    // Camera Center
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
 
     // Draw Grid
     // We draw tiles around the logical position but use smooth display position for screen coords
