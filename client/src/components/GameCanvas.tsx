@@ -542,9 +542,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Draw Player
     ctx.fillStyle = "#fbbf24"; // Goldish player
     
-    // Simple character shape
-    const px = cx - TILE_SIZE/2 + 8;
-    const py = cy - TILE_SIZE/2 + 8;
+    // Character shape - position relative to smooth camera
+    const px = cx + (localPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
+    const py = cy + (localPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
     const pSize = TILE_SIZE - 16;
     
     ctx.fillRect(px, py, pSize, pSize);
