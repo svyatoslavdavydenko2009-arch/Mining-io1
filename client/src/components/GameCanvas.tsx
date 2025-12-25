@@ -76,6 +76,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
   const [lookDir, setLookDir] = useState({ dx: 0, dy: 0 }); // Direction player is looking
   const smoothLookDir = useRef({ dx: 0, dy: 0 }); // Smoothly interpolated look direction
+  const smoothPickaxeSide = useRef(0); // 0 for right, 1 for left
   const displayPlayerPos = useRef({ x: user.x, y: user.y });
   const smoothedPos = useRef({ x: user.x, y: user.y }); // Smooth camera position
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
@@ -483,6 +484,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
       smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * lookLerpFactor;
       smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * lookLerpFactor;
 
+      // Smooth pickaxe side transition
+      const targetSide = lookDir.dx < 0 ? 1 : 0;
+      smoothPickaxeSide.current += (targetSide - smoothPickaxeSide.current) * lookLerpFactor;
+
       // Smooth camera follows logical position
       smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * lerpFactor;
       smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * lerpFactor;
@@ -564,16 +569,22 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
       // Draw Held Pickaxe
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
-      const isLookingLeft = lookDir.dx < 0;
       
       ctx.save();
-      // Position pickaxe based on looking direction
-      if (isLookingLeft) {
-        ctx.translate(px, py + pSize / 2); // Left hand
-        ctx.scale(-1, 1); // Flip horizontally
-      } else {
-        ctx.translate(px + pSize, py + pSize / 2); // Right hand
-      }
+      
+      // Interpolate position between right and left hand
+      // smoothPickaxeSide: 0 = right, 1 = left
+      const side = smoothPickaxeSide.current;
+      const pickaxeX = px + pSize * (1 - side);
+      const pickaxeY = py + pSize / 2;
+      
+      ctx.translate(pickaxeX, pickaxeY);
+      
+      // Flip horizontally based on smooth value
+      // We use scale to flip, but we also want to smooth the flipping itself
+      // A simple way is to use the side value to interpolate scale
+      const scaleX = 1 - (side * 2); // 0 -> 1, 1 -> -1
+      ctx.scale(scaleX, 1);
       
       ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
       ctx.lineWidth = 5;
