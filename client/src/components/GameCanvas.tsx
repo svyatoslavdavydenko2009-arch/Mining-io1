@@ -448,17 +448,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
         ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
 
         // Draw Resource
-        // If we mined this recently (in miningTarget), don't draw it? 
-        // Actually, we rely on server response/optimistic update. 
-        // But since procedural gen is deterministic, it will reappear unless we store 'mined chunks'.
-        // For this simple MVP, mined rocks don't disappear permanently in procedural logic because we don't store world state.
-        // We just get resources.
-        // BUT for visual feedback, we want it to vanish.
-        // Let's assume mining just GIVES resource, doesn't destroy the infinite rock.
-        // OR: add a 'mined' check if we had world state. 
-        // We will make rocks flash when mining.
-
-        // Skip if tile has been fully mined
         if (isTileMined(wx, wy)) {
           continue;
         }
@@ -480,61 +469,20 @@ export function GameCanvas({ user }: GameCanvasProps) {
           ctx.fillRect(sx + 24, sy + 16, 6, 6);
           ctx.fillRect(sx + 16, sy + 28, 8, 8);
 
-          // Draw cracks based on health damage
+          // Health Bar
           const health = getTileHealth(wx, wy);
           const maxHealth = RESOURCE_HEALTH[resourceType];
-          const damagePercent = health > 0 ? (maxHealth - health) / maxHealth : 0;
-          
-          if (damagePercent > 0) {
-            // Crack color based on resource color (lighter/softer)
-            const resColor = RESOURCES[resourceType].color;
-            ctx.strokeStyle = `rgba(0, 0, 0, ${0.4 + damagePercent * 0.5})`; // Intensity links to health
-            ctx.lineWidth = 1.5 + damagePercent * 2;
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            
-            // Texture: Sharp, jagged cracks from center
-            const crackCount = Math.floor(damagePercent * 12) + 4;
-            ctx.beginPath();
-            for (let i = 0; i < crackCount; i++) {
-              const seed = (wx * 11 + wy * 19 + i * 23) % 100 / 100;
-              const angle = (i / crackCount) * Math.PI * 2 + (seed * 0.5);
-              const maxLength = TILE_SIZE * 0.55; 
-              const length = (10 + seed * 20) * damagePercent * 1.5; // Linked to damage
-              
-              let curX = sx + TILE_SIZE/2;
-              let curY = sy + TILE_SIZE/2;
-              
-              ctx.moveTo(curX, curY);
-              
-              // Jagged segments
-              const segments = 3;
-              for(let j = 0; j < segments; j++) {
-                const segAngle = angle + (Math.sin(j * seed * 12) * 0.3);
-                const segLen = length / segments;
-                curX += Math.cos(segAngle) * segLen;
-                curY += Math.sin(segAngle) * segLen;
-                ctx.lineTo(curX, curY);
-              }
-            }
-            ctx.stroke();
-          }
-
-          // Draw Health Bar
           if (health > 0) {
             const healthPercent = health / maxHealth;
             const barWidth = TILE_SIZE - 8;
             const barHeight = 4;
             
-            // Background
             ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
             ctx.fillRect(sx + 4, sy + 2, barWidth, barHeight);
             
-            // Health
             ctx.fillStyle = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#eab308" : "#ef4444";
             ctx.fillRect(sx + 4, sy + 2, barWidth * healthPercent, barHeight);
             
-            // Border
             ctx.strokeStyle = "#fff";
             ctx.lineWidth = 1;
             ctx.strokeRect(sx + 4, sy + 2, barWidth, barHeight);
@@ -642,14 +590,23 @@ export function GameCanvas({ user }: GameCanvasProps) {
       </div>
 
       {/* Mining Cooldown Bar */}
-      <div className="absolute top-[calc(50%+24px)] left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 border border-secondary rounded-full overflow-hidden pointer-events-none">
-        <motion.div 
-          className="h-full bg-purple-500"
-          initial={{ width: "100%" }}
-          animate={{ width: `${cooldownProgress * 100}%` }}
-          transition={{ duration: 0.1 }}
-        />
-      </div>
+      <AnimatePresence>
+        {cooldownProgress < 1 && (
+          <motion.div 
+            initial={ { opacity: 0, scale: 0.8 } }
+            animate={ { opacity: 1, scale: 1 } }
+            exit={ { opacity: 0, scale: 1.1, filter: "blur(10px)" } }
+            className="absolute top-[calc(50%+24px)] left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 border border-secondary rounded-full overflow-hidden pointer-events-none shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+          >
+            <motion.div 
+              className="h-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"
+              initial={ { width: "0%" } }
+              animate={ { width: `${cooldownProgress * 100}%` } }
+              transition={ { duration: 0.1 } }
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mining Notifications */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 items-end pointer-events-none">
