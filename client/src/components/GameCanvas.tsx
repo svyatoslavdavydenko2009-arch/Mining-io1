@@ -123,10 +123,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
         e.preventDefault();
       }
 
-      // Movement debounce - 200ms delay between moves
+      // Movement debounce - 250ms delay between moves (increased from 200ms)
       const now = Date.now();
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"].includes(e.key)) {
-        if (now - lastMoveTime.current < 200) return; // Ignore if too soon
+        if (now - lastMoveTime.current < 250) return; // Ignore if too soon
         lastMoveTime.current = now;
       }
 
@@ -457,10 +457,18 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const pSize = TILE_SIZE - 16;
     
     ctx.fillRect(px, py, pSize, pSize);
+
+    // Draw Held Pickaxe
+    const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
+    ctx.fillStyle = pickaxeColor;
+    ctx.shadowBlur = 0;
+    // Handle part
+    ctx.fillRect(px + pSize - 2, py + pSize/2, 10, 4);
+    // Head part
+    ctx.fillRect(px + pSize + 4, py + pSize/2 - 6, 4, 16);
     
     // Eyes
     ctx.fillStyle = "black";
-    ctx.shadowBlur = 0;
     ctx.fillRect(px + 8, py + 10, 6, 6);
     ctx.fillRect(px + 20, py + 10, 6, 6);
 
