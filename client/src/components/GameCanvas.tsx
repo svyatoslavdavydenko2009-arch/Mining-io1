@@ -74,7 +74,6 @@ const MINING_COOLDOWNS: Record<number, number> = {
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
-  const [displayPos, setDisplayPos] = useState({ x: user.x, y: user.y }); // Smooth camera position
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
   const lastMineTime = useRef(Date.now());
@@ -349,20 +348,12 @@ export function GameCanvas({ user }: GameCanvasProps) {
     requestAnimationFrame(animateMining);
   };
 
-  // Smooth camera animation & particle updates
+  // Particle updates
   useEffect(() => {
     let lastTime = performance.now();
     const update = (time: number) => {
       const dt = time - lastTime;
       lastTime = time;
-
-      setDisplayPos(prev => {
-        const easing = 0.15;
-        const dx = (localPos.x - prev.x) * easing;
-        const dy = (localPos.y - prev.y) * easing;
-        if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return localPos;
-        return { x: prev.x + dx, y: prev.y + dy };
-      });
 
       // Update particles
       setParticles(prev => {
@@ -383,7 +374,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     
     const frameId = requestAnimationFrame(update);
     return () => cancelAnimationFrame(frameId);
-  }, [localPos]);
+  }, []);
 
   // Render Loop
   useEffect(() => {
@@ -411,12 +402,12 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Draw Grid
     for (let dy = -VIEW_RADIUS; dy <= VIEW_RADIUS; dy++) {
       for (let dx = -VIEW_RADIUS; dx <= VIEW_RADIUS; dx++) {
-        const wx = Math.floor(displayPos.x) + dx;
-        const wy = Math.floor(displayPos.y) + dy;
+        const wx = Math.floor(localPos.x) + dx;
+        const wy = Math.floor(localPos.y) + dy;
 
-        // Screen coords (with smooth offset)
-        const offsetX = (displayPos.x - Math.floor(displayPos.x)) * TILE_SIZE;
-        const offsetY = (displayPos.y - Math.floor(displayPos.y)) * TILE_SIZE;
+        // Screen coords
+        const offsetX = (localPos.x - Math.floor(localPos.x)) * TILE_SIZE;
+        const offsetY = (localPos.y - Math.floor(localPos.y)) * TILE_SIZE;
         const sx = cx + dx * TILE_SIZE - TILE_SIZE/2 - offsetX;
         const sy = cy + dy * TILE_SIZE - TILE_SIZE/2 - offsetY;
 
@@ -594,8 +585,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
     // Draw Particles
     particles.forEach(p => {
-      const screenX = cx + (p.x - displayPos.x) * TILE_SIZE;
-      const screenY = cy + (p.y - displayPos.y) * TILE_SIZE;
+      const screenX = cx + (p.x - localPos.x) * TILE_SIZE;
+      const screenY = cy + (p.y - localPos.y) * TILE_SIZE;
       
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.life;
@@ -603,7 +594,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.globalAlpha = 1;
     });
 
-  }, [displayPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles, particles]); // Re-render when these change
+  }, [localPos, miningTarget, user.pickaxeLevel, tileHealth, minedTiles, particles]); // Re-render when these change
 
   return (
     <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl">
