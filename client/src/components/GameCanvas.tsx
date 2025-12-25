@@ -351,17 +351,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
         
         // --- STRIKE EFFECT ---
         const key = `${targetX},${targetY}`;
-        const currentHealth = getTileHealth(targetX, targetY);
+        const actualHealth = tileHealth[key];
         const maxHealth = RESOURCE_HEALTH[resource];
-        const isFirstHit = currentHealth === 0;
-        const newHealth = isFirstHit ? maxHealth - 1 : currentHealth - 1;
+        
+        // If it's the very first hit, initialize visual state immediately
+        if (actualHealth === undefined) {
+          setVisualHealth(prev => ({ ...prev, [key]: maxHealth }));
+          setAppearingBars(prev => ({ ...prev, [key]: 0.1 }));
+        }
+
+        const currentHP = actualHealth ?? maxHealth;
+        const newHealth = currentHP - 1;
 
         setLastHitTime(prev => ({ ...prev, [key]: Date.now() }));
-        if (appearingBars[key] === undefined) {
-          setAppearingBars(prev => ({ ...prev, [key]: 0 }));
-          // Ensure visual health starts at max for first hit animation
-          setVisualHealth(prev => ({ ...prev, [key]: maxHealth }));
-        }
         
         // Update tile health
         setTileHealth(prev => ({ ...prev, [key]: newHealth }));
