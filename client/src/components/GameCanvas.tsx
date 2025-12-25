@@ -515,7 +515,11 @@ export function GameCanvas({ user }: GameCanvasProps) {
       const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const py = cy + (playerPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const pSize = TILE_SIZE - 16;
-      ctx.fillRect(px, py, pSize, pSize);
+      
+      // Rounded corners for the player
+      ctx.beginPath();
+      ctx.roundRect(px, py, pSize, pSize, 8);
+      ctx.fill();
 
       // Draw Held Pickaxe
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
