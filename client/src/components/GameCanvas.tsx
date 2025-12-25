@@ -88,6 +88,11 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
   // Handle mobile D-pad button press
   const handleMobileMove = (dx: number, dy: number) => {
+    // Movement debounce - 250ms delay
+    const now = Date.now();
+    if (now - lastMoveTime.current < 250) return;
+    lastMoveTime.current = now;
+
     setLocalPos(prev => {
       const nextX = prev.x + dx;
       const nextY = prev.y + dy;
@@ -460,12 +465,26 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
     // Draw Held Pickaxe
     const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
+    ctx.save();
+    ctx.translate(px + pSize, py + pSize / 2);
+    ctx.rotate(Math.PI / 4); // Angle for holding
+    
+    // Draw pickaxe shape (simplified icon style)
     ctx.fillStyle = pickaxeColor;
     ctx.shadowBlur = 0;
-    // Handle part
-    ctx.fillRect(px + pSize - 2, py + pSize/2, 10, 4);
-    // Head part
-    ctx.fillRect(px + pSize + 4, py + pSize/2 - 6, 4, 16);
+    
+    // Pickaxe Head
+    ctx.beginPath();
+    ctx.arc(0, -8, 12, Math.PI + 0.2, -0.2); // Curved head
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = pickaxeColor;
+    ctx.stroke();
+    
+    // Pickaxe Handle
+    ctx.fillStyle = "#5D4037"; // Dark brown handle
+    ctx.fillRect(-2, -8, 4, 16);
+    
+    ctx.restore();
     
     // Eyes
     ctx.fillStyle = "black";
