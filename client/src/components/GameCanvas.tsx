@@ -408,16 +408,17 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const cx = rect.width / 2;
     const cy = rect.height / 2;
 
-    // Draw Grid based on actual player position, but render with smooth camera offset
+    // Draw Grid
     for (let dy = -VIEW_RADIUS; dy <= VIEW_RADIUS; dy++) {
       for (let dx = -VIEW_RADIUS; dx <= VIEW_RADIUS; dx++) {
-        // Use actual player position for grid calculation
-        const wx = localPos.x + dx;
-        const wy = localPos.y + dy;
+        const wx = Math.floor(displayPos.x) + dx;
+        const wy = Math.floor(displayPos.y) + dy;
 
-        // Calculate screen position using smooth camera position for visual smoothing
-        const sx = cx + (wx - displayPos.x) * TILE_SIZE;
-        const sy = cy + (wy - displayPos.y) * TILE_SIZE;
+        // Screen coords (with smooth offset)
+        const offsetX = (displayPos.x - Math.floor(displayPos.x)) * TILE_SIZE;
+        const offsetY = (displayPos.y - Math.floor(displayPos.y)) * TILE_SIZE;
+        const sx = cx + dx * TILE_SIZE - TILE_SIZE/2 - offsetX;
+        const sy = cy + dy * TILE_SIZE - TILE_SIZE/2 - offsetY;
 
         // Draw Floor
         ctx.fillStyle = (wx + wy) % 2 === 0 ? "#262626" : "#2a2a2a"; // Checker pattern floor
