@@ -61,6 +61,16 @@ const PICKAXE_COLORS: Record<number, string> = {
   6: "#00BFFF", // Diamond (Deep Sky Blue)
 };
 
+// Mining cooldown mapping (in ms)
+const MINING_COOLDOWNS: Record<number, number> = {
+  1: 1500,
+  2: 1250,
+  3: 1000,
+  4: 900,
+  5: 800,
+  6: 750,
+};
+
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
@@ -221,9 +231,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const targetX = localPos.x + relX;
     const targetY = localPos.y + relY;
 
-    // Mining debounce - 400ms delay between hits
+    // Mining cooldown based on level
+    const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
     const now = Date.now();
-    if (now - lastMineTime.current < 400) return;
+    if (now - lastMineTime.current < cooldown) return;
     lastMineTime.current = now;
 
     // Check distance - only adjacent (include diagonals)
@@ -507,19 +518,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
     
     // Pickaxe Head (the curved metal part)
     ctx.beginPath();
-    // Slightly more pronounced curve to match the image
-    ctx.arc(0, -10, 14, Math.PI + 0.3, -0.3);
+    // Move head down so it's not "in the air"
+    ctx.arc(0, 0, 14, Math.PI + 0.3, -0.3);
     ctx.strokeStyle = pickaxeColor;
     ctx.stroke();
     
     // The handle sleeve (the dark part where head meets handle)
     ctx.fillStyle = "#3e2723";
-    ctx.fillRect(-4, -6, 8, 6);
+    ctx.fillRect(-4, -4, 8, 6);
     
     // Pickaxe Handle
     ctx.beginPath();
-    ctx.moveTo(0, -6);
-    ctx.lineTo(0, 18);
+    ctx.moveTo(0, -4);
+    ctx.lineTo(0, 20);
     ctx.strokeStyle = "#5D4037"; // Dark brown handle
     ctx.lineWidth = 4;
     ctx.stroke();
