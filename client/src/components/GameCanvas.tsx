@@ -448,17 +448,15 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const displayPos = smoothedPos.current;
 
     // Draw Grid
-    // Use logical localPos as the grid anchor to prevent "jumping"
-    const startX = localPos.x - VIEW_RADIUS - 1;
-    const endX = localPos.x + VIEW_RADIUS + 1;
-    const startY = localPos.y - VIEW_RADIUS - 1;
-    const endY = localPos.y + VIEW_RADIUS + 1;
+    // We draw tiles around the logical position but use smooth display position for screen coords
+    const drawRadius = VIEW_RADIUS + 2;
+    for (let dy = -drawRadius; dy <= drawRadius; dy++) {
+      for (let dx = -drawRadius; dx <= drawRadius; dx++) {
+        const wx = localPos.x + dx;
+        const wy = localPos.y + dy;
 
-    for (let wy = startY; wy <= endY; wy++) {
-      for (let wx = startX; wx <= endX; wx++) {
-        // Calculate screen position: 
-        // Relative to player center (cx, cy)
-        // Offset by the difference between tile coordinate and SMOOTH display position
+        // Screen coords: start from center, then offset by the logical tile index
+        // but subtract the smooth display position to get the smooth scroll effect
         const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
         const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
 
