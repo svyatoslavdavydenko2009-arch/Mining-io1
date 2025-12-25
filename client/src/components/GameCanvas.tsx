@@ -454,15 +454,14 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const displayPos = smoothedPos.current;
 
     // Draw Grid
-    const startX = Math.floor(displayPos.x) - VIEW_RADIUS;
-    const endX = Math.floor(displayPos.x) + VIEW_RADIUS;
-    const startY = Math.floor(displayPos.y) - VIEW_RADIUS;
-    const endY = Math.floor(displayPos.y) + VIEW_RADIUS;
+    const startX = Math.floor(displayPos.x) - VIEW_RADIUS - 1;
+    const endX = Math.floor(displayPos.x) + VIEW_RADIUS + 1;
+    const startY = Math.floor(displayPos.y) - VIEW_RADIUS - 1;
+    const endY = Math.floor(displayPos.y) + VIEW_RADIUS + 1;
 
     for (let wy = startY; wy <= endY; wy++) {
       for (let wx = startX; wx <= endX; wx++) {
-        // Screen coords: calculate relative to center, then offset by tile size
-        // This ensures the grid is always aligned with the smooth camera
+        // Use EXACT grid coordinates for resources, only smooth the screen position
         const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
         const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
 
