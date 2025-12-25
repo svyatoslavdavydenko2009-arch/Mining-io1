@@ -310,7 +310,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const newHealth = currentHealth === 0 ? maxHealth - 1 : currentHealth - 1;
 
     // Create particles on each hit
-    createParticles(targetX, targetY, RESOURCES[resource].color);
+    // createParticles(targetX, targetY, RESOURCES[resource].color); // Moved to destruction only
 
     // Update tile health
     setTileHealth(prev => ({
@@ -319,6 +319,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
     }));
 
     if (newHealth === 0) {
+      // Create particles only on destruction
+      createParticles(targetX, targetY, RESOURCES[resource].color);
+
       // Tile is fully mined - mark as mined and send to server
       setMinedTiles(prev => new Set(Array.from(prev).concat(key)));
       mine.mutate(resource, {
@@ -459,31 +462,34 @@ export function GameCanvas({ user }: GameCanvasProps) {
           
           if (damagePercent > 0) {
             ctx.strokeStyle = "rgba(0, 0, 0, 0.9)";
-            ctx.lineWidth = 2.5;
+            ctx.lineWidth = 2;
             ctx.lineCap = "round";
             ctx.lineJoin = "round";
             
-            // Smoother crack appearance based on exact damage progress
-            const crackCount = Math.floor(damagePercent * 12);
+            // Larger and more volume destruction texture
+            const crackCount = Math.floor(damagePercent * 16);
             ctx.beginPath();
             for (let i = 0; i < crackCount; i++) {
               const seed = (wx * 7 + wy * 13 + i * 17) % 100 / 100;
-              const angle = (i / crackCount) * Math.PI * 2 + seed;
-              const length = 5 + seed * 15 * damagePercent;
+              const angle = (i / crackCount) * Math.PI * 2 + (seed * 0.5);
+              const length = 8 + seed * 25 * damagePercent; // Longer lines
               
-              const startX = sx + TILE_SIZE/2 + Math.cos(angle) * 2;
-              const startY = sy + TILE_SIZE/2 + Math.sin(angle) * 2;
+              const startX = sx + TILE_SIZE/2 + (seed - 0.5) * 4;
+              const startY = sy + TILE_SIZE/2 + (seed - 0.5) * 4;
               const endX = startX + Math.cos(angle) * length;
               const endY = startY + Math.sin(angle) * length;
               
               ctx.moveTo(startX, startY);
               ctx.lineTo(endX, endY);
               
-              // Add a sub-branch for realism
-              if (damagePercent > 0.5) {
-                const subAngle = angle + (seed - 0.5);
+              // More complex branching
+              if (damagePercent > 0.4) {
+                const subAngle1 = angle + 0.5 + seed;
+                const subAngle2 = angle - 0.5 - seed;
                 ctx.moveTo(endX, endY);
-                ctx.lineTo(endX + Math.cos(subAngle) * 5, endY + Math.sin(subAngle) * 5);
+                ctx.lineTo(endX + Math.cos(subAngle1) * 8, endY + Math.sin(subAngle1) * 8);
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(endX + Math.cos(subAngle2) * 8, endY + Math.sin(subAngle2) * 8);
               }
             }
             ctx.stroke();
@@ -541,23 +547,23 @@ export function GameCanvas({ user }: GameCanvasProps) {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     
-    // Pickaxe Head - Curved Arc
+    // Pickaxe Head - Curved Arc (Moved slightly higher)
     ctx.beginPath();
-    ctx.arc(0, 0, 14, Math.PI + 0.3, -0.3);
+    ctx.arc(0, -4, 14, Math.PI + 0.3, -0.3);
     ctx.strokeStyle = pickaxeColor;
     ctx.stroke();
     
-    // Pickaxe Handle - Directly connected to the head (arc center)
+    // Pickaxe Handle - Directly connected to the head
     ctx.beginPath();
-    ctx.moveTo(0, 0); // Start exactly at the head center
-    ctx.lineTo(0, 24);
+    ctx.moveTo(0, -4); 
+    ctx.lineTo(0, 20);
     ctx.strokeStyle = "#5D4037";
     ctx.lineWidth = 4;
     ctx.stroke();
 
     // Small sleeve connecting the two
     ctx.fillStyle = "#3e2723";
-    ctx.fillRect(-4, -2, 8, 4);
+    ctx.fillRect(-4, -6, 8, 4);
     
     ctx.restore();
 
