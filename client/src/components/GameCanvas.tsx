@@ -498,22 +498,39 @@ export function GameCanvas({ user }: GameCanvasProps) {
           if (health > 0 && health < maxHealth) {
             const healthPercent = health / maxHealth;
             const barWidth = TILE_SIZE - 12;
-            const barHeight = 4;
+            const barHeight = 3;
             const bx = sx + 6;
-            const by = sy + TILE_SIZE - 8;
+            const by = sy + TILE_SIZE - 7;
+            const cornerRadius = 2;
             
-            // Background
-            ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-            ctx.fillRect(bx, by, barWidth, barHeight);
+            // Shadow glow effect
+            ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
             
-            // Health
-            ctx.fillStyle = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#eab308" : "#ef4444";
-            ctx.fillRect(bx, by, barWidth * healthPercent, barHeight);
+            // Background with rounded corners
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.beginPath();
+            ctx.roundRect(bx, by, barWidth, barHeight, cornerRadius);
+            ctx.fill();
             
             // Border
-            ctx.strokeStyle = "#fff";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(bx, by, barWidth, barHeight);
+            ctx.strokeStyle = "rgba(100, 100, 100, 0.6)";
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            
+            // Health bar with glow
+            const fillColor = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#eab308" : "#ef4444";
+            ctx.fillStyle = fillColor;
+            ctx.shadowColor = fillColor;
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.roundRect(bx, by, barWidth * healthPercent, barHeight, cornerRadius);
+            ctx.fill();
+            
+            ctx.shadowColor = "transparent";
+            ctx.shadowBlur = 0;
           }
         }
       }
@@ -574,12 +591,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
     ctx.fillStyle = "black";
     ctx.fillRect(px + 8, py + 10, 6, 6);
     ctx.fillRect(px + 20, py + 10, 6, 6);
-
-    // Pickaxe Level indicator
-    ctx.font = "10px 'Press Start 2P'";
-    ctx.fillStyle = "white";
-    ctx.textAlign = "center";
-    ctx.fillText(`LVL ${user.pickaxeLevel}`, cx, py - 10);
 
     // Draw Lighting System (Radial Gradient / Vignette)
     const gradient = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
