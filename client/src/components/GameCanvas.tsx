@@ -198,14 +198,15 @@ export function GameCanvas({ user }: GameCanvasProps) {
   // Create mining particles
   const createParticles = (x: number, y: number, color: string) => {
     const newParticles: Particle[] = [];
-    for (let i = 0; i < 12; i++) {
-      const angle = (Math.PI * 2 * i) / 12;
-      const speed = 1 + Math.random() * 2;
+    const particleCount = 6; // Reduced volume
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (Math.PI * 2 * i) / particleCount;
+      const speed = 0.5 + Math.random() * 1.5;
       newParticles.push({
-        x: x + 0.5,
-        y: y + 0.5,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
+        x: x + 0.5, // Center of block
+        y: y + 0.5, // Center of block
+        vx: (Math.random() - 0.5) * speed,
+        vy: (Math.random() - 0.5) * speed - 1,
         life: 1,
         color: color,
       });
@@ -458,33 +459,34 @@ export function GameCanvas({ user }: GameCanvasProps) {
           
           if (damagePercent > 0) {
             ctx.strokeStyle = "rgba(0, 0, 0, 0.9)";
-            ctx.lineWidth = 4; // Much thicker and darker cracks
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
             
-            // Draw more prominent cracks
-            if (damagePercent > 0.2) {
-              ctx.beginPath();
-              ctx.moveTo(sx + 6, sy + 6);
-              ctx.lineTo(sx + 42, sy + 42);
-              ctx.stroke();
+            // Smoother crack appearance based on exact damage progress
+            const crackCount = Math.floor(damagePercent * 12);
+            ctx.beginPath();
+            for (let i = 0; i < crackCount; i++) {
+              const seed = (wx * 7 + wy * 13 + i * 17) % 100 / 100;
+              const angle = (i / crackCount) * Math.PI * 2 + seed;
+              const length = 5 + seed * 15 * damagePercent;
+              
+              const startX = sx + TILE_SIZE/2 + Math.cos(angle) * 2;
+              const startY = sy + TILE_SIZE/2 + Math.sin(angle) * 2;
+              const endX = startX + Math.cos(angle) * length;
+              const endY = startY + Math.sin(angle) * length;
+              
+              ctx.moveTo(startX, startY);
+              ctx.lineTo(endX, endY);
+              
+              // Add a sub-branch for realism
+              if (damagePercent > 0.5) {
+                const subAngle = angle + (seed - 0.5);
+                ctx.moveTo(endX, endY);
+                ctx.lineTo(endX + Math.cos(subAngle) * 5, endY + Math.sin(subAngle) * 5);
+              }
             }
-            if (damagePercent > 0.4) {
-              ctx.beginPath();
-              ctx.moveTo(sx + 42, sy + 6);
-              ctx.lineTo(sx + 6, sy + 42);
-              ctx.stroke();
-            }
-            if (damagePercent > 0.6) {
-              ctx.beginPath();
-              ctx.moveTo(sx + 24, sy + 4);
-              ctx.lineTo(sx + 24, sy + 44);
-              ctx.stroke();
-            }
-            if (damagePercent > 0.8) {
-              ctx.beginPath();
-              ctx.moveTo(sx + 4, sy + 24);
-              ctx.lineTo(sx + 44, sy + 24);
-              ctx.stroke();
-            }
+            ctx.stroke();
           }
 
           // Draw Health Bar
