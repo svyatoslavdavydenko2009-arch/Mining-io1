@@ -454,41 +454,35 @@ export function GameCanvas({ user }: GameCanvasProps) {
           const damagePercent = health > 0 ? (maxHealth - health) / maxHealth : 0;
           
           if (damagePercent > 0) {
-            ctx.strokeStyle = "rgba(20, 20, 20, 0.95)";
-            ctx.lineWidth = 2.5;
-            ctx.lineCap = "butt";
-            ctx.lineJoin = "miter";
+            // Crack color based on resource color (lighter/softer)
+            const resColor = RESOURCES[resourceType].color;
+            ctx.strokeStyle = `rgba(0, 0, 0, ${0.4 + damagePercent * 0.5})`; // Intensity links to health
+            ctx.lineWidth = 1.5 + damagePercent * 2;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
             
-            // Texture: Cracks always from center, longer lines
-            const crackCount = Math.floor(damagePercent * 18);
+            // Texture: Sharp, jagged cracks from center
+            const crackCount = Math.floor(damagePercent * 12) + 4;
             ctx.beginPath();
             for (let i = 0; i < crackCount; i++) {
               const seed = (wx * 11 + wy * 19 + i * 23) % 100 / 100;
-              const angle = (i / crackCount) * Math.PI * 2 + (seed * 0.4);
-              const totalLength = 18 + seed * 40 * damagePercent; // Much longer lines
+              const angle = (i / crackCount) * Math.PI * 2 + (seed * 0.5);
+              const maxLength = TILE_SIZE * 0.55; 
+              const length = (10 + seed * 20) * damagePercent * 1.5; // Linked to damage
               
-              // Always start from exact center
               let curX = sx + TILE_SIZE/2;
               let curY = sy + TILE_SIZE/2;
               
               ctx.moveTo(curX, curY);
               
-              // Jagged lines with multiple segments
-              const segments = 4;
+              // Jagged segments
+              const segments = 3;
               for(let j = 0; j < segments; j++) {
-                const segAngle = angle + (Math.sin(j * seed * 15) * 0.4);
-                const segLen = totalLength / segments;
+                const segAngle = angle + (Math.sin(j * seed * 12) * 0.3);
+                const segLen = length / segments;
                 curX += Math.cos(segAngle) * segLen;
                 curY += Math.sin(segAngle) * segLen;
                 ctx.lineTo(curX, curY);
-                
-                // Branches
-                if (damagePercent > 0.5 && j === 2) {
-                  const branchAngle = segAngle + (seed > 0.5 ? Math.PI/2.5 : -Math.PI/2.5);
-                  ctx.moveTo(curX, curY);
-                  ctx.lineTo(curX + Math.cos(branchAngle) * 12, curY + Math.sin(branchAngle) * 12);
-                  ctx.moveTo(curX, curY);
-                }
               }
             }
             ctx.stroke();
@@ -512,12 +506,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
             ctx.strokeStyle = "#fff";
             ctx.lineWidth = 1;
             ctx.strokeRect(sx + 4, sy + 2, barWidth, barHeight);
-          }
-
-          // Mining Overlay
-          if (miningTarget?.x === wx && miningTarget?.y === wy) {
-             ctx.fillStyle = "rgba(255, 100, 100, 0.4)";
-             ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
           }
         }
       }
@@ -546,23 +534,31 @@ export function GameCanvas({ user }: GameCanvasProps) {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     
-    // Pickaxe Head - Curved Arc (Moved much higher)
+    // Pickaxe Head - Sharp stylized shape (Moved much higher)
+    const headY = -24;
     ctx.beginPath();
-    ctx.arc(0, -18, 14, Math.PI + 0.3, -0.3);
-    ctx.strokeStyle = pickaxeColor;
+    ctx.moveTo(-16, headY + 8);
+    ctx.quadraticCurveTo(0, headY - 12, 16, headY + 8); // Top curve
+    ctx.lineTo(12, headY + 10);
+    ctx.quadraticCurveTo(0, headY, -12, headY + 10); // Bottom inner curve
+    ctx.closePath();
+    
+    ctx.fillStyle = pickaxeColor;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(0,0,0,0.3)";
     ctx.stroke();
     
     // Pickaxe Handle - Directly connected to the head
     ctx.beginPath();
-    ctx.moveTo(0, -18); 
-    ctx.lineTo(0, 6);
+    ctx.moveTo(0, headY); 
+    ctx.lineTo(0, 4);
     ctx.strokeStyle = "#5D4037";
     ctx.lineWidth = 4;
     ctx.stroke();
 
     // Small sleeve connecting the two
     ctx.fillStyle = "#3e2723";
-    ctx.fillRect(-4, -20, 8, 4);
+    ctx.fillRect(-3, headY - 2, 6, 6);
     
     ctx.restore();
 
@@ -643,23 +639,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
           ))}
         </AnimatePresence>
       </div>
-      
-      <AnimatePresence>
-        {miningTarget && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.5, rotate: 0 }}
-            animate={{ opacity: 1, scale: 1, rotate: 360 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6 }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-          >
-            <Pickaxe 
-              className="w-12 h-12 drop-shadow-lg" 
-              style={{ color: PICKAXE_COLORS[user.pickaxeLevel] || "#fff" }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
       
       {/* Mobile D-Pad Controls */}
       <div className="absolute bottom-4 left-4 md:hidden flex flex-col items-center gap-2">
