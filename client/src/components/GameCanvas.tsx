@@ -351,29 +351,38 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
   // Smooth camera animation & particle updates
   useEffect(() => {
-    const interval = setInterval(() => {
+    let lastTime = performance.now();
+    const update = (time: number) => {
+      const dt = time - lastTime;
+      lastTime = time;
+
       setDisplayPos(prev => {
-        const easing = 0.15; // Smooth interpolation factor
-        return {
-          x: prev.x + (localPos.x - prev.x) * easing,
-          y: prev.y + (localPos.y - prev.y) * easing,
-        };
+        const easing = 0.15;
+        const dx = (localPos.x - prev.x) * easing;
+        const dy = (localPos.y - prev.y) * easing;
+        if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return localPos;
+        return { x: prev.x + dx, y: prev.y + dy };
       });
 
       // Update particles
       setParticles(prev => {
+        if (prev.length === 0) return prev;
         return prev
           .map(p => ({
             ...p,
             x: p.x + p.vx * 0.05,
             y: p.y + p.vy * 0.05,
-            vy: p.vy + 0.15, // Slightly more gravity
-            life: p.life - 0.04, // Faster decay for smaller bits
+            vy: p.vy + 0.15,
+            life: p.life - 0.04,
           }))
           .filter(p => p.life > 0);
       });
-    }, 16); // ~60fps
-    return () => clearInterval(interval);
+
+      requestAnimationFrame(update);
+    };
+    
+    const frameId = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(frameId);
   }, [localPos]);
 
   // Render Loop
