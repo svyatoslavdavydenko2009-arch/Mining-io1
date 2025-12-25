@@ -233,6 +233,22 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const targetX = localPos.x + relX;
     const targetY = localPos.y + relY;
 
+    // Check distance - only adjacent (include diagonals)
+    const dist = Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y));
+    if (dist > 1) {
+      return; // Silent fail - too far away
+    }
+
+    // Skip if already fully mined
+    if (isTileMined(targetX, targetY)) {
+      return;
+    }
+
+    const resource = getTileAt(targetX, targetY);
+    if (!resource) {
+      return; // Silent fail - nothing to mine
+    }
+
     // Mining cooldown based on level
     const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
     const now = Date.now();
@@ -251,22 +267,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
       }
     };
     requestAnimationFrame(updateCooldown);
-
-    // Check distance - only adjacent (include diagonals)
-    const dist = Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y));
-    if (dist > 1) {
-      return; // Silent fail - too far away
-    }
-
-    // Skip if already fully mined
-    if (isTileMined(targetX, targetY)) {
-      return;
-    }
-
-    const resource = getTileAt(targetX, targetY);
-    if (!resource) {
-      return; // Silent fail - nothing to mine
-    }
 
     // Check requirements
     const resDef = RESOURCES[resource];
@@ -537,18 +537,18 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Pickaxe Head (the curved metal part)
     ctx.beginPath();
     // Move head down so it's not "in the air"
-    ctx.arc(0, 0, 14, Math.PI + 0.3, -0.3);
+    ctx.arc(0, 10, 14, Math.PI + 0.3, -0.3);
     ctx.strokeStyle = pickaxeColor;
     ctx.stroke();
     
     // The handle sleeve (the dark part where head meets handle)
     ctx.fillStyle = "#3e2723";
-    ctx.fillRect(-4, -4, 8, 6);
+    ctx.fillRect(-4, 6, 8, 6);
     
     // Pickaxe Handle
     ctx.beginPath();
-    ctx.moveTo(0, -4);
-    ctx.lineTo(0, 20);
+    ctx.moveTo(0, 6);
+    ctx.lineTo(0, 30);
     ctx.strokeStyle = "#5D4037"; // Dark brown handle
     ctx.lineWidth = 4;
     ctx.stroke();
