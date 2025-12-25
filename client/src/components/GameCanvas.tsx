@@ -95,6 +95,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [cooldownProgress, setCooldownProgress] = useState(1); // 0 to 1
   const [visualHealth, setVisualHealth] = useState<Record<string, number>>({});
   const [lastHitTime, setLastHitTime] = useState<Record<string, number>>({});
+  const [appearingBars, setAppearingBars] = useState<Record<string, number>>({});
 
   // Update visual health for smooth, uniform animations
   useEffect(() => {
@@ -124,6 +125,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
           }
         });
         
+        return changed ? next : prev;
+      });
+
+      // Update appearing bars opacity
+      setAppearingBars(prev => {
+        const next = { ...prev };
+        let changed = false;
+        Object.entries(prev).forEach(([key, opacity]) => {
+          if (opacity < 1) {
+            next[key] = Math.min(1, opacity + 0.05);
+            changed = true;
+          }
+        });
         return changed ? next : prev;
       });
     }, 16);
@@ -344,6 +358,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
         // --- STRIKE EFFECT ---
         const key = `${targetX},${targetY}`;
         setLastHitTime(prev => ({ ...prev, [key]: Date.now() }));
+        if (appearingBars[key] === undefined) {
+          setAppearingBars(prev => ({ ...prev, [key]: 0 }));
+        }
         const currentHealth = getTileHealth(targetX, targetY);
         const maxHealth = RESOURCE_HEALTH[resource];
         const newHealth = currentHealth === 0 ? maxHealth - 1 : currentHealth - 1;
@@ -523,14 +540,14 @@ export function GameCanvas({ user }: GameCanvasProps) {
             let by = sy + TILE_SIZE - 8; 
             
             // "Soft move down" and gentle fade
-            let alpha = 0.9;
+            let alpha = appearingBars[key] ?? 1;
             if (isRecentlyHit) {
               const progress = Math.min(elapsedSinceHit / 800, 1);
               const dropOffset = progress * 6; // Moves down smoothly
               by += dropOffset;
               // Fade only at the very end of the 800ms
               if (progress > 0.7) {
-                alpha = 0.9 * (1 - (progress - 0.7) / 0.3);
+                alpha *= (1 - (progress - 0.7) / 0.3);
               }
             }
 
