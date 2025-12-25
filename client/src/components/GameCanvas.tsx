@@ -104,9 +104,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
   // Handle mobile D-pad button press
   const handleMobileMove = (dx: number, dy: number) => {
-    // Movement debounce - 250ms delay
+    // Movement debounce - 150ms delay for smoother feel
     const now = Date.now();
-    if (now - lastMoveTime.current < 250) return;
+    if (now - lastMoveTime.current < 150) return;
     lastMoveTime.current = now;
 
     setLocalPos(prev => {
@@ -144,10 +144,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
         e.preventDefault();
       }
 
-      // Movement debounce - 250ms delay between moves (increased from 200ms)
+      // Movement debounce - 150ms delay between moves for smoother feel
       const now = Date.now();
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"].includes(e.key)) {
-        if (now - lastMoveTime.current < 250) return; // Ignore if too soon
+        if (now - lastMoveTime.current < 150) return; // Ignore if too soon
         lastMoveTime.current = now;
       }
 
@@ -435,7 +435,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Smooth interpolation for display position based on movement
     const now = Date.now();
     const timeSinceMove = now - lastMoveTimeForInterp.current;
-    const interpDuration = 400; // Smooth movement over 400ms for very fluid camera
+    const interpDuration = 500; // Smooth movement over 500ms for ultra fluid camera
     const interpProgress = Math.min(timeSinceMove / interpDuration, 1);
     
     // Smooth easing for movement (ease-out cubic for even smoother motion)
@@ -561,9 +561,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const headY = -24;
     ctx.beginPath();
     ctx.moveTo(-16, headY + 8);
-    ctx.quadraticCurveTo(0, headY - 12, 16, headY + 8); // Top curve
-    ctx.lineTo(12, headY + 10);
-    ctx.quadraticCurveTo(0, headY, -12, headY + 10); // Bottom inner curve
+    ctx.lineTo(-8, headY - 16); // Sharp left point
+    ctx.lineTo(0, headY - 18); // Sharp top point
+    ctx.lineTo(8, headY - 16); // Sharp right point
+    ctx.lineTo(16, headY + 8); // Right corner
+    ctx.lineTo(12, headY + 10); // Right bottom
+    ctx.lineTo(0, headY + 2); // Center bottom
+    ctx.lineTo(-12, headY + 10); // Left bottom
     ctx.closePath();
     
     ctx.fillStyle = pickaxeColor;
