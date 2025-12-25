@@ -497,10 +497,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
           
           if (health > 0 && health < maxHealth) {
             const healthPercent = health / maxHealth;
-            const barWidth = TILE_SIZE - 12;
-            const barHeight = 3;
-            const bx = sx + 6;
-            const by = sy + TILE_SIZE - 7;
+            const barWidth = TILE_SIZE - 8;
+            const barHeight = 5;
+            const bx = sx + 4;
+            const by = sy + TILE_SIZE - 8;
             const cornerRadius = 2;
             
             // Shadow glow effect
@@ -538,8 +538,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
     // Draw Player
     ctx.fillStyle = "#fbbf24"; // Goldish player
-    ctx.shadowColor = "#fbbf24";
-    ctx.shadowBlur = 10;
     
     // Simple character shape
     const px = cx - TILE_SIZE/2 + 8;
