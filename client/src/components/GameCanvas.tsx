@@ -23,13 +23,35 @@ function pseudoRandom(x: number, y: number) {
   return sin - Math.floor(sin);
 }
 
-// Organic floor noise for biomes with larger 20x20-like patches
+// Simplex-like noise for more organic biomes
+function getNoise(x: number, y: number, scale: number) {
+  const x0 = Math.floor(x * scale);
+  const y0 = Math.floor(y * scale);
+  const x1 = x0 + 1;
+  const y1 = y0 + 1;
+  
+  const sx = (x * scale) - x0;
+  const sy = (y * scale) - y0;
+  
+  const n00 = pseudoRandom(x0 + WORLD_SEED, y0 + WORLD_SEED);
+  const n10 = pseudoRandom(x1 + WORLD_SEED, y0 + WORLD_SEED);
+  const n01 = pseudoRandom(x0 + WORLD_SEED, y1 + WORLD_SEED);
+  const n11 = pseudoRandom(x1 + WORLD_SEED, y1 + WORLD_SEED);
+  
+  const nx0 = n00 * (1 - sx) + n10 * sx;
+  const nx1 = n01 * (1 - sx) + n11 * sx;
+  
+  return nx0 * (1 - sy) + nx1 * sy;
+}
+
+// Organic floor noise for biomes with realistic blending
 function getFloorColor(x: number, y: number): string {
-  // Use a much smaller multiplier (0.05 instead of 0.1) for larger patches
-  const val = pseudoRandom(Math.floor(x / 10) * 0.5 + WORLD_SEED, Math.floor(y / 10) * 0.5 + WORLD_SEED);
-  if (val > 0.75) return "#3d2b1f"; // Lighter brown patch
-  if (val > 0.5) return "#322319";  // Medium brown patch
-  if (val > 0.25) return "#2b1e15"; // Default dark brown
+  // Use multi-scale noise for more organic "cloud-like" patches
+  const noise = getNoise(x, y, 0.05) * 0.7 + getNoise(x, y, 0.15) * 0.3;
+  
+  if (noise > 0.75) return "#3d2b1f"; // Lighter brown patch
+  if (noise > 0.5) return "#322319";  // Medium brown patch
+  if (noise > 0.25) return "#2b1e15"; // Default dark brown
   return "#1e150f"; // Deep brown patch
 }
 
@@ -288,9 +310,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
       const targetSide = lookDir.dx < 0 ? 1 : 0;
       smoothPickaxeSide.current += (targetSide - smoothPickaxeSide.current) * 0.05;
       
-      // Calculate how close the pickaxe is to the center of the body (0.5 side value)
       const distanceFromCenter = Math.abs(smoothPickaxeSide.current - 0.5);
-      const isNearCenter = distanceFromCenter < 0.2; 
+      const isNearCenter = distanceFromCenter < 0.25; 
 
       dashScale.current.x += (1 - dashScale.current.x) * 0.15;
       dashScale.current.y += (1 - dashScale.current.y) * 0.15;
@@ -313,7 +334,12 @@ export function GameCanvas({ user }: GameCanvasProps) {
             const resType = getTileAt(wx, wy);
             if (resType) {
               const res = RESOURCES[resType]; ctx.fillStyle = "#444"; ctx.beginPath(); ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
-              ctx.fillStyle = res.color; ctx.fillRect(sx + 10, sy + 10, 8, 8); ctx.fillRect(sx + 24, sy + 16, 6, 6); ctx.fillRect(sx + 16, sy + 28, 8, 8);
+              
+              // Only draw inner pixels for ores, not plain stone
+              if (resType !== "stone") {
+                ctx.fillStyle = res.color; ctx.fillRect(sx + 10, sy + 10, 8, 8); ctx.fillRect(sx + 24, sy + 16, 6, 6); ctx.fillRect(sx + 16, sy + 28, 8, 8);
+              }
+              
               const h = tileHealth[`${wx},${wy}`] || RESOURCE_HEALTH[resType]; const mh = RESOURCE_HEALTH[resType];
               if (h < mh) {
                 const hp = h / mh; ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.beginPath(); ctx.roundRect(sx + 4, sy + TILE_SIZE - 8, TILE_SIZE - 8, 5, 2); ctx.fill();
@@ -337,9 +363,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.translate((pSize / 2) * (1 - side * 2), 0); 
       ctx.scale(1 - side * 2, 1);
       
-      // Add blur filter when passing through middle
       if (isNearCenter) {
-          ctx.filter = "blur(2px)";
+          // Increased blur intensity as requested
+          ctx.filter = "blur(4px)";
       }
       
       ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
