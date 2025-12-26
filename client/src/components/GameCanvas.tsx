@@ -653,8 +653,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       displayPlayerPos.current.y += (localPos.y - displayPlayerPos.current.y) * 0.2;
       
       // Smooth look direction - responsive to joystick input
-      smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * 0.15;
-      smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * 0.15;
+      // Use different easing: faster response to input, slower return to idle
+      const isInputActive = Math.abs(lookDir.dx) > 0.01 || Math.abs(lookDir.dy) > 0.01;
+      const easeSpeed = isInputActive ? 0.18 : 0.08; // Slower return for smooth hands
+      smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * easeSpeed;
+      smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * easeSpeed;
       
       let targetSide = lookDir.dx < 0 ? 1 : 0;
       if (Math.abs(lookDir.dy) > Math.abs(lookDir.dx) && lookDir.dy < 0) {
