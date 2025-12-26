@@ -9,48 +9,57 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
   const [knobPos, setKnobPos] = useState({ x: 0, y: 0 });
   const [isActive, setIsActive] = useState(false);
   const baseRef = useRef<HTMLDivElement>(null);
-  const activeTouchId = useRef<number | null>(null);
-  const startCenterX = useRef(0);
-  const startCenterY = useRef(0);
+  const activeTouchIdRef = useRef<number | null>(null);
+  const startCenterRef = useRef({ x: 0, y: 0 });
   const radius = 40;
 
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
     if (!baseRef.current) return;
     
+    const rect = baseRef.current.getBoundingClientRect();
+    startCenterRef.current = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
+    };
+    
     if ('touches' in e) {
-      activeTouchId.current = e.touches[0].identifier;
+      activeTouchIdRef.current = e.touches[0].identifier;
     } else {
-      activeTouchId.current = -1;
+      activeTouchIdRef.current = -1;
     }
     
-    // Save the starting center position
-    const rect = baseRef.current.getBoundingClientRect();
-    startCenterX.current = rect.left + rect.width / 2;
-    startCenterY.current = rect.top + rect.height / 2;
-    
     setIsActive(true);
-    handleUpdate(e);
+    updateJoystick(e);
   };
 
-  const handleUpdate = (e: any) => {
-    if (activeTouchId.current === null) return;
+  const updateJoystick = (e: any) => {
+    const activeTouchId = activeTouchIdRef.current;
+    if (activeTouchId === null) return;
     
-    let clientX: number, clientY: number;
+    let clientX = 0, clientY = 0;
+    let touchFound = false;
     
     if (e.touches) {
-      // Find the touch with the matching ID
-      const touch = Array.from(e.touches).find((t: any) => t.identifier === activeTouchId.current);
-      if (!touch) return; // Our touch is no longer active
-      clientX = (touch as any).clientX;
-      clientY = (touch as any).clientY;
-    } else {
+      // Find the specific touch we're tracking
+      for (let i = 0; i < e.touches.length; i++) {
+        if (e.touches[i].identifier === activeTouchId) {
+          clientX = e.touches[i].clientX;
+          clientY = e.touches[i].clientY;
+          touchFound = true;
+          break;
+        }
+      }
+      if (!touchFound) return;
+    } else if (activeTouchId === -1) {
       // Mouse event
       clientX = e.clientX;
       clientY = e.clientY;
+    } else {
+      return;
     }
     
-    const dx = clientX - startCenterX.current;
-    const dy = clientY - startCenterY.current;
+    const dx = clientX - startCenterRef.current.x;
+    const dy = clientY - startCenterRef.current.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
     const limitedDist = Math.min(distance, radius);
@@ -66,46 +75,52 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
   useEffect(() => {
     if (!isActive) return;
 
-    const onMoveAny = (e: MouseEvent | TouchEvent) => {
-      handleUpdate(e);
+    const handleGlobalMove = (e: Event) => {
+      updateJoystick(e);
     };
     
-    const onEndAny = (e: MouseEvent | TouchEvent) => {
-      // Only reset if the active touch/mouse that started the joystick has ended
-      if ('changedTouches' in e) {
-        // For touch events, check if the touch that was tracked has ended
-        let touchEnded = false;
-        for (let i = 0; i < e.changedTouches.length; i++) {
-          if (e.changedTouches[i].identifier === activeTouchId.current) {
-            touchEnded = true;
+    const handleGlobalEnd = (e: Event) => {
+      const activeTouchId = activeTouchIdRef.current;
+      if (activeTouchId === null) return;
+      
+      const touchEvent = e as TouchEvent;
+      const mouseEvent = e as MouseEvent;
+      
+      if (touchEvent.changedTouches) {
+        // Check if our tracked touch ended
+        let ourTouchEnded = false;
+        for (let i = 0; i < touchEvent.changedTouches.length; i++) {
+          if (touchEvent.changedTouches[i].identifier === activeTouchId) {
+            ourTouchEnded = true;
             break;
           }
         }
-        if (!touchEnded) return;
-      } else {
-        // For mouse events, always reset (we only track one mouse)
-        if (activeTouchId.current !== -1) return;
+        if (!ourTouchEnded) return;
+      } else if (activeTouchId !== -1) {
+        // We're tracking a touch but this is a mouse event, ignore
+        return;
       }
       
+      // Our touch/mouse ended
       setIsActive(false);
       setKnobPos({ x: 0, y: 0 });
       onMove(0, 0);
       onEnd();
-      activeTouchId.current = null;
+      activeTouchIdRef.current = null;
     };
 
-    window.addEventListener("mousemove", onMoveAny as EventListener);
-    window.addEventListener("mouseup", onEndAny as EventListener);
-    window.addEventListener("touchmove", onMoveAny as EventListener, { passive: false });
-    window.addEventListener("touchend", onEndAny as EventListener);
+    window.addEventListener("mousemove", handleGlobalMove);
+    window.addEventListener("mouseup", handleGlobalEnd);
+    window.addEventListener("touchmove", handleGlobalMove, { passive: false });
+    window.addEventListener("touchend", handleGlobalEnd, { passive: false });
 
     return () => {
-      window.removeEventListener("mousemove", onMoveAny as EventListener);
-      window.removeEventListener("mouseup", onEndAny as EventListener);
-      window.removeEventListener("touchmove", onMoveAny as EventListener);
-      window.removeEventListener("touchend", onEndAny as EventListener);
+      window.removeEventListener("mousemove", handleGlobalMove);
+      window.removeEventListener("mouseup", handleGlobalEnd);
+      window.removeEventListener("touchmove", handleGlobalMove);
+      window.removeEventListener("touchend", handleGlobalEnd);
     };
-  }, [isActive]);
+  }, [isActive, onMove, onEnd]);
 
   return (
     <div 
