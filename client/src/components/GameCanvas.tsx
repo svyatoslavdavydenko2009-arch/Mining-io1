@@ -50,11 +50,11 @@ function getFloorColor(x: number, y: number): string {
   // Use multi-scale noise for more organic "cloud-like" patches
   const noise = getNoise(x, y, 0.05) * 0.7 + getNoise(x, y, 0.15) * 0.3;
   
-  // Rarity check for grey biome (e.g., using a different noise or threshold)
-  const greyNoise = getNoise(x + 5000, y + 5000, 0.1); 
-  if (greyNoise > 0.85) {
+  // Rarity check for grey biome (larger patches)
+  const greyNoise = getNoise(x + 5000, y + 5000, 0.05); 
+  if (greyNoise > 0.8) {
     if (greyNoise > 0.95) return "#4a4a4a"; // Dark grey
-    if (greyNoise > 0.90) return "#5c5c5c"; // Medium grey
+    if (greyNoise > 0.88) return "#5c5c5c"; // Medium grey
     return "#6e6e6e"; // Light grey
   }
 
@@ -231,7 +231,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
   useEffect(() => {
     const now = Date.now();
-    if (now - lastServerUpdate > 500 && (Math.round(localPos.x) !== user.x || Math.round(localPos.y) !== user.y)) {
+    // Increase frequency of server updates and reduce distance threshold for sync
+    if (now - lastServerUpdate > 200 && (Math.abs(localPos.x - user.x) > 0.1 || Math.abs(localPos.y - user.y) > 0.1)) {
       move.mutate({ x: Math.round(localPos.x), y: Math.round(localPos.y) });
       setLastServerUpdate(now);
     }
