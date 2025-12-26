@@ -424,11 +424,12 @@ export function GameCanvas({ user }: GameCanvasProps) {
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       
       ctx.save(); 
-      // Pickaxe follows rotation and is positioned on the "side"
+      // Pickaxe follows rotation and is positioned on the "front" or "side"
       ctx.rotate(bodyRotation);
-      ctx.translate(pSize / 2, 0); 
+      // Move pickaxe slightly forward and to the side from the center of the body
+      ctx.translate(pSize / 3, -pSize / 4); 
       
-      ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
+      ctx.rotate(-(Math.PI / 6) + (miningRotation * Math.PI / 180));
       
       const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
       ctx.fillStyle = pickaxeColor; ctx.fill();
