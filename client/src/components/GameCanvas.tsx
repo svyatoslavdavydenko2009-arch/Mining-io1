@@ -72,9 +72,9 @@ function getFloorColor(x: number, y: number): string {
   // Grass/Plains biome (main biome - grassland)
   const grassNoise = getNoise(x + 1000, y + 1000, 0.06);
   if (grassNoise > 0.55) {
-    if (grassNoise > 0.8) return "#3d7c4c"; // Dark grass
-    if (grassNoise > 0.7) return "#4a9a5a"; // Medium grass
-    return "#5db870"; // Light grass
+    if (grassNoise > 0.8) return "#367346"; // Dark grass
+    if (grassNoise > 0.7) return "#449154"; // Medium grass
+    return "#56ac66"; // Light grass
   }
 
   if (noise > 0.75) return "#3d2b1f"; // Lighter brown patch
@@ -590,7 +590,27 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           if (!isTileMined(wx, wy)) {
             const resType = getTileAt(wx, wy);
             if (resType) {
-              const res = RESOURCES[resType]; ctx.fillStyle = "#444"; ctx.beginPath(); ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
+              const res = RESOURCES[resType]; 
+              ctx.fillStyle = "#444";
+              
+              if (resType === "stone") {
+                // Draw pentagon for stone
+                ctx.beginPath();
+                const centerX = sx + TILE_SIZE / 2;
+                const centerY = sy + TILE_SIZE / 2;
+                const radius = (TILE_SIZE - 8) / 2;
+                for (let i = 0; i < 5; i++) {
+                  const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+                  const x = centerX + radius * Math.cos(angle);
+                  const y = centerY + radius * Math.sin(angle);
+                  if (i === 0) ctx.moveTo(x, y);
+                  else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+              } else {
+                ctx.beginPath(); ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
+              }
               
               if (resType !== "stone") {
                 ctx.fillStyle = res.color; ctx.fillRect(sx + 10, sy + 10, 8, 8); ctx.fillRect(sx + 24, sy + 16, 6, 6); ctx.fillRect(sx + 16, sy + 28, 8, 8);
