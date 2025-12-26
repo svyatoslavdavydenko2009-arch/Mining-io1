@@ -23,6 +23,15 @@ function pseudoRandom(x: number, y: number) {
   return sin - Math.floor(sin);
 }
 
+// Organic floor noise for biomes
+function getFloorColor(x: number, y: number): string {
+  const val = pseudoRandom(x * 0.1 + WORLD_SEED, y * 0.1 + WORLD_SEED);
+  if (val > 0.8) return "#16130e"; // Extra dark patch
+  if (val > 0.5) return "#1e1a14"; // Default dark earth
+  if (val > 0.2) return "#252119"; // Slightly lighter earth
+  return "#2c2820"; // Lightest earth patch
+}
+
 function getTileAt(x: number, y: number): ResourceType | null {
   const val = pseudoRandom(x + WORLD_SEED, y + WORLD_SEED);
   if (val > 0.98) return "diamond";
@@ -70,6 +79,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [lookDir, setLookDir] = useState({ dx: 0, dy: 0 }); 
   const smoothLookDir = useRef({ dx: 0, dy: 0 }); 
   const smoothPickaxeSide = useRef(0); 
+  const lastPickaxeSide = useRef(0);
   const dashScale = useRef({ x: 1, y: 1 });
   const displayPlayerPos = useRef({ x: user.x, y: user.y });
   const smoothedPos = useRef({ x: user.x, y: user.y }); 
@@ -274,16 +284,22 @@ export function GameCanvas({ user }: GameCanvasProps) {
       smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * 0.15;
       smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * 0.15;
       
-      // Slower hand switching (0.05 instead of 0.15) for more realism
-      smoothPickaxeSide.current += ((lookDir.dx < 0 ? 1 : 0) - smoothPickaxeSide.current) * 0.05;
+      const targetSide = lookDir.dx < 0 ? 1 : 0;
+      const sideChanged = lastPickaxeSide.current !== targetSide;
+      if (sideChanged) {
+          lastPickaxeSide.current = targetSide;
+      }
       
+      smoothPickaxeSide.current += (targetSide - smoothPickaxeSide.current) * 0.05;
+      const switchingSpeed = Math.abs(targetSide - smoothPickaxeSide.current);
+      const isSwitching = switchingSpeed > 0.01;
+
       dashScale.current.x += (1 - dashScale.current.x) * 0.15;
       dashScale.current.y += (1 - dashScale.current.y) * 0.15;
 
       const displayPos = smoothedPos.current; const playerPos = displayPlayerPos.current;
       const cx = rect.width / 2; const cy = rect.height / 2;
       
-      // Update floor color to dark earth
       ctx.fillStyle = "#1e1a14"; ctx.fillRect(0, 0, rect.width, rect.height);
 
       const drawRadius = 10;
@@ -293,8 +309,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
           
-          // Pattern for floor texture
-          ctx.fillStyle = (wx + wy) % 2 === 0 ? "#1a1611" : "#1e1a14"; ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+          ctx.fillStyle = getFloorColor(wx, wy); ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
           
           if (!isTileMined(wx, wy)) {
             const resType = getTileAt(wx, wy);
@@ -316,12 +331,38 @@ export function GameCanvas({ user }: GameCanvasProps) {
       const pSize = TILE_SIZE - 16;
       ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
       ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8); ctx.fill();
-      ctx.save(); const side = smoothPickaxeSide.current; ctx.translate((pSize / 2) * (1 - side * 2), 0); ctx.scale(1 - side * 2, 1);
+      
+      // Draw Pickaxe with Motion Blur
+      const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
+      
+      if (isSwitching) {
+          // Motion blur effect: draw multiple faint pickaxes during transition
+          for (let i = 0; i < 3; i++) {
+              ctx.save();
+              const offset = (i - 1) * switchingSpeed * 10;
+              const blurredSide = smoothPickaxeSide.current + offset;
+              const blurAlpha = 0.3 - (i * 0.1);
+              ctx.globalAlpha = blurAlpha;
+              ctx.translate((pSize / 2) * (1 - blurredSide * 2), 0); 
+              ctx.scale(1 - blurredSide * 2, 1);
+              ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
+              const hY = -24; ctx.beginPath(); ctx.moveTo(-14, hY + 4); ctx.quadraticCurveTo(0, hY - 8, 14, hY + 4); ctx.lineTo(10, hY + 6); ctx.quadraticCurveTo(0, hY - 2, -10, hY + 6); ctx.closePath();
+              ctx.fillStyle = pickaxeColor; ctx.fill();
+              ctx.beginPath(); ctx.moveTo(0, hY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
+              ctx.restore();
+          }
+      }
+      
+      ctx.save(); 
+      const side = smoothPickaxeSide.current; 
+      ctx.translate((pSize / 2) * (1 - side * 2), 0); 
+      ctx.scale(1 - side * 2, 1);
       ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
       const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
-      ctx.fillStyle = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513"; ctx.fill();
+      ctx.fillStyle = pickaxeColor; ctx.fill();
       ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
       ctx.restore();
+      
       ctx.fillStyle = "black"; const eX = smoothLookDir.current.dx * 4; const eY = smoothLookDir.current.dy * 4;
       ctx.beginPath(); ctx.arc(-pSize / 2 + 10 + eX, -pSize / 2 + 13 + eY, 3, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(-pSize / 2 + 22 + eX, -pSize / 2 + 13 + eY, 3, 0, Math.PI * 2); ctx.fill();
