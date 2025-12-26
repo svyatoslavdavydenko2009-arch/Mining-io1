@@ -436,26 +436,25 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       let offY = 0;
 
       if (progress < 0.3) {
-        // Mirrored wind up backwards and inwards (curving towards the body, like a hook)
+        // Wind up backwards (to the left side)
         const p = progress / 0.3;
-        rot = p * -45; // Rotation inwards
-        offX = p * 12; // Curving IN towards the body from the right side of left hand
-        offY = p * -2; // Slightly back
+        rot = p * 45; 
+        offX = p * -12; 
+        offY = p * -2; 
       } else if (progress < 0.8) {
-        // Mirrored powerful elliptical swing from left to right
+        // Swing from right to left
         const p = (progress - 0.3) / 0.5;
         const easedP = p * p * (3 - 2 * p);
-        rot = -45 + (easedP * 135); // Swing forward to the right
+        rot = 45 - (easedP * 135); 
         
-        // Ellipse path - mirrored starting from the "hooked" position
         const angle = easedP * Math.PI;
-        offX = 12 - Math.sin(angle) * 20; 
+        offX = -12 + (Math.sin(angle) * 20); 
         offY = -2 + (1 - Math.cos(angle)) * 14; 
       } else {
         // Settle at the end
         const p = (progress - 0.8) / 0.2;
-        rot = 90 - (p * 15);
-        offX = -8 * (1 - p);
+        rot = -90 + (p * 15);
+        offX = 8 * (1 - p);
         offY = 22 * (1 - p);
       }
       
