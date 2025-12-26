@@ -834,6 +834,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // The hand should pivot around its shoulder point and follow the pickaxe exactly
       ctx.translate(-handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY);
       
+      // Draw a "limb" connecting hand to body
+      ctx.beginPath();
+      ctx.moveTo(0, 0); // At hand
+      ctx.lineTo(handOffsetSide, handOffsetFront); // Towards body center
+      ctx.strokeStyle = "#fbbf24";
+      ctx.lineWidth = 8;
+      ctx.lineCap = "round";
+      ctx.stroke();
+
       // Apply the EXACT SAME rotation as the pickaxe (Base -90 deg + swing)
       if (isMining) {
         ctx.rotate(-(90 * Math.PI / 180) + swingAngle);
@@ -852,10 +861,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.stroke();
       ctx.restore();
 
-      // Drawing Right Hand (Static)
+      // Drawing Right Hand (Static with limb)
       ctx.save();
       ctx.rotate(bodyRotation);
       ctx.translate(handOffsetSide, -handOffsetFront);
+      
+      // Draw a "limb" connecting hand to body
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-handOffsetSide, handOffsetFront);
+      ctx.strokeStyle = "#fbbf24";
+      ctx.lineWidth = 8;
+      ctx.lineCap = "round";
+      ctx.stroke();
+
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
