@@ -187,6 +187,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const displayPlayerPos = useRef({ x: user.x, y: user.y });
   const smoothedPos = useRef({ x: user.x, y: user.y }); 
   const hitProcessed = useRef(false);
+  const miningRotationSnapshot = useRef(0); // Snapshot of rotation when mining starts
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
   const lastMineTime = useRef(Date.now());
@@ -318,13 +319,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   }, [user.x, user.y]);
 
   useEffect(() => {
-    // Sync displayPlayerPos and rotation when mining state changes to prevent jerking
+    // Save position and rotation snapshot when mining starts
     if (isMining) {
       displayPlayerPos.current.x = smoothedPos.current.x;
       displayPlayerPos.current.y = smoothedPos.current.y;
-      // Also sync rotation to prevent camera jerk
-      const currentTargetRot = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
-      smoothBodyRotation.current = currentTargetRot;
+      miningRotationSnapshot.current = smoothBodyRotation.current;
     }
   }, [isMining]);
 
@@ -869,13 +868,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const swingOffsetX = miningAnimation.offsetX;
       const swingOffsetY = miningAnimation.offsetY;
       
-      // Determine base rotation for mining if currently mining
-      // We now smoothly blend the mining direction with the current body rotation
-      // so it doesn't "freeze" the character's orientation.
-      let miningBaseRot = bodyRotation;
-      if (isMining && miningDirection) {
-        miningBaseRot = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
-      }
+      // Use saved rotation snapshot when mining to prevent character from turning
+      let miningBaseRot = isMining ? miningRotationSnapshot.current : bodyRotation;
       
       // Draw Body and Hands
       ctx.save();
