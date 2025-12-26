@@ -178,9 +178,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const containerRef = useRef<HTMLDivElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
   const [velocity, setVelocity] = useState({ x: 0, y: 0 });
-  const [lookDir, setLookDir] = useState({ dx: 0, dy: 0 }); 
+  const [lookDir, setLookDir] = useState({ dx: 1, dy: 0 }); 
+  const lastLookDirRef = useRef({ dx: 1, dy: 0 }); 
   const smoothBodyRotation = useRef(0);
-  const smoothLookDir = useRef({ dx: 0, dy: 0 }); 
+  const smoothLookDir = useRef({ dx: 1, dy: 0 }); 
   const smoothPickaxeSide = useRef(0); 
   const lastPickaxeSide = useRef(0);
   const dashScale = useRef({ x: 1, y: 1 });
@@ -291,6 +292,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   useEffect(() => {
     // Force the character to look right initially or after reset
     setLookDir({ dx: 1, dy: 0 });
+    lastLookDirRef.current = { dx: 1, dy: 0 };
   }, []);
 
   const handleMobileMove = (dx: number, dy: number) => {
@@ -350,6 +352,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Combine keyboard and joystick, prioritizing joystick if active
       let moveX = Math.abs(joyX) > 0.01 ? joyX : dx;
       let moveY = Math.abs(joyY) > 0.01 ? joyY : dy;
+      
+      // If joystick is active but not moving yet, use last direction to avoid snapping
+      if ((Math.abs(joyX) > 0.01 || Math.abs(joyY) > 0.01) && Math.abs(moveX) < 0.001 && Math.abs(moveY) < 0.001) {
+        moveX = lastLookDirRef.current.dx;
+        moveY = lastLookDirRef.current.dy;
+      }
 
       // Normalize diagonal keyboard movement
       if (dx !== 0 && dy !== 0 && Math.abs(joyX) <= 0.01 && Math.abs(joyY) <= 0.01) {
@@ -374,6 +382,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           
           if (updatedX !== prev.x || updatedY !== prev.y) {
             setLookDir({ dx: moveX, dy: moveY });
+            lastLookDirRef.current = { dx: moveX, dy: moveY };
             return { x: updatedX, y: updatedY };
           }
           return prev;
