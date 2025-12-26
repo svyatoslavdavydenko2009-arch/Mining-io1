@@ -55,8 +55,8 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
           }}
         />
 
-        <div className="relative z-10 flex items-center justify-between mb-4">
-          <h2 className="text-primary text-xl font-semibold uppercase">Inventory</h2>
+        <div className="relative z-10 flex items-center justify-between mb-6">
+          <h2 className="text-primary text-2xl font-bold uppercase tracking-wider">Inventory</h2>
           <button
             onClick={() => onOpenChange(false)}
             className="p-1 hover:bg-secondary/20 rounded transition-colors"
@@ -66,33 +66,33 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
           </button>
         </div>
 
-        <div className="relative z-10 space-y-4">
-          <div className="border-t border-secondary/50 pt-4">
-            <p className="text-muted-foreground text-sm mb-3 font-semibold">Explorer</p>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="relative z-10 space-y-5">
+          <div className="border-t border-secondary/50 pt-5">
+            <p className="text-muted-foreground text-base mb-4 font-bold tracking-wide">Explorer</p>
+            <div className="grid grid-cols-2 gap-4 text-base">
               <div>
-                <p className="text-muted-foreground text-xs">Username</p>
-                <p className="text-foreground font-semibold">{user.username}</p>
+                <p className="text-muted-foreground text-sm mb-1">Username</p>
+                <p className="text-foreground font-bold antialiased">{user.username}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs">Playtime</p>
-                <p className="text-foreground font-semibold">{playtime}</p>
+                <p className="text-muted-foreground text-sm mb-1">Playtime</p>
+                <p className="text-foreground font-bold antialiased">{playtime}</p>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-secondary/50 pt-4">
-            <p className="text-muted-foreground text-sm mb-3 font-semibold">Inventory</p>
-            <div className="flex flex-wrap gap-6">
+          <div className="border-t border-secondary/50 pt-5">
+            <p className="text-muted-foreground text-base mb-4 font-bold tracking-wide">Inventory</p>
+            <div className="flex flex-wrap gap-8">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
                   <div key={item} className="flex flex-col items-center gap-2">
-                    <StoneIcon size={32} />
-                    <p className="text-foreground text-base font-semibold">{count}</p>
+                    <StoneIcon size={40} />
+                    <p className="text-foreground text-lg font-bold antialiased">{count}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground text-sm">Empty</p>
+                <p className="text-muted-foreground text-base">Empty</p>
               )}
             </div>
           </div>
@@ -100,7 +100,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
 
         <button
           onClick={() => onOpenChange(false)}
-          className="relative z-10 w-full mt-6 p-2 bg-black/60 hover:bg-black/80 border-2 border-secondary rounded-md text-white transition-all active:scale-95 text-sm font-semibold uppercase"
+          className="relative z-10 w-full mt-8 p-3 bg-black/60 hover:bg-black/80 border-2 border-secondary rounded-md text-white transition-all active:scale-95 text-base font-bold uppercase tracking-wide"
         >
           Close
         </button>
