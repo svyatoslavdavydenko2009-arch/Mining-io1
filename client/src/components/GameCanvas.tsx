@@ -223,6 +223,12 @@ export function GameCanvas({ user }: GameCanvasProps) {
           
           if (finalX !== prev.x || finalY !== prev.y) {
             setLookDir({ dx: finalX - prev.x, dy: finalY - prev.y });
+            // Round to nearest tile for server synchronization to prevent database errors with floating point numbers
+            const roundedX = Math.round(finalX);
+            const roundedY = Math.round(finalY);
+            if (roundedX !== Math.round(prev.x) || roundedY !== Math.round(prev.y)) {
+              // We'll let the useEffect handle the actual move mutation with rounded values
+            }
             return { x: finalX, y: finalY };
           }
           return prev;
@@ -241,8 +247,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
   useEffect(() => {
     const now = Date.now();
-    if (now - lastServerUpdate > 500 && (localPos.x !== user.x || localPos.y !== user.y)) {
-      move.mutate(localPos);
+    if (now - lastServerUpdate > 500 && (Math.round(localPos.x) !== user.x || Math.round(localPos.y) !== user.y)) {
+      move.mutate({ x: Math.round(localPos.x), y: Math.round(localPos.y) });
       setLastServerUpdate(now);
     }
   }, [localPos, user.x, user.y, move]);
@@ -464,7 +470,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
   return (
     <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl">
       <canvas ref={canvasRef} onClick={handleCanvasClick} className="w-full h-full cursor-crosshair active:cursor-grabbing" />
-      <div className="absolute top-4 left-4 font-pixel text-white text-xs opacity-70">X: {localPos.x} Y: {localPos.y}</div>
       <AnimatePresence>{cooldownProgress < 1 && (
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }} className="absolute top-[calc(50%+28px)] left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 border border-secondary rounded-full overflow-hidden shadow-[0_0_10px_rgba(0,0,0,0.5)]">
           <motion.div className="h-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]" initial={{ width: "0%" }} animate={{ width: `${cooldownProgress * 100}%` }} transition={{ duration: 0.1 }} />
