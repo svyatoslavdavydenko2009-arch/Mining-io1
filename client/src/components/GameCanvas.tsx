@@ -819,13 +819,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
 
-      // Left hand (holding pickaxe) - now with animation
+      // Left hand (holding pickaxe) - synchronized with swing
       ctx.save();
       // Move pivot to center, then apply same swing rotation as pickaxe
       ctx.translate(-handOffsetSide, -handOffsetFront);
-      // Synchronize hand rotation with mining animation
-      const handSwing = isMining ? (miningRotation * Math.PI / 180) : 0;
-      ctx.rotate(-(Math.PI / 4) + handSwing);
+      // Continuous synchronization with miningRotation
+      ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
       ctx.beginPath();
       ctx.arc(0, 0, handSize, 0, Math.PI * 2);
       ctx.fill();
