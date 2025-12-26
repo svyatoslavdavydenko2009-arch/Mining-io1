@@ -23,13 +23,14 @@ function pseudoRandom(x: number, y: number) {
   return sin - Math.floor(sin);
 }
 
-// Organic floor noise for biomes
+// Organic floor noise for biomes with larger 20x20-like patches
 function getFloorColor(x: number, y: number): string {
-  const val = pseudoRandom(x * 0.1 + WORLD_SEED, y * 0.1 + WORLD_SEED);
-  if (val > 0.8) return "#16130e"; // Extra dark patch
-  if (val > 0.5) return "#1e1a14"; // Default dark earth
-  if (val > 0.2) return "#252119"; // Slightly lighter earth
-  return "#2c2820"; // Lightest earth patch
+  // Use a much smaller multiplier (0.05 instead of 0.1) for larger patches
+  const val = pseudoRandom(Math.floor(x / 10) * 0.5 + WORLD_SEED, Math.floor(y / 10) * 0.5 + WORLD_SEED);
+  if (val > 0.75) return "#3d2b1f"; // Lighter brown patch
+  if (val > 0.5) return "#322319";  // Medium brown patch
+  if (val > 0.25) return "#2b1e15"; // Default dark brown
+  return "#1e150f"; // Deep brown patch
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
@@ -286,8 +287,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
       
       const targetSide = lookDir.dx < 0 ? 1 : 0;
       smoothPickaxeSide.current += (targetSide - smoothPickaxeSide.current) * 0.05;
-      const switchingSpeed = Math.abs(targetSide - smoothPickaxeSide.current);
-      const isSwitching = switchingSpeed > 0.01;
+      
+      // Calculate how close the pickaxe is to the center of the body (0.5 side value)
+      const distanceFromCenter = Math.abs(smoothPickaxeSide.current - 0.5);
+      const isNearCenter = distanceFromCenter < 0.2; 
 
       dashScale.current.x += (1 - dashScale.current.x) * 0.15;
       dashScale.current.y += (1 - dashScale.current.y) * 0.15;
@@ -295,7 +298,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       const displayPos = smoothedPos.current; const playerPos = displayPlayerPos.current;
       const cx = rect.width / 2; const cy = rect.height / 2;
       
-      ctx.fillStyle = "#1e1a14"; ctx.fillRect(0, 0, rect.width, rect.height);
+      ctx.fillStyle = "#1e150f"; ctx.fillRect(0, 0, rect.width, rect.height);
 
       const drawRadius = 10;
       for (let dy = -drawRadius; dy <= drawRadius; dy++) {
@@ -329,27 +332,16 @@ export function GameCanvas({ user }: GameCanvasProps) {
       
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       
-      if (isSwitching) {
-          for (let i = 0; i < 3; i++) {
-              ctx.save();
-              const offset = (i - 1) * switchingSpeed * 10;
-              const blurredSide = smoothPickaxeSide.current + offset;
-              const blurAlpha = 0.3 - (i * 0.1);
-              ctx.globalAlpha = blurAlpha;
-              ctx.translate((pSize / 2) * (1 - blurredSide * 2), 0); 
-              ctx.scale(1 - blurredSide * 2, 1);
-              ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
-              const hY = -24; ctx.beginPath(); ctx.moveTo(-14, hY + 4); ctx.quadraticCurveTo(0, hY - 8, 14, hY + 4); ctx.lineTo(10, hY + 6); ctx.quadraticCurveTo(0, hY - 2, -10, hY + 6); ctx.closePath();
-              ctx.fillStyle = pickaxeColor; ctx.fill();
-              ctx.beginPath(); ctx.moveTo(0, hY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
-              ctx.restore();
-          }
-      }
-      
       ctx.save(); 
       const side = smoothPickaxeSide.current; 
       ctx.translate((pSize / 2) * (1 - side * 2), 0); 
       ctx.scale(1 - side * 2, 1);
+      
+      // Add blur filter when passing through middle
+      if (isNearCenter) {
+          ctx.filter = "blur(2px)";
+      }
+      
       ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
       const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
       ctx.fillStyle = pickaxeColor; ctx.fill();
