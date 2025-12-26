@@ -970,8 +970,26 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.closePath();
       ctx.stroke();
 
-      ctx.fillStyle = pickaxeColor; 
+      // Create a gradient for the head texture (inner shadow/depth)
+      const headGrad = ctx.createLinearGradient(-14, headY, 14, headY + 6);
+      headGrad.addColorStop(0, "rgba(0,0,0,0.2)"); // Darker side
+      headGrad.addColorStop(0.2, pickaxeColor);
+      headGrad.addColorStop(0.8, pickaxeColor);
+      headGrad.addColorStop(1, "rgba(0,0,0,0.2)"); // Darker side
+      
+      ctx.fillStyle = headGrad; 
       ctx.fill();
+      
+      // Add an inner "light" layer to match the look in the photo
+      ctx.beginPath();
+      ctx.moveTo(-10, headY + 3);
+      ctx.quadraticCurveTo(0, headY - 5, 10, headY + 3);
+      ctx.lineTo(8, headY + 4);
+      ctx.quadraticCurveTo(0, headY - 1, -8, headY + 4);
+      ctx.closePath();
+      ctx.fillStyle = pickaxeColor;
+      ctx.fill();
+      
       ctx.restore();
       
       ctx.restore();
