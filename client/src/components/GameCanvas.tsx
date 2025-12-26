@@ -441,29 +441,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       let offX = 0;
       let offY = 0;
 
-      if (progress < 0.5) {
-        // Slowed down wind up with easing
-        const p = progress / 0.5;
+      if (progress < 0.4) {
+        // Wind up backwards (to the left/back for left hand)
+        const p = progress / 0.4;
         const easedP = p * p;
         rot = easedP * -50; 
-        offX = -Math.sin(easedP * Math.PI / 4) * 8;
-        offY = (1 - Math.cos(easedP * Math.PI / 4)) * 5;
-      } else if (progress < 0.8) {
-        // Faster swing forward with elastic feel
-        const p = (progress - 0.5) / 0.3;
+      } else if (progress < 0.6) {
+        // Fast swing forward (from 40% to 60%)
+        const p = (progress - 0.4) / 0.2;
         const easedP = p * p * (3 - 2 * p);
         rot = -50 + (easedP * 110);
-        
-        const angle = (-50 + (easedP * 110)) * Math.PI / 180;
-        offX = Math.sin(angle) * 10;
-        offY = -Math.cos(angle) * 5 + 5;
+      } else if (progress < 0.8) {
+        // Hold the impact position (from 60% to 80%)
+        rot = 60;
       } else {
-        // Slow return to neutral (increased time/reduced speed)
+        // Very slow return to neutral (from 80% to 100%)
         const p = (progress - 0.8) / 0.2;
-        const easedP = 1 - Math.pow(1 - p, 3); // More dramatic easing
+        const easedP = 1 - Math.pow(1 - p, 4); // Even smoother cubic easing
         rot = 60 * (1 - easedP);
-        offX = Math.sin(60 * Math.PI / 180 * (1 - easedP)) * 5;
-        offY = (1 - Math.cos(60 * Math.PI / 180 * (1 - easedP))) * 3;
       }
       
       setMiningAnimation({ rotation: rot, offsetX: 0, offsetY: 0 });
@@ -807,12 +802,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.lineWidth = 1.5;
 
       // Draw Body
-      ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#fbbf24";
+      ctx.strokeStyle = "rgba(0,0,0,0.3)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
 
       // Eyes
       ctx.fillStyle = "black";
-      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.2)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       
       ctx.restore(); // Restore body rotation
 
