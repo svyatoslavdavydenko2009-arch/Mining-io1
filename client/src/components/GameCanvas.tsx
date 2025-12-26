@@ -310,6 +310,75 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     setParticles(prev => [...prev, ...newParticles]);
   };
 
+  const performMining = (targetX: number, targetY: number) => {
+    const resource = getTileAt(targetX, targetY);
+    if (!resource || isTileMined(targetX, targetY)) return;
+
+    const dx = targetX - localPos.x;
+    const dy = targetY - localPos.y;
+    const normalizedDx = dx !== 0 ? Math.sign(dx) : 0;
+    const normalizedDy = dy !== 0 ? Math.sign(dy) : 0;
+    
+    if (normalizedDx !== 0) {
+      setLookDir({ dx: normalizedDx, dy: 0 });
+    } else if (normalizedDy !== 0) {
+      setLookDir({ dx: 0, dy: normalizedDy });
+    }
+
+    if (Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y)) > 1) return;
+
+    const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
+    if (isMining || Date.now() - lastMineTime.current < cooldown) return;
+    const resDef = RESOURCES[resource];
+    if (user.pickaxeLevel < resDef.minPickaxeLevel) {
+      toast({ title: "Pickaxe too weak!", variant: "destructive" });
+      return;
+    }
+    setIsMining(true);
+    setMiningTarget({ x: targetX, y: targetY });
+    let animStartTime = performance.now();
+    const animateMining = (time: number) => {
+      const elapsed = time - animStartTime;
+      const progress = Math.min(elapsed / 1000, 1);
+      setMiningRotation(progress < 0.75 ? (progress / 0.75) * -55 : -55 + (((progress - 0.75) / 0.25) * 120));
+      if (progress < 1) requestAnimationFrame(animateMining);
+      else {
+        const key = `${targetX},${targetY}`;
+        const newHealth = (getTileHealth(targetX, targetY) || RESOURCE_HEALTH[resource]) - 1;
+        setTileHealth(prev => ({ ...prev, [key]: newHealth }));
+        if (newHealth <= 0) {
+          createParticles(targetX, targetY, resDef.color);
+          mine.mutate(resource, { onSuccess: () => {
+            const id = Date.now();
+            setMiningNotifications(prev => [...prev, { id, resource, x: targetX, y: targetY }]);
+            setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
+            setMiningTarget(null);
+          }});
+          setMinedTiles(prev => new Set(prev).add(key));
+        } else setMiningTarget(null);
+        let returnStartTime = performance.now();
+        const animateReturn = (t: number) => {
+          const p = Math.min((t - returnStartTime) / 400, 1);
+          setMiningRotation(65 * (1 - p));
+          if (p < 1) requestAnimationFrame(animateReturn);
+          else { setIsMining(false); setMiningRotation(0); lastMineTime.current = Date.now(); setCooldownProgress(0); const cs = Date.now(); const uc = () => { const el = Date.now() - cs; const cp = Math.min(el/cooldown, 1); setCooldownProgress(cp); if (cp < 1) requestAnimationFrame(uc); }; requestAnimationFrame(uc); }
+        };
+        requestAnimationFrame(animateReturn);
+      }
+    };
+    requestAnimationFrame(animateMining);
+  };
+
+  const handleMineButtonClick = () => {
+    if (lookDir.dx === 0 && lookDir.dy === 0) {
+      toast({ title: "Face a direction first!", variant: "destructive" });
+      return;
+    }
+    const targetX = localPos.x + lookDir.dx;
+    const targetY = localPos.y + lookDir.dy;
+    performMining(targetX, targetY);
+  };
+
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
