@@ -967,7 +967,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       }
       
       // Apply damping factor to hand animation for smooth decay
-      const handBob = Math.sin(walkCycle.current) * 4 * armDampingFactor.current;
+      const handBob = Math.sin(walkCycle.current) * 2 * armDampingFactor.current;
 
       // Draw Pickaxe
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
