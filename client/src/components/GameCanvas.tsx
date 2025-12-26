@@ -433,7 +433,33 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       setMiningTarget({ x: mainTarget.x, y: mainTarget.y });
     }
 
+    const hitProcessed = useRef(false);
+    const processMiningHit = () => {
+      targets.forEach(t => {
+        const key = `${t.x},${t.y}`;
+        const newHealth = (getTileHealth(t.x, t.y) || RESOURCE_HEALTH[t.resource]) - 1;
+        setTileHealth(prev => ({ ...prev, [key]: newHealth }));
+        
+        if (newHealth <= 0) {
+          const resDef = RESOURCES[t.resource];
+          if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
+            createParticles(t.x, t.y, resDef.color);
+            mine.mutate(t.resource, { onSuccess: () => {
+              const id = Date.now() + Math.random();
+              setMiningNotifications(prev => [...prev, { id, resource: t.resource, x: t.x, y: t.y }]);
+              setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
+            }});
+            setMinedTiles(prev => new Set(prev).add(key));
+          } else {
+            toast({ title: `Pickaxe too weak for ${resDef.name}!`, variant: "destructive" });
+          }
+        }
+      });
+      setMiningTarget(null);
+    };
+
     let animStartTime = performance.now();
+    hitProcessed.current = false;
     const animateMining = (time: number) => {
       const elapsed = time - animStartTime;
       const totalDuration = 1620; // Increased total duration by 35% (1200 * 1.35)
@@ -443,53 +469,33 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       let offX = 0;
       let offY = 0;
 
-      if (progress < 0.4) {
-        // Wind up backwards with smoother cubic easing
-        const p = progress / 0.4;
+      if (progress < 0.35) {
+        // Wind up backwards (to the left/back for left hand)
+        const p = progress / 0.35;
         const easedP = p * p * p;
         rot = easedP * -50; 
-      } else if (progress < 0.6) {
-        // Fast swing forward with elastic easing for "impact"
-        const p = (progress - 0.4) / 0.2;
+      } else if (progress < 0.55) {
+        // Fast swing forward (from 35% to 55%)
+        const p = (progress - 0.35) / 0.2;
         const easedP = p * p * (3 - 2 * p); // Smoothstep
         rot = -50 + (easedP * 110);
-      } else if (progress < 0.7) { // Hold impact for 10% of total time
-        // Hold impact for longer
-        rot = 60;
       } else {
-        // Much slower and extra smooth return to neutral (30% of total time)
-        const p = (progress - 0.7) / 0.3;
+        // Slow return to neutral (45% of total time)
+        const p = (progress - 0.55) / 0.45;
         const easedP = 1 - Math.pow(1 - p, 4); // Quartic easing for maximum smoothness
         rot = 60 * (1 - easedP);
       }
       
       setMiningAnimation({ rotation: rot, offsetX: 0, offsetY: 0 });
       
+      // Sync damage application with the hit moment (0.55 progress)
+      if (progress >= 0.55 && !hitProcessed.current) {
+        hitProcessed.current = true;
+        processMiningHit();
+      }
+      
       if (progress < 1) requestAnimationFrame(animateMining);
       else {
-        // Process all targets in radius at the end of swing
-        targets.forEach(t => {
-          const key = `${t.x},${t.y}`;
-          const newHealth = (getTileHealth(t.x, t.y) || RESOURCE_HEALTH[t.resource]) - 1;
-          setTileHealth(prev => ({ ...prev, [key]: newHealth }));
-          
-          if (newHealth <= 0) {
-            const resDef = RESOURCES[t.resource];
-            if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
-              createParticles(t.x, t.y, resDef.color);
-              mine.mutate(t.resource, { onSuccess: () => {
-                const id = Date.now() + Math.random();
-                setMiningNotifications(prev => [...prev, { id, resource: t.resource, x: t.x, y: t.y }]);
-                setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
-              }});
-              setMinedTiles(prev => new Set(prev).add(key));
-            } else {
-              toast({ title: `Pickaxe too weak for ${resDef.name}!`, variant: "destructive" });
-            }
-          }
-        });
-        setMiningTarget(null);
-
         // Process mining completion directly
         const now = Date.now();
         setIsMining(false);
