@@ -9,7 +9,11 @@ import { Pickaxe, Hammer, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } fr
 const TILE_SIZE = 48; 
 const VIEW_RADIUS = 8; 
 const WORLD_SEED = 12345;
-const PLAYER_COLLISION_RADIUS_SQ = 0.444; // Full character coverage: 32px character / 48px tile = 0.666 radius, squared = 0.444 
+const PLAYER_SIZE = 32; // Player is 32px circle
+const ROCK_SIZE = 32; // Rock is 32px hexagon
+const PLAYER_COLLISION_RADIUS = PLAYER_SIZE / TILE_SIZE / 2; // 0.333 tiles
+const ROCK_COLLISION_RADIUS = ROCK_SIZE / TILE_SIZE / 2 * 0.9; // 0.3 tiles (90% for tighter collision)
+const COLLISION_DISTANCE_SQ = Math.pow(PLAYER_COLLISION_RADIUS + ROCK_COLLISION_RADIUS, 2); // (0.333 + 0.3)^2 = 0.402 
 
 const RESOURCE_HEALTH: Record<ResourceType, number> = {
   stone: 2,
@@ -168,10 +172,11 @@ export function GameCanvas({ user }: GameCanvasProps) {
             const distDy = y - centerY;
             const distSq = distDx * distDx + distDy * distDy;
             
-            // RockSize is 32px, TILE_SIZE is 48px, Player is 32px (pSize = TILE_SIZE - 16).
-            // Both use 0.666 radius in tiles for full collision coverage.
-            // distSq should be < (0.666)^2 = 0.444.
-            if (distSq < PLAYER_COLLISION_RADIUS_SQ) return true;
+            // Collision detection: sum of radii
+            // Player radius: 32px/2 = 16px = 0.333 tiles
+            // Rock radius: 32px/2 = 16px = 0.333 tiles
+            // Collision distance: 0.333 + 0.333 = 0.666 tiles, squared = 0.444
+            if (distSq < COLLISION_DISTANCE_SQ) return true;
           }
         }
       }
