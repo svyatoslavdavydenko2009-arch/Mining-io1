@@ -617,9 +617,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       displayPlayerPos.current.x += (localPos.x - displayPlayerPos.current.x) * 0.2;
       displayPlayerPos.current.y += (localPos.y - displayPlayerPos.current.y) * 0.2;
       
-      // Increased smoothness for character rotation (lowered factor from 0.15 to 0.08)
-      smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * 0.08;
-      smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * 0.08;
+      // Smooth look direction - responsive to joystick input
+      smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * 0.15;
+      smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * 0.15;
       
       let targetSide = lookDir.dx < 0 ? 1 : 0;
       if (Math.abs(lookDir.dy) > Math.abs(lookDir.dx) && lookDir.dy < 0) {
@@ -853,12 +853,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Determine target rotation based on look direction
       let targetRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
       
-      // Much smoother and slower interpolation for body rotation
-      // Lowered factor from 0.15 to 0.04 for that "heavy" cinematic turn feel
+      // Smooth body rotation - responsive to joystick changes
       let diff = targetRotation - smoothBodyRotation.current;
       while (diff < -Math.PI) diff += Math.PI * 2;
       while (diff > Math.PI) diff -= Math.PI * 2;
-      smoothBodyRotation.current += diff * 0.04;
+      smoothBodyRotation.current += diff * 0.14;
       const bodyRotation = smoothBodyRotation.current;
       
       // Mining swing animation: we calculate it once to use for both pickaxe and hand
