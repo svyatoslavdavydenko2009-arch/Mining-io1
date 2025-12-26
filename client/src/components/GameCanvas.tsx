@@ -406,10 +406,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
     if (isMining || Date.now() - lastMineTime.current < cooldown) return;
     
-    // Set mining direction for animation
-    const dirX = targetX - localPos.x;
-    const dirY = targetY - localPos.y;
-    setMiningDirection({ x: dirX, y: dirY });
+    // Set mining direction for animation to match current look direction
+    setMiningDirection({ x: lookDir.dx, y: lookDir.dy });
     
     // Use rounded player position for all calculations
     const playerTileX = Math.round(localPos.x);
