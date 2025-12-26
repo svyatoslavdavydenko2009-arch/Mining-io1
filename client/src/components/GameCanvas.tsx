@@ -453,13 +453,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const p = (progress - 0.4) / 0.2;
         const easedP = p * p * (3 - 2 * p); // Smoothstep
         rot = -50 + (easedP * 110);
-      } else if (progress < 0.75) { // Increased hold time from 0.7
+      } else if (progress < 0.7) { // Hold impact slightly less to give more time to return
         // Hold impact for longer
         rot = 60;
       } else {
-        // Very slow and extra smooth return to neutral
-        const p = (progress - 0.75) / 0.25;
-        const easedP = 1 - Math.pow(1 - p, 5); // Quintic easing for maximum smoothness
+        // Much slower and extra smooth return to neutral (from 70% to 100%)
+        const p = (progress - 0.7) / 0.3;
+        const easedP = 1 - Math.pow(1 - p, 4); // Quartic easing for maximum smoothness
         rot = 60 * (1 - easedP);
       }
       
