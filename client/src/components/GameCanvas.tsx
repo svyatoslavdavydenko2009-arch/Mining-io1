@@ -69,11 +69,11 @@ function getFloorColor(x: number, y: number): string {
 
 function getTileAt(x: number, y: number): ResourceType | null {
   const noise = getNoise(x, y, 0.1);
-  // Stone appears in brown biomes with some frequency
+  // Stone appears rarely in brown biomes - only single tiles spread far apart
   const greyNoise = getNoise(x + 5000, y + 5000, 0.08);
   if (greyNoise <= 0.83 && noise > 0.3) {
-    const tileNoise = getNoise(x + 1000, y + 1000, 0.15);
-    if (tileNoise > 0.6) return "stone";
+    const tileNoise = getNoise(x + 1000, y + 1000, 0.08); // Lower frequency = rarer, more spread out
+    if (tileNoise > 0.85) return "stone"; // Higher threshold = fewer stones, only lonely ones
   }
   return null;
 }
@@ -153,7 +153,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
   const hasCollision = (x: number, y: number): boolean => {
-    // Hexagon rock collision in grey biome
+    // Hexagon rock collision in grey biome + Stone resource collision
     // We check a 3x3 grid around the precise position
     const tx = Math.floor(x);
     const ty = Math.floor(y);
@@ -162,6 +162,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       for (let dx = -1; dx <= 1; dx++) {
         const ntx = tx + dx;
         const nty = ty + dy;
+        
+        // Check hexagon rocks in grey biome
         const greyNoise = getNoise(ntx + 5000, nty + 5000, 0.08);
         if (greyNoise > 0.83) {
           const rockSeed = pseudoRandom(ntx + 777, nty + 777);
@@ -179,21 +181,26 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             }
             if (hasNeighbor) continue;
 
-            // Accurate center calculation to match rendering sx/sy
-            // Rendering uses sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2
-            // Which means the tile's visual center is wx, wy
             const centerX = ntx;
             const centerY = nty;
             const distDx = x - centerX;
             const distDy = y - centerY;
             const distSq = distDx * distDx + distDy * distDy;
             
-            // Collision detection: sum of radii
-            // Player radius: 32px/2 = 16px = 0.333 tiles
-            // Rock radius: 32px/2 = 16px = 0.333 tiles
-            // Collision distance: 0.333 + 0.333 = 0.666 tiles, squared = 0.444
             if (distSq < COLLISION_DISTANCE_SQ) return true;
           }
+        }
+        
+        // Check stone resource tiles
+        const resource = getTileAt(ntx, nty);
+        if (resource === "stone" && !isTileMined(ntx, nty)) {
+          const centerX = ntx;
+          const centerY = nty;
+          const distDx = x - centerX;
+          const distDy = y - centerY;
+          const distSq = distDx * distDx + distDy * distDy;
+          
+          if (distSq < COLLISION_DISTANCE_SQ) return true;
         }
       }
     }
