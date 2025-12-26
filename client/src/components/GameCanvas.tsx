@@ -436,27 +436,27 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       let offY = 0;
 
       if (progress < 0.3) {
-        // Wind up backwards and outwards
+        // Wind up backwards and inwards (curving towards body)
         const p = progress / 0.3;
         rot = p * -60;
-        offX = p * -4;
-        offY = p * -2;
+        offX = p * 6; // Move right (towards body center)
+        offY = p * -4; // Move slightly back
       } else if (progress < 0.8) {
-        // Powerful elliptical swing forward
+        // Powerful elliptical swing forward (curving around the body)
         const p = (progress - 0.3) / 0.5;
         const easedP = p * p * (3 - 2 * p);
         rot = -60 + (easedP * 150);
         
-        // Ellipse path - smaller offsets to keep hand attached
+        // Ellipse path - curving inwards and then back out
         const angle = easedP * Math.PI;
-        offX = -4 + Math.sin(angle) * 8;
-        offY = -2 + (1 - Math.cos(angle)) * 4;
+        offX = 6 - Math.sin(angle) * 14; // Start right, swing left
+        offY = -4 + (1 - Math.cos(angle)) * 12; // Swing forward
       } else {
         // Settle at the end
         const p = (progress - 0.8) / 0.2;
         rot = 90 - (p * 20);
-        offX = 4 * (1 - p);
-        offY = 6 * (1 - p);
+        offX = -8 * (1 - p);
+        offY = 20 * (1 - p);
       }
       
       setMiningAnimation({ rotation: rot, offsetX: offX, offsetY: offY });
@@ -829,8 +829,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Adjusted translation to align the handle with the left hand
       ctx.translate(-handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY); 
-      // Base rotation of -80 degrees (converted to radians) + swing
-      ctx.rotate(-(80 * Math.PI / 180) + swingAngle);
+      // Base rotation of -90 degrees (facing forward/left relative to body) + swing
+      ctx.rotate(-(90 * Math.PI / 180) + swingAngle);
       
       const headY = -24; 
       ctx.beginPath(); 
@@ -857,12 +857,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // The hand should pivot around its shoulder point and follow the pickaxe exactly
       ctx.translate(-handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY);
       
-      // Apply the EXACT SAME rotation as the pickaxe (Base -80 deg + swing)
+      // Apply the EXACT SAME rotation as the pickaxe (Base -90 deg + swing)
       if (isMining) {
-        ctx.rotate(-(80 * Math.PI / 180) + swingAngle);
+        ctx.rotate(-(90 * Math.PI / 180) + swingAngle);
       } else {
-        // When not mining, stay at -80 deg
-        ctx.rotate(-(80 * Math.PI / 180));
+        // When not mining, stay at -90 deg
+        ctx.rotate(-(90 * Math.PI / 180));
       }
 
       // Draw hand circle centered at (0,0)
