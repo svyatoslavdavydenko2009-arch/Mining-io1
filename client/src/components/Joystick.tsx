@@ -9,9 +9,15 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
   const [knobPos, setKnobPos] = useState({ x: 0, y: 0 });
   const [isActive, setIsActive] = useState(false);
   const baseRef = useRef<HTMLDivElement>(null);
+  const activeTouchId = useRef<number | null>(null);
   const radius = 40;
 
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    if ('touches' in e) {
+      activeTouchId.current = e.touches[0].identifier;
+    } else {
+      activeTouchId.current = -1; // Mouse has identifier -1
+    }
     setIsActive(true);
     handleUpdate(e);
   };
@@ -44,29 +50,43 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
     if (!isActive) return;
 
     const onMoveAny = (e: MouseEvent | TouchEvent) => {
-      // Don't prevent default if we're clicking outside the joystick base
-      // to allow interactions with other elements (like the mine button)
-      // e.preventDefault(); 
       handleUpdate(e);
     };
     
-    const onEndAny = () => {
+    const onEndAny = (e: MouseEvent | TouchEvent) => {
+      // Only reset if the active touch/mouse that started the joystick has ended
+      if ('changedTouches' in e) {
+        // For touch events, check if the touch that was tracked has ended
+        let touchEnded = false;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === activeTouchId.current) {
+            touchEnded = true;
+            break;
+          }
+        }
+        if (!touchEnded) return;
+      } else {
+        // For mouse events, always reset (we only track one mouse)
+        if (activeTouchId.current !== -1) return;
+      }
+      
       setIsActive(false);
       setKnobPos({ x: 0, y: 0 });
       onMove(0, 0);
       onEnd();
+      activeTouchId.current = null;
     };
 
-    window.addEventListener("mousemove", onMoveAny);
-    window.addEventListener("mouseup", onEndAny);
-    window.addEventListener("touchmove", onMoveAny, { passive: false });
-    window.addEventListener("touchend", onEndAny);
+    window.addEventListener("mousemove", onMoveAny as EventListener);
+    window.addEventListener("mouseup", onEndAny as EventListener);
+    window.addEventListener("touchmove", onMoveAny as EventListener, { passive: false });
+    window.addEventListener("touchend", onEndAny as EventListener);
 
     return () => {
-      window.removeEventListener("mousemove", onMoveAny);
-      window.removeEventListener("mouseup", onEndAny);
-      window.removeEventListener("touchmove", onMoveAny);
-      window.removeEventListener("touchend", onEndAny);
+      window.removeEventListener("mousemove", onMoveAny as EventListener);
+      window.removeEventListener("mouseup", onEndAny as EventListener);
+      window.removeEventListener("touchmove", onMoveAny as EventListener);
+      window.removeEventListener("touchend", onEndAny as EventListener);
     };
   }, [isActive]);
 
