@@ -925,6 +925,28 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(-(90 * Math.PI / 180));
       
       const headY = -24; 
+      
+      // Draw handle first (behind the head)
+      ctx.save();
+      // Draw handle outline (black stroke on all sides of the line)
+      ctx.strokeStyle = "rgba(0,0,0,0.6)";
+      ctx.lineWidth = 7; 
+      ctx.beginPath(); 
+      ctx.moveTo(0, headY); 
+      ctx.lineTo(0, 0); 
+      ctx.stroke();
+
+      // Inner handle color
+      ctx.beginPath(); 
+      ctx.moveTo(0, headY); 
+      ctx.lineTo(0, 0); 
+      ctx.strokeStyle = "#5D4037"; 
+      ctx.lineWidth = 4; 
+      ctx.stroke();
+      ctx.restore();
+
+      // Draw head on top of the handle
+      ctx.save();
       // Draw outline for head
       ctx.strokeStyle = "rgba(0,0,0,0.6)";
       ctx.lineWidth = 3;
@@ -938,23 +960,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       ctx.fillStyle = pickaxeColor; 
       ctx.fill();
+      ctx.restore();
       
-      // The handle starts from the hand (0,0 now due to translate)
-      // Draw handle outline (black stroke on all sides of the line)
-      ctx.strokeStyle = "rgba(0,0,0,0.6)";
-      ctx.lineWidth = 7; // Thicker for visible outline on both sides
-      ctx.beginPath(); 
-      ctx.moveTo(0, headY); 
-      ctx.lineTo(0, 0); 
-      ctx.stroke();
-
-      // Inner handle color
-      ctx.beginPath(); 
-      ctx.moveTo(0, headY); 
-      ctx.lineTo(0, 0); 
-      ctx.strokeStyle = "#5D4037"; 
-      ctx.lineWidth = 4; 
-      ctx.stroke();
       ctx.restore();
 
       // Drawing Left Hand (Holding Pickaxe)
