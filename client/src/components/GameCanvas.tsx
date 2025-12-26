@@ -377,8 +377,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   useEffect(() => {
     const now = Date.now();
     // Reduce update frequency and distance threshold to prevent jitter
+    // Ensure we send rounded integers to the server to match schema
     if (now - lastServerUpdate > 100 && (Math.abs(localPos.x - user.x) > 0.01 || Math.abs(localPos.y - user.y) > 0.01)) {
-      move.mutate({ x: localPos.x, y: localPos.y });
+      move.mutate({ x: Math.round(localPos.x), y: Math.round(localPos.y) });
       setLastServerUpdate(now);
     }
   }, [localPos, user.x, user.y, move]);
@@ -457,9 +458,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         offX = Math.sin(angle) * 10;
         offY = -Math.cos(angle) * 5 + 5;
       } else {
-        // Smooth return to neutral
+        // Slow return to neutral (increased time/reduced speed)
         const p = (progress - 0.8) / 0.2;
-        const easedP = 1 - Math.pow(1 - p, 2);
+        const easedP = 1 - Math.pow(1 - p, 3); // More dramatic easing
         rot = 60 * (1 - easedP);
         offX = Math.sin(60 * Math.PI / 180 * (1 - easedP)) * 5;
         offY = (1 - Math.cos(60 * Math.PI / 180 * (1 - easedP))) * 3;
