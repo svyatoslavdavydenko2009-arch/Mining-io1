@@ -647,6 +647,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             if (resType) {
               const res = RESOURCES[resType]; 
               
+              // Deterministic visual offset for variety
+              const offsetX = (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12;
+              const offsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12;
+              const dsx = sx + offsetX;
+              const dsy = sy + offsetY;
+
               // Draw outline
               ctx.strokeStyle = "rgba(0,0,0,0.4)";
               ctx.lineWidth = 2;
@@ -655,8 +661,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.fillStyle = "#444";
                 // Draw pentagon for stone with random rotation
                 ctx.beginPath();
-                const centerX = sx + TILE_SIZE / 2;
-                const centerY = sy + TILE_SIZE / 2;
+                const centerX = dsx + TILE_SIZE / 2;
+                const centerY = dsy + TILE_SIZE / 2;
                 const radius = (TILE_SIZE - 8) / 2;
                 // Deterministic random rotation based on tile position
                 const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
@@ -672,18 +678,21 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.stroke();
               } else {
                 ctx.fillStyle = "#444";
-                ctx.beginPath(); ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
+                ctx.beginPath(); ctx.roundRect(dsx + 4, dsy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
                 ctx.stroke();
               }
               
               if (resType !== "stone") {
-                ctx.fillStyle = res.color; ctx.fillRect(sx + 10, sy + 10, 8, 8); ctx.fillRect(sx + 24, sy + 16, 6, 6); ctx.fillRect(sx + 16, sy + 28, 8, 8);
+                ctx.fillStyle = res.color; 
+                ctx.fillRect(dsx + 10, dsy + 10, 8, 8); 
+                ctx.fillRect(dsx + 24, dsy + 16, 6, 6); 
+                ctx.fillRect(dsx + 16, dsy + 28, 8, 8);
               }
               
               const h = tileHealth[`${wx},${wy}`] || RESOURCE_HEALTH[resType]; const mh = RESOURCE_HEALTH[resType];
               if (h < mh) {
-                const hp = h / mh; ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.beginPath(); ctx.roundRect(sx + 4, sy + TILE_SIZE - 8, TILE_SIZE - 8, 5, 2); ctx.fill();
-                ctx.fillStyle = hp > 0.5 ? "#22c55e" : hp > 0.25 ? "#eab308" : "#ef4444"; ctx.beginPath(); ctx.roundRect(sx + 4, sy + TILE_SIZE - 8, (TILE_SIZE - 8) * hp, 5, 2); ctx.fill();
+                const hp = h / mh; ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.beginPath(); ctx.roundRect(dsx + 4, dsy + TILE_SIZE - 8, TILE_SIZE - 8, 5, 2); ctx.fill();
+                ctx.fillStyle = hp > 0.5 ? "#22c55e" : hp > 0.25 ? "#eab308" : "#ef4444"; ctx.beginPath(); ctx.roundRect(dsx + 4, dsy + TILE_SIZE - 8, (TILE_SIZE - 8) * hp, 5, 2); ctx.fill();
               }
             } else {
               // Draw hexagon rocks in grey biome
@@ -704,14 +713,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   }
                   
                   if (!hasNeighbor) {
+                    // Deterministic visual offset for rocks
+                    const offsetX = (pseudoRandom(wx + 888, wy + 888) - 0.5) * 16;
+                    const offsetY = (pseudoRandom(wx + 999, wy + 999) - 0.5) * 16;
+                    const dsx = sx + offsetX;
+                    const dsy = sy + offsetY;
+
                     ctx.fillStyle = "#333";
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
                     ctx.beginPath();
                     const rockSize = 32;
-                    // Visual offset to center the hexagon on the tile center (sx + TILE_SIZE/2, sy + TILE_SIZE/2)
-                    const renderCenterX = sx + TILE_SIZE / 2;
-                    const renderCenterY = sy + TILE_SIZE / 2;
+                    // Visual offset to center the hexagon on the tile center (dsx + TILE_SIZE/2, dsy + TILE_SIZE/2)
+                    const renderCenterX = dsx + TILE_SIZE / 2;
+                    const renderCenterY = dsy + TILE_SIZE / 2;
                     for (let i = 0; i < 6; i++) {
                       const angle = (Math.PI / 3) * i;
                       const hx = renderCenterX + Math.cos(angle) * rockSize;
