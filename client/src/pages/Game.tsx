@@ -39,7 +39,7 @@ export default function Game() {
             <DropdownMenuItem 
               data-testid="button-logout"
               onClick={() => logout.mutate()}
-              className="flex items-center gap-2 text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer font-pixel text-xs py-2"
+              className="flex items-center gap-2 text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer font-sans text-xs py-2"
             >
               <LogOut size={16} />
               EXIT TO MENU
