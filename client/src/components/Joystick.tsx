@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 interface JoystickProps {
   onMove: (dx: number, dy: number) => void;
@@ -7,64 +7,13 @@ interface JoystickProps {
 
 export function Joystick({ onMove, onEnd }: JoystickProps) {
   const [knobPos, setKnobPos] = useState({ x: 0, y: 0 });
-  const [isActive, setIsActive] = useState(false);
   const baseRef = useRef<HTMLDivElement>(null);
-  const activeTouchIdRef = useRef<number | null>(null);
-  const startCenterRef = useRef({ x: 0, y: 0 });
+  const centerRef = useRef({ x: 0, y: 0 });
   const radius = 40;
 
-  const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!baseRef.current) return;
-    
-    const rect = baseRef.current.getBoundingClientRect();
-    startCenterRef.current = {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2
-    };
-    
-    if ('touches' in e) {
-      activeTouchIdRef.current = e.touches[0].identifier;
-    } else {
-      activeTouchIdRef.current = -1;
-    }
-    
-    setIsActive(true);
-    updateJoystick(e);
-  };
-
-  const handleJoystickPointerDown = (e: React.PointerEvent) => {
-    // Only handle pointer events on the joystick itself
-    handleStart(e as any);
-  };
-
-  const updateJoystick = (e: any) => {
-    const activeTouchId = activeTouchIdRef.current;
-    if (activeTouchId === null) return;
-    
-    let clientX = 0, clientY = 0;
-    let touchFound = false;
-    
-    if (e.touches) {
-      // Find the specific touch we're tracking
-      for (let i = 0; i < e.touches.length; i++) {
-        if (e.touches[i].identifier === activeTouchId) {
-          clientX = e.touches[i].clientX;
-          clientY = e.touches[i].clientY;
-          touchFound = true;
-          break;
-        }
-      }
-      if (!touchFound) return;
-    } else if (activeTouchId === -1) {
-      // Mouse event
-      clientX = e.clientX;
-      clientY = e.clientY;
-    } else {
-      return;
-    }
-    
-    const dx = clientX - startCenterRef.current.x;
-    const dy = clientY - startCenterRef.current.y;
+  const updatePosition = (clientX: number, clientY: number) => {
+    const dx = clientX - centerRef.current.x;
+    const dy = clientY - centerRef.current.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
     const limitedDist = Math.min(distance, radius);
@@ -77,81 +26,54 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
     onMove(nx / radius, ny / radius);
   };
 
-  useEffect(() => {
-    if (!isActive) return;
-
-    const handleGlobalMove = (e: Event) => {
-      const activeTouchId = activeTouchIdRef.current;
-      if (activeTouchId === null) return;
-      
-      // Only update if this is our tracked input
-      const touchEvent = e as TouchEvent;
-      if (touchEvent.touches) {
-        let found = false;
-        for (let i = 0; i < touchEvent.touches.length; i++) {
-          if (touchEvent.touches[i].identifier === activeTouchId) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) return;
-      }
-      
-      updateJoystick(e);
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (!baseRef.current) return;
+    
+    const rect = baseRef.current.getBoundingClientRect();
+    centerRef.current = {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2
     };
     
-    const handleGlobalEnd = (e: Event) => {
-      const activeTouchId = activeTouchIdRef.current;
-      if (activeTouchId === null) return;
-      
-      const touchEvent = e as TouchEvent;
-      
-      if (touchEvent.changedTouches) {
-        // Check if our tracked touch ended
-        let ourTouchEnded = false;
-        for (let i = 0; i < touchEvent.changedTouches.length; i++) {
-          if (touchEvent.changedTouches[i].identifier === activeTouchId) {
-            ourTouchEnded = true;
-            break;
-          }
-        }
-        if (!ourTouchEnded) return;
-      } else if (activeTouchId !== -1) {
-        // We're tracking a touch but this is a mouse event, ignore
-        return;
-      }
-      
-      // Our touch/mouse ended
-      setIsActive(false);
-      setKnobPos({ x: 0, y: 0 });
-      onMove(0, 0);
-      onEnd();
-      activeTouchIdRef.current = null;
-    };
+    baseRef.current.setPointerCapture(e.pointerId);
+    updatePosition(e.clientX, e.clientY);
+  };
 
-    window.addEventListener("mousemove", handleGlobalMove);
-    window.addEventListener("mouseup", handleGlobalEnd);
-    window.addEventListener("touchmove", handleGlobalMove, { passive: true });
-    window.addEventListener("touchend", handleGlobalEnd, { passive: true });
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!baseRef.current) return;
+    
+    // Only update if this element has captured the pointer
+    if (baseRef.current.hasPointerCapture && baseRef.current.hasPointerCapture(e.pointerId)) {
+      updatePosition(e.clientX, e.clientY);
+    }
+  };
 
-    return () => {
-      window.removeEventListener("mousemove", handleGlobalMove);
-      window.removeEventListener("mouseup", handleGlobalEnd);
-      window.removeEventListener("touchmove", handleGlobalMove);
-      window.removeEventListener("touchend", handleGlobalEnd);
-    };
-  }, [isActive, onMove, onEnd]);
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!baseRef.current) return;
+    
+    try {
+      baseRef.current.releasePointerCapture(e.pointerId);
+    } catch (e) {
+      // Already released
+    }
+    
+    setKnobPos({ x: 0, y: 0 });
+    onMove(0, 0);
+    onEnd();
+  };
 
   return (
     <div 
       ref={baseRef}
-      onMouseDown={handleStart}
-      onTouchStart={handleStart}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
       className="w-24 h-24 bg-black/40 rounded-full border-4 border-[#3d2b1f] flex items-center justify-center pointer-events-auto touch-none select-none shadow-[0_0_15px_rgba(0,0,0,0.5)]"
     >
       <div className="absolute inset-0 rounded-full border-2 border-white/5 pointer-events-none" />
       <div 
-        className="w-12 h-12 bg-[#fbbf24] rounded-full border-4 border-[#b45309] shadow-[inset_-4px_-4px_0_rgba(0,0,0,0.2)] flex items-center justify-center"
+        className="w-12 h-12 bg-[#fbbf24] rounded-full border-4 border-[#b45309] shadow-[inset_-4px_-4px_0_rgba(0,0,0,0.2)] flex items-center justify-center pointer-events-none"
         style={{ transform: `translate(${knobPos.x}px, ${knobPos.y}px)` }}
       >
         <div className="w-6 h-6 border-2 border-[#b45309]/30 rounded-full" />

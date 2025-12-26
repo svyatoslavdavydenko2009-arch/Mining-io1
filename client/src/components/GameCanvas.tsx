@@ -1039,6 +1039,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 e.stopPropagation();
                 e.preventDefault();
               }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                handleMineButtonClick();
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
