@@ -318,10 +318,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   }, [user.x, user.y]);
 
   useEffect(() => {
-    // Sync displayPlayerPos with smoothedPos when mining state changes to prevent jerking
+    // Sync displayPlayerPos and rotation when mining state changes to prevent jerking
     if (isMining) {
       displayPlayerPos.current.x = smoothedPos.current.x;
       displayPlayerPos.current.y = smoothedPos.current.y;
+      // Also sync rotation to prevent camera jerk
+      const currentTargetRot = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
+      smoothBodyRotation.current = currentTargetRot;
     }
   }, [isMining]);
 
