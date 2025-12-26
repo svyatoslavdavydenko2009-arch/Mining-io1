@@ -136,7 +136,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const tx = Math.floor(x);
     const ty = Math.floor(y);
     
-    // Check neighbors to handle large rock collision
+    // Check local and neighbors since rocks are large (size 32px > 24px tile center)
+    // We check a 3x3 grid around the current tile
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
         const ntx = tx + dx;
@@ -144,9 +145,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
         const greyNoise = getNoise(ntx + 5000, nty + 5000, 0.08);
         if (greyNoise > 0.83) {
           const rockSeed = pseudoRandom(ntx + 777, nty + 777);
-          // Reduced probability (0.95 instead of 0.85) and check for neighbors to prevent touching
           if (rockSeed > 0.95) {
-            // Basic neighbor check to prevent touching: only spawn if no rock in adjacent tiles
+            // Neighbor check for consistency
             let hasNeighbor = false;
             for (let ny = -1; ny <= 1; ny++) {
               for (let nx = -1; nx <= 1; nx++) {
@@ -160,13 +160,18 @@ export function GameCanvas({ user }: GameCanvasProps) {
             }
             if (hasNeighbor) continue;
 
+            // Rock visual center is ntx + 0.5, nty + 0.5
             const centerX = ntx + 0.5;
             const centerY = nty + 0.5;
             const distDx = x - centerX;
             const distDy = y - centerY;
             const distSq = distDx * distDx + distDy * distDy;
-            // Increased collision radius (0.6 instead of 0.15) to match visual size (32px / 48px radius ~ 0.6)
-            if (distSq < 0.4) return true; 
+            
+            // Rock size is 32px. Tile size is 48px. 
+            // 32/48 = 0.666 tiles radius.
+            // distSq should be compared with (0.666)^2 = 0.444
+            // Let's use 0.5 for a slightly more forgiving collision
+            if (distSq < 0.5) return true; 
           }
         }
       }
@@ -407,7 +412,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
       
       ctx.fillStyle = "#1e150f"; ctx.fillRect(0, 0, rect.width, rect.height);
 
-      const drawRadius = 10;
+      // Render Biome Floors
+      const drawRadius = 12; // Increased radius to ensure large rocks don't clip at edges
       for (let dy = -drawRadius; dy <= drawRadius; dy++) {
         for (let dx = -drawRadius; dx <= drawRadius; dx++) {
           const wx = Math.round(localPos.x) + dx; const wy = Math.round(localPos.y) + dy;
@@ -415,7 +421,16 @@ export function GameCanvas({ user }: GameCanvasProps) {
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
           
           ctx.fillStyle = getFloorColor(wx, wy); ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
-          
+        }
+      }
+
+      // Render Resources and Rocks in a separate pass to ensure proper layering and prevent clipping
+      for (let dy = -drawRadius; dy <= drawRadius; dy++) {
+        for (let dx = -drawRadius; dx <= drawRadius; dx++) {
+          const wx = Math.round(localPos.x) + dx; const wy = Math.round(localPos.y) + dy;
+          const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
+          const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+
           if (!isTileMined(wx, wy)) {
             const resType = getTileAt(wx, wy);
             if (resType) {
@@ -435,9 +450,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
               const greyNoise = getNoise(wx + 5000, wy + 5000, 0.08);
               if (greyNoise > 0.83) {
                 const rockSeed = pseudoRandom(wx + 777, wy + 777);
-                // Matched rarity (0.95)
                 if (rockSeed > 0.95) {
-                  // Neighbor check for rendering consistency
                   let hasNeighbor = false;
                   for (let ny = -1; ny <= 1; ny++) {
                     for (let nx = -1; nx <= 1; nx++) {
@@ -453,7 +466,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
                   if (!hasNeighbor) {
                     ctx.fillStyle = "#333";
                     ctx.beginPath();
-                    // Increased size (32px instead of 16px)
                     const rockSize = 32;
                     for (let i = 0; i < 6; i++) {
                       const angle = (Math.PI / 3) * i;
