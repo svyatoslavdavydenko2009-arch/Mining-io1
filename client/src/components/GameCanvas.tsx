@@ -178,8 +178,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const hasCollision = (x: number, y: number): boolean => {
     // Hexagon rock collision in grey biome + Stone resource collision
     // We check a 3x3 grid around the precise position
-    const tx = Math.floor(x);
-    const ty = Math.floor(y);
+    const tx = Math.round(x);
+    const ty = Math.round(y);
 
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
@@ -611,10 +611,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 }
                 ctx.closePath();
                 ctx.fill();
-                // Draw outline
-                ctx.strokeStyle = "#222";
-                ctx.lineWidth = 2;
-                ctx.stroke();
               } else {
                 ctx.beginPath(); ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
               }
