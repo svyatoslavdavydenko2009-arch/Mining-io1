@@ -213,8 +213,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
   const joystickDirRef = useRef({ dx: 0, dy: 0 });
   const smoothHandBob = useRef(0); // Smooth hand bob value
-  const lastPosForVelocity = useRef({ x: user.x, y: user.y }); // Track position for velocity calculation
-  const currentVelocity = useRef(0); // Current speed of movement
   
   // Update button state every 50ms so cooldown is responsive
   useEffect(() => {
@@ -957,16 +955,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       const frameRateFactor = dt / 16.66; // Normalize animation to ~60fps
       
-      // Calculate velocity based on position change
-      const dx = smoothedPos.current.x - lastPosForVelocity.current.x;
-      const dy = smoothedPos.current.y - lastPosForVelocity.current.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      currentVelocity.current += (distance - currentVelocity.current) * 0.1;
-      lastPosForVelocity.current = { x: smoothedPos.current.x, y: smoothedPos.current.y };
-      
       if (isWalking) {
-        // Speed of walkCycle depends on movement velocity (0.5 to 2.5x base speed)
-        const velocityModifier = Math.min(2.5, Math.max(0.5, currentVelocity.current * 10));
+        // Speed of walk cycle increases based on joystick input intensity
+        const joystickMagnitude = Math.sqrt(joystickDirRef.current.dx ** 2 + joystickDirRef.current.dy ** 2);
+        const velocityModifier = Math.max(0.5, Math.min(2, joystickMagnitude)); // 0.5 to 2x speed
         walkCycle.current += dt * 0.01 * velocityModifier;
       }
       
