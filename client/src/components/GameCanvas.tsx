@@ -376,9 +376,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
   useEffect(() => {
     const now = Date.now();
-    // Increase frequency of server updates and reduce distance threshold for sync
-    if (now - lastServerUpdate > 200 && (Math.abs(localPos.x - user.x) > 0.1 || Math.abs(localPos.y - user.y) > 0.1)) {
-      move.mutate({ x: Math.round(localPos.x), y: Math.round(localPos.y) });
+    // Reduce update frequency and distance threshold to prevent jitter
+    if (now - lastServerUpdate > 100 && (Math.abs(localPos.x - user.x) > 0.01 || Math.abs(localPos.y - user.y) > 0.01)) {
+      move.mutate({ x: localPos.x, y: localPos.y });
       setLastServerUpdate(now);
     }
   }, [localPos, user.x, user.y, move]);
@@ -441,18 +441,28 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       let offY = 0;
 
       if (progress < 0.5) {
-        // Slowed down wind up (50% of time instead of 30%)
+        // Slowed down wind up with easing
         const p = progress / 0.5;
-        rot = p * -45; 
+        const easedP = p * p;
+        rot = easedP * -50; 
+        offX = -Math.sin(easedP * Math.PI / 4) * 8;
+        offY = (1 - Math.cos(easedP * Math.PI / 4)) * 5;
       } else if (progress < 0.8) {
-        // Faster swing forward (30% of time instead of 50%)
+        // Faster swing forward with elastic feel
         const p = (progress - 0.5) / 0.3;
         const easedP = p * p * (3 - 2 * p);
-        rot = -45 + (easedP * 90);
+        rot = -50 + (easedP * 110);
+        
+        const angle = (-50 + (easedP * 110)) * Math.PI / 180;
+        offX = Math.sin(angle) * 10;
+        offY = -Math.cos(angle) * 5 + 5;
       } else {
-        // Return to neutral (remains 20% of time)
+        // Smooth return to neutral
         const p = (progress - 0.8) / 0.2;
-        rot = 45 * (1 - p);
+        const easedP = 1 - Math.pow(1 - p, 2);
+        rot = 60 * (1 - easedP);
+        offX = Math.sin(60 * Math.PI / 180 * (1 - easedP)) * 5;
+        offY = (1 - Math.cos(60 * Math.PI / 180 * (1 - easedP))) * 3;
       }
       
       setMiningAnimation({ rotation: rot, offsetX: 0, offsetY: 0 });
@@ -574,10 +584,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.imageSmoothingEnabled = false;
-      smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * 0.1;
-      smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * 0.1;
-      displayPlayerPos.current.x += (localPos.x - displayPlayerPos.current.x) * 0.1;
-      displayPlayerPos.current.y += (localPos.y - displayPlayerPos.current.y) * 0.1;
+      smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * 0.2;
+      smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * 0.2;
+      displayPlayerPos.current.x += (localPos.x - displayPlayerPos.current.x) * 0.2;
+      displayPlayerPos.current.y += (localPos.y - displayPlayerPos.current.y) * 0.2;
       smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * 0.15;
       smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * 0.15;
       
