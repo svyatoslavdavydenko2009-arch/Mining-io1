@@ -444,12 +444,16 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const resDef = RESOURCES[t.resource];
           if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
             createParticles(t.x, t.y, resDef.color);
-            mine.mutate(t.resource, { onSuccess: () => {
+            mine.mutate(t.resource, { onSuccess: (data) => {
               const id = Date.now() + Math.random();
               setMiningNotifications(prev => [...prev, { id, resource: t.resource, x: t.x, y: t.y }]);
               setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
             }});
-            setMinedTiles(prev => new Set(prev).add(key));
+            setMinedTiles(prev => {
+              const next = new Set(prev);
+              next.add(key);
+              return next;
+            });
           } else {
             toast({ title: `Pickaxe too weak for ${resDef.name}!`, variant: "destructive" });
           }
