@@ -948,11 +948,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.lineTo(0, 0); 
       ctx.stroke();
 
-      // Inner handle color with gradient for depth/shadow
+      // Inner handle color with gradient for depth/shadow (enhanced matching head style)
       const handleGrad = ctx.createLinearGradient(-3, 0, 3, 0);
-      handleGrad.addColorStop(0, "#2d1f1a"); // Darker edge
+      handleGrad.addColorStop(0, "rgba(0,0,0,0.3)"); // Darker edge
       handleGrad.addColorStop(0.5, "#3d2b25"); // Base shadow color
-      handleGrad.addColorStop(1, "#2d1f1a"); // Darker edge
+      handleGrad.addColorStop(1, "rgba(0,0,0,0.3)"); // Darker edge
       
       ctx.beginPath(); 
       ctx.moveTo(0, headY); 
@@ -961,12 +961,26 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.lineWidth = 4; 
       ctx.stroke();
       
-      // Add a subtle highlight line on the handle
+      // Add a subtle highlight line on the handle (matching head highlight)
       ctx.beginPath();
       ctx.moveTo(-1, headY);
       ctx.lineTo(-1, 0);
-      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
       ctx.lineWidth = 1;
+      ctx.stroke();
+      
+      // Add top-to-bottom shading on handle for more detail
+      const handleTopGrad = ctx.createLinearGradient(0, headY, 0, 0);
+      handleTopGrad.addColorStop(0, "rgba(0,0,0,0.2)");
+      handleTopGrad.addColorStop(0.2, "transparent");
+      handleTopGrad.addColorStop(0.8, "transparent");
+      handleTopGrad.addColorStop(1, "rgba(0,0,0,0.1)");
+      
+      ctx.beginPath();
+      ctx.moveTo(0, headY);
+      ctx.lineTo(0, 0);
+      ctx.strokeStyle = handleTopGrad;
+      ctx.lineWidth = 4;
       ctx.stroke();
       
       ctx.restore();
