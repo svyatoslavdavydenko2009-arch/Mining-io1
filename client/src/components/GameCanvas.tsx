@@ -134,10 +134,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const hasCollision = (x: number, y: number): boolean => {
     // Hexagon rock collision in grey biome
     // We check a 3x3 grid around the precise position
+    const tx = Math.floor(x);
+    const ty = Math.floor(y);
+
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
-        const ntx = Math.floor(x) + dx;
-        const nty = Math.floor(y) + dy;
+        const ntx = tx + dx;
+        const nty = ty + dy;
         const greyNoise = getNoise(ntx + 5000, nty + 5000, 0.08);
         if (greyNoise > 0.83) {
           const rockSeed = pseudoRandom(ntx + 777, nty + 777);
