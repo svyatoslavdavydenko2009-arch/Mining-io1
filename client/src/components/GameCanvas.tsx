@@ -271,7 +271,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const distDy = y - centerY;
           const distSq = distDx * distDx + distDy * distDy;
           
-          if (distSq < COLLISION_DISTANCE_SQ) return true;
+          // Scale collision distance based on stone size
+          const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
+          const rockScale = 0.7 + sizeSeed * 1.5;
+          const scaledCollisionDist = COLLISION_DISTANCE_SQ * rockScale;
+          
+          if (distSq < scaledCollisionDist) return true;
         }
       }
     }
@@ -756,15 +761,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 // Adjust health bar size based on rock scale
                 const barWidth = (TILE_SIZE - 8) * rockScale;
                 const barX = dsx + TILE_SIZE / 2 - barWidth / 2;
+                // Position health bar below the stone texture
+                const barY = dsy + TILE_SIZE + 4;
                 
                 ctx.fillStyle = "rgba(0,0,0,0.5)"; 
                 ctx.beginPath(); 
-                ctx.roundRect(barX, dsy + TILE_SIZE - 8, barWidth, 5, 2); 
+                ctx.roundRect(barX, barY, barWidth, 5, 2); 
                 ctx.fill();
                 
                 ctx.fillStyle = hp > 0.5 ? "#22c55e" : hp > 0.25 ? "#eab308" : "#ef4444"; 
                 ctx.beginPath(); 
-                ctx.roundRect(barX, dsy + TILE_SIZE - 8, barWidth * hp, 5, 2); 
+                ctx.roundRect(barX, barY, barWidth * hp, 5, 2); 
                 ctx.fill();
               }
             } else {
