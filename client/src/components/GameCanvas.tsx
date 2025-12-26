@@ -403,10 +403,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
   useEffect(() => {
     const now = Date.now();
-    // Reduce update frequency and distance threshold to prevent jitter
-    // Ensure we send rounded integers to the server to match schema
-    // Use Math.floor/ceil based on movement to be more deterministic
-    if (now - lastServerUpdate > 100 && (Math.abs(localPos.x - user.x) > 0.05 || Math.abs(localPos.y - user.y) > 0.05)) {
+    // Throttle movement updates significantly (max 4 per second) to reduce server load
+    // Only update if moved more than a half tile or if it's been a while
+    const moveThreshold = 0.5;
+    const timeThreshold = 250;
+    
+    if (now - lastServerUpdate > timeThreshold && 
+        (Math.abs(localPos.x - user.x) > moveThreshold || Math.abs(localPos.y - user.y) > moveThreshold)) {
       move.mutate({ x: Math.round(localPos.x), y: Math.round(localPos.y) });
       setLastServerUpdate(now);
     }
@@ -650,17 +653,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.fillStyle = "#1e150f"; ctx.fillRect(0, 0, rect.width, rect.height);
 
       // Render Biome Regions
-      // Group tiles by biome color to draw them as unified shapes
-      const drawRadius = 12;
+      // Limit draw radius to actual visible area
+      const drawRadius = 10;
       const biomeTiles: Record<string, {wx: number, wy: number, sx: number, sy: number}[]> = {};
       
-      for (let dy = -drawRadius; dy <= drawRadius; dy++) {
-        for (let dx = -drawRadius; dx <= drawRadius; dx++) {
-          const wx = Math.round(localPos.x) + dx; const wy = Math.round(localPos.y) + dy;
+      const startX = Math.round(localPos.x) - drawRadius;
+      const endX = Math.round(localPos.x) + drawRadius;
+      const startY = Math.round(localPos.y) - drawRadius;
+      const endY = Math.round(localPos.y) + drawRadius;
+
+      for (let wy = startY; wy <= endY; wy++) {
+        for (let wx = startX; wx <= endX; wx++) {
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
-          const color = getFloorColor(wx, wy);
           
+          // Skip if off screen
+          if (sx + TILE_SIZE < 0 || sx > rect.width || sy + TILE_SIZE < 0 || sy > rect.height) continue;
+          
+          const color = getFloorColor(wx, wy);
           if (!biomeTiles[color]) biomeTiles[color] = [];
           biomeTiles[color].push({wx, wy, sx, sy});
         }
@@ -703,12 +713,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           });
         });
 
-      // Render Resources and Rocks in a separate pass to ensure proper layering and prevent clipping
-      for (let dy = -drawRadius; dy <= drawRadius; dy++) {
-        for (let dx = -drawRadius; dx <= drawRadius; dx++) {
-          const wx = Math.round(localPos.x) + dx; const wy = Math.round(localPos.y) + dy;
+      // Render Resources and Rocks in a separate pass
+      for (let wy = startY; wy <= endY; wy++) {
+        for (let wx = startX; wx <= endX; wx++) {
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+          
+          // Skip if off screen
+          if (sx + TILE_SIZE < 0 || sx > rect.width || sy + TILE_SIZE < 0 || sy > rect.height) continue;
 
           if (!isTileMined(wx, wy)) {
             const resType = getTileAt(wx, wy);
