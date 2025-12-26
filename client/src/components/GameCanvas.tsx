@@ -824,10 +824,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Left hand (holding pickaxe) - synchronized with swing
       ctx.save();
-      // Move pivot to center, then apply same swing rotation as pickaxe
+      // Translate to hand position relative to body center
       ctx.translate(-handOffsetSide, -handOffsetFront);
       // Continuous synchronization with swingAngle
-      ctx.rotate(swingAngle); // FIXED: Removed the additional -(Math.PI/4) because it's already in swingAngle calculation logic or should be inherited
+      ctx.rotate(swingAngle); 
+      // Draw hand at (0,0) after translation and rotation
       ctx.beginPath();
       ctx.arc(0, 0, handSize, 0, Math.PI * 2);
       ctx.fill();
