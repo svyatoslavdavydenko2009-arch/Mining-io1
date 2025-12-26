@@ -436,36 +436,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const elapsed = time - animStartTime;
       const progress = Math.min(elapsed / 1000, 1);
       
-      let rot = 0;
-      let offX = 0;
-      let offY = 0;
-
-      if (progress < 0.3) {
-        // Wind up backwards (to the right for a right-handed swing starting from the right)
-        const p = progress / 0.3;
-        rot = p * -45; // Backwards rotation
-        offX = p * 12; // Start from right
-        offY = p * -2; 
-      } else if (progress < 0.8) {
-        // Swing from right to left
-        const p = (progress - 0.3) / 0.5;
-        const easedP = p * p * (3 - 2 * p);
-        // Rotation goes from -45 to -180 (a 135 degree arc to the left)
-        rot = -45 - (easedP * 135); 
-        
-        const angle = easedP * Math.PI;
-        // The arc moves from right (12) to left (-12 or more)
-        offX = 12 - (Math.sin(angle) * 32); 
-        offY = -2 + (1 - Math.cos(angle)) * 14; 
-      } else {
-        // Settle at the end
-        const p = (progress - 0.8) / 0.2;
-        rot = -180 + (p * 90); // Settle towards a neutral forward-ish position
-        offX = -20 * (1 - p); 
-        offY = 22 * (1 - p);
-      }
-      
-      setMiningAnimation({ rotation: rot, offsetX: offX, offsetY: offY });
+      setMiningAnimation({ rotation: 0, offsetX: 0, offsetY: 0 });
       
       if (progress < 1) requestAnimationFrame(animateMining);
       else {
