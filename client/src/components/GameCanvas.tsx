@@ -583,6 +583,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Render Biome Floors
       const drawRadius = 12; // Increased radius to ensure large rocks don't clip at edges
+      
+      // Draw a solid dark brown layer first to ensure no gaps at all
+      ctx.fillStyle = "#1e150f";
+      ctx.fillRect(cx - drawRadius * TILE_SIZE, cy - drawRadius * TILE_SIZE, drawRadius * 2 * TILE_SIZE, drawRadius * 2 * TILE_SIZE);
+
       for (let dy = -drawRadius; dy <= drawRadius; dy++) {
         for (let dx = -drawRadius; dx <= drawRadius; dx++) {
           const wx = Math.round(localPos.x) + dx; const wy = Math.round(localPos.y) + dy;
@@ -591,12 +596,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           
           ctx.fillStyle = getFloorColor(wx, wy); 
           // Always draw a base tile first to prevent gaps
-          ctx.fillRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
+          ctx.fillRect(sx - 1, sy - 1, TILE_SIZE + 2, TILE_SIZE + 2);
           
           if (isBiomeBorder(wx, wy)) {
-            const sizeBonus = TILE_SIZE * 0.2;
+            const sizeBonus = TILE_SIZE * 0.25; // Slightly more bonus
             ctx.beginPath();
-            ctx.roundRect(sx - sizeBonus / 2 - 0.5, sy - sizeBonus / 2 - 0.5, TILE_SIZE + sizeBonus + 1, TILE_SIZE + sizeBonus + 1, 10);
+            ctx.roundRect(sx - sizeBonus / 2 - 1, sy - sizeBonus / 2 - 1, TILE_SIZE + sizeBonus + 2, TILE_SIZE + sizeBonus + 2, 12);
             ctx.fill();
           }
         }
