@@ -375,12 +375,12 @@ export function GameCanvas({ user }: GameCanvasProps) {
       
       ctx.save();
       ctx.scale(1, depthScaleY);
-      const headY = -30; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
+      const headY = -27; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
       ctx.fillStyle = pickaxeColor; ctx.fill();
       ctx.restore();
       
-      // Draw handle with slight extension
-      ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 4); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
+      // Draw handle
+      ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
       ctx.restore();
       
       ctx.fillStyle = "black"; const eX = smoothLookDir.current.dx * 4; const eY = smoothLookDir.current.dy * 4;
