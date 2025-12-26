@@ -393,11 +393,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
 
       // Determine rotation based on look direction
-      let targetRotation = 0;
-      if (lookDir.dx === 1) targetRotation = Math.PI / 2;      // Right
-      else if (lookDir.dx === -1) targetRotation = -Math.PI / 2; // Left
-      else if (lookDir.dy === 1) targetRotation = Math.PI;       // Down
-      else if (lookDir.dy === -1) targetRotation = 0;           // Up (default)
+      let targetRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
       
       // Smoothly interpolate rotation
       let diff = targetRotation - smoothBodyRotation.current;
