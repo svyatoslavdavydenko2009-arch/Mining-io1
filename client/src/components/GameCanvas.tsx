@@ -355,51 +355,73 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const playerTileX = Math.round(localPos.x);
     const playerTileY = Math.round(localPos.y);
     
-    const resource = getTileAt(targetX, targetY);
-    const hasResource = resource && !isTileMined(targetX, targetY);
-    
-    // Calculate direction based on tile positions (not float positions)
-    const dx = targetX - playerTileX;
-    const dy = targetY - playerTileY;
-    
-    // Check distance using tile coordinates (not float position)
-    // Allow mining if the target tile is within a 1-tile radius (including diagonals)
-    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) return;
-
-    if (dx !== 0 || dy !== 0) {
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      setLookDir({ dx: dx / dist, dy: dy / dist });
+    // Find all resources in radius
+    const targets: {x: number, y: number, resource: ResourceType}[] = [];
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const tx = playerTileX + dx;
+        const ty = playerTileY + dy;
+        const resource = getTileAt(tx, ty);
+        if (resource && !isTileMined(tx, ty)) {
+          targets.push({ x: tx, y: ty, resource });
+        }
+      }
     }
 
-    setIsMining(true);
-    setMiningTarget(hasResource ? { x: targetX, y: targetY } : null);
+    if (targets.length === 0) {
+      // If no resource, still swing in direction
+      const dx = targetX - playerTileX;
+      const dy = targetY - playerTileY;
+      if (dx !== 0 || dy !== 0) {
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        setLookDir({ dx: dx / dist, dy: dy / dist });
+      }
+      // Just one swing even if empty
+      setIsMining(true);
+      setMiningTarget(null);
+    } else {
+      // Swing towards the first target found or the clicked one
+      const mainTarget = targets.find(t => t.x === targetX && t.y === targetY) || targets[0];
+      const dx = mainTarget.x - playerTileX;
+      const dy = mainTarget.y - playerTileY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      setLookDir({ dx: dx / dist, dy: dy / dist });
+
+      setIsMining(true);
+      setMiningTarget({ x: mainTarget.x, y: mainTarget.y });
+    }
+
     let animStartTime = performance.now();
     const animateMining = (time: number) => {
       const elapsed = time - animStartTime;
       const progress = Math.min(elapsed / 1000, 1);
       setMiningRotation(progress < 0.75 ? (progress / 0.75) * -55 : -55 + (((progress - 0.75) / 0.25) * 120));
+      
       if (progress < 1) requestAnimationFrame(animateMining);
       else {
-        if (hasResource && resource) {
-          const key = `${targetX},${targetY}`;
-          const newHealth = (getTileHealth(targetX, targetY) || RESOURCE_HEALTH[resource]) - 1;
+        // Process all targets in radius at the end of swing
+        targets.forEach(t => {
+          const key = `${t.x},${t.y}`;
+          const newHealth = (getTileHealth(t.x, t.y) || RESOURCE_HEALTH[t.resource]) - 1;
           setTileHealth(prev => ({ ...prev, [key]: newHealth }));
+          
           if (newHealth <= 0) {
-            const resDef = RESOURCES[resource];
+            const resDef = RESOURCES[t.resource];
             if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
-              createParticles(targetX, targetY, resDef.color);
-              mine.mutate(resource, { onSuccess: () => {
-                const id = Date.now();
-                setMiningNotifications(prev => [...prev, { id, resource, x: targetX, y: targetY }]);
+              createParticles(t.x, t.y, resDef.color);
+              mine.mutate(t.resource, { onSuccess: () => {
+                const id = Date.now() + Math.random();
+                setMiningNotifications(prev => [...prev, { id, resource: t.resource, x: t.x, y: t.y }]);
                 setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
-                setMiningTarget(null);
               }});
               setMinedTiles(prev => new Set(prev).add(key));
             } else {
-              toast({ title: "Pickaxe too weak!", variant: "destructive" });
+              toast({ title: `Pickaxe too weak for ${resDef.name}!`, variant: "destructive" });
             }
-          } else setMiningTarget(null);
-        }
+          }
+        });
+        setMiningTarget(null);
+
         let returnStartTime = performance.now();
         const animateReturn = (t: number) => {
           const p = Math.min((t - returnStartTime) / 400, 1);
@@ -453,6 +475,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     // Target tile using rounded direction (allows 8 directions + diagonals)
     const targetX = playerTileX + Math.round(dirX);
     const targetY = playerTileY + Math.round(dirY);
+    
+    // Always swing even if no resource directly in front, as long as SOMETHING is in radius
     performMining(targetX, targetY);
   };
 
@@ -465,60 +489,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const centerY = rect.height / 2;
     const relX = Math.round((clickX - centerX) / TILE_SIZE);
     const relY = Math.round((clickY - centerY) / TILE_SIZE);
-    const targetX = localPos.x + relX;
-    const targetY = localPos.y + relY;
+    const targetX = Math.round(localPos.x + relX);
+    const targetY = Math.round(localPos.y + relY);
     
-    const resource = getTileAt(targetX, targetY);
-    if (!resource || isTileMined(targetX, targetY)) return;
-
-    const dx = targetX - localPos.x;
-    const dy = targetY - localPos.y;
-    
-    // Allow mining if the target tile is within a 1-tile radius (including diagonals)
-    if (Math.abs(targetX - localPos.x) > 1.5 || Math.abs(targetY - localPos.y) > 1.5) return;
-
-    const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
-    if (isMining || Date.now() - lastMineTime.current < cooldown) return;
-    const resDef = RESOURCES[resource];
-    if (user.pickaxeLevel < resDef.minPickaxeLevel) {
-      toast({ title: "Pickaxe too weak!", variant: "destructive" });
-      return;
-    }
-    setIsMining(true);
-    setMiningTarget({ x: targetX, y: targetY });
-    let animStartTime = performance.now();
-    const animateMining = (time: number) => {
-      const elapsed = time - animStartTime;
-      const progress = Math.min(elapsed / 1000, 1);
-      // Mirrored swing logic: start negative, go positive (relative to mirrored base)
-      setMiningRotation(progress < 0.75 ? (progress / 0.75) * -55 : -55 + (((progress - 0.75) / 0.25) * 120));
-      if (progress < 1) requestAnimationFrame(animateMining);
-      else {
-        const key = `${targetX},${targetY}`;
-        const newHealth = (getTileHealth(targetX, targetY) || RESOURCE_HEALTH[resource]) - 1;
-        setTileHealth(prev => ({ ...prev, [key]: newHealth }));
-        if (newHealth <= 0) {
-          createParticles(targetX, targetY, resDef.color);
-          mine.mutate(resource, { onSuccess: () => {
-            const id = Date.now();
-            setMiningNotifications(prev => [...prev, { id, resource, x: targetX, y: targetY }]);
-            setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
-            setMiningTarget(null);
-          }});
-          setMinedTiles(prev => new Set(prev).add(key));
-        } else setMiningTarget(null);
-        let returnStartTime = performance.now();
-        const animateReturn = (t: number) => {
-          const p = Math.min((t - returnStartTime) / 400, 1);
-          // Mirrored return logic
-          setMiningRotation(65 * (1 - p));
-          if (p < 1) requestAnimationFrame(animateReturn);
-          else { setIsMining(false); setMiningRotation(0); lastMineTime.current = Date.now(); setCooldownProgress(0); const cs = Date.now(); const uc = () => { const el = Date.now() - cs; const cp = Math.min(el/cooldown, 1); setCooldownProgress(cp); if (cp < 1) requestAnimationFrame(uc); }; requestAnimationFrame(uc); }
-        };
-        requestAnimationFrame(animateReturn);
-      }
-    };
-    requestAnimationFrame(animateMining);
+    performMining(targetX, targetY);
   };
 
   useEffect(() => {
@@ -679,25 +653,26 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Draw Body
       ctx.save();
-      ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
-
-      // Draw Eyes (following rotation)
-      ctx.save();
       ctx.rotate(bodyRotation);
+      ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2); ctx.fill();
+      
+      // Draw Eyes (relative to body rotation)
       ctx.fillStyle = "black";
       ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
-      
+
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       
       ctx.save(); 
-      // Pickaxe rotation follows look direction
-      ctx.rotate(bodyRotation);
+      // Pickaxe rotation follows look direction BUT swing is added
+      const baseAngle = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
+      ctx.rotate(baseAngle);
+      
       // Pickaxe is always on the "left" relative to the front-facing direction (mirrored)
       ctx.translate(-pSize / 2, 0); 
       
+      // Swing rotation
       ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
       const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
       ctx.fillStyle = pickaxeColor; ctx.fill();
