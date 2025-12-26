@@ -212,7 +212,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const [, setButtonUpdateTrigger] = useState(0); // Force re-renders for button
 
   const joystickDirRef = useRef({ dx: 0, dy: 0 });
-  const armDampingFactor = useRef(1); // Smooth decay of hand amplitude when stopping
+  const smoothHandBob = useRef(0); // Smooth hand bob value
   
   // Update button state every 50ms so cooldown is responsive
   useEffect(() => {
@@ -957,17 +957,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       if (isWalking) {
         walkCycle.current += dt * 0.01;
-        armDampingFactor.current += (1 - armDampingFactor.current) * 0.15;
-      } else {
-        // Smoothly decay hand amplitude when stopping - prevents jerking
-        armDampingFactor.current += (0 - armDampingFactor.current) * 0.08;
-        walkCycle.current += (0 - walkCycle.current) * 0.08;
-        // If very close to 0, snap to 0 to prevent floating point drift
-        if (Math.abs(walkCycle.current) < 0.01) walkCycle.current = 0;
       }
       
-      // Apply damping factor to hand animation for smooth decay
-      const handBob = Math.sin(walkCycle.current) * 2 * armDampingFactor.current;
+      // Calculate raw hand bob
+      const rawHandBob = Math.sin(walkCycle.current) * 2;
+      
+      // Smoothly interpolate hand bob - this prevents jerking when stopping
+      smoothHandBob.current += (rawHandBob - smoothHandBob.current) * (isWalking ? 0.2 : 0.06);
+      const handBob = smoothHandBob.current;
 
       // Draw Pickaxe
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
