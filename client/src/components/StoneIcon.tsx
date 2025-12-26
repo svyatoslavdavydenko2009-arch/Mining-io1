@@ -3,7 +3,7 @@ interface StoneIconProps {
   color?: string;
 }
 
-export function StoneIcon({ size = 16, color = "#F0A500" }: StoneIconProps) {
+export function StoneIcon({ size = 24, color = "#78716c" }: StoneIconProps) {
   return (
     <svg
       width={size}

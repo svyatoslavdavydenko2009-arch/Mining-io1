@@ -18,7 +18,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
       onClick={() => onOpenChange(false)}
     >
       <div 
-        className="bg-amber-900 border-2 border-secondary rounded-md p-6 max-w-md w-full mx-4 animate-in slide-in-from-bottom-50 duration-300"
+        className="bg-amber-950 border-2 border-secondary rounded-md p-6 max-w-md w-full mx-4 animate-in slide-in-from-bottom-50 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -49,12 +49,12 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
 
           <div className="border-t border-secondary/50 pt-4">
             <p className="text-muted-foreground text-xs font-pixel mb-3 uppercase">Inventory</p>
-            <div className="space-y-2">
+            <div className="flex flex-wrap gap-4">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
-                  <div key={item} className="flex items-center gap-2">
-                    <StoneIcon size={16} />
-                    <p className="text-foreground text-xs">{item}: <span className="text-primary font-pixel">{count}</span></p>
+                  <div key={item} className="flex flex-col items-center gap-1">
+                    <StoneIcon size={32} />
+                    <p className="text-foreground text-sm font-pixel">{count}</p>
                   </div>
                 ))
               ) : (
