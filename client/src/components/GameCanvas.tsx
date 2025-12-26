@@ -292,7 +292,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         lastMoveTimeForInterp.current = now;
         setLookDir({ dx, dy });
         triggerDash(dx, dy);
-        setIsMining(false); setMiningTarget(null); setMiningRotation(0);
+        setIsMining(false); setMiningTarget(null); setMiningAnimation({ rotation: 0, offsetX: 0, offsetY: 0 });
         return { x: nextX, y: nextY };
       }
       return prev;
