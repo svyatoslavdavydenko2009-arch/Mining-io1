@@ -363,7 +363,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.scale(1 - side * 2, 1);
       
       if (isNearCenter) {
-          // Increased blur intensity and range
           const intensity = Math.max(0, (0.3 - distanceFromCenter) / 0.3) * 8;
           ctx.filter = `blur(${intensity}px)`;
       }
