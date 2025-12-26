@@ -318,6 +318,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   }, [user.x, user.y]);
 
   useEffect(() => {
+    // Sync displayPlayerPos with smoothedPos when mining state changes to prevent jerking
+    if (isMining) {
+      displayPlayerPos.current.x = smoothedPos.current.x;
+      displayPlayerPos.current.y = smoothedPos.current.y;
+    }
+  }, [isMining]);
+
+  useEffect(() => {
     const keys: Record<string, boolean> = {};
     const handleKeyDown = (e: KeyboardEvent) => { keys[e.key.toLowerCase()] = true; };
     const handleKeyUp = (e: KeyboardEvent) => { keys[e.key.toLowerCase()] = false; };
