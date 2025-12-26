@@ -11,9 +11,7 @@ const VIEW_RADIUS = 8;
 const WORLD_SEED = 12345;
 const PLAYER_SIZE = 32; // Player is 32px circle
 const ROCK_SIZE = 32; // Rock is 32px hexagon
-const PLAYER_COLLISION_RADIUS = PLAYER_SIZE / TILE_SIZE / 2; // 0.333 tiles
-const ROCK_COLLISION_RADIUS = ROCK_SIZE / TILE_SIZE / 2 * 0.8; // 0.267 tiles (80% for solid collision)
-const COLLISION_DISTANCE_SQ = Math.pow(PLAYER_COLLISION_RADIUS + ROCK_COLLISION_RADIUS, 2); // (0.333 + 0.267)^2 = 0.36 
+const COLLISION_DISTANCE_SQ = 0.40; // Distance squared for collision detection 
 
 const RESOURCE_HEALTH: Record<ResourceType, number> = {
   stone: 2,
