@@ -594,13 +594,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               ctx.fillStyle = "#444";
               
               if (resType === "stone") {
-                // Draw pentagon for stone
+                // Draw pentagon for stone with random rotation
                 ctx.beginPath();
                 const centerX = sx + TILE_SIZE / 2;
                 const centerY = sy + TILE_SIZE / 2;
                 const radius = (TILE_SIZE - 8) / 2;
+                // Deterministic random rotation based on tile position
+                const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
                 for (let i = 0; i < 5; i++) {
-                  const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+                  const angle = (i * 2 * Math.PI / 5) - Math.PI / 2 + randomRotation;
                   const x = centerX + radius * Math.cos(angle);
                   const y = centerY + radius * Math.sin(angle);
                   if (i === 0) ctx.moveTo(x, y);
@@ -608,6 +610,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 }
                 ctx.closePath();
                 ctx.fill();
+                // Draw outline
+                ctx.strokeStyle = "#222";
+                ctx.lineWidth = 2;
+                ctx.stroke();
               } else {
                 ctx.beginPath(); ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
               }
