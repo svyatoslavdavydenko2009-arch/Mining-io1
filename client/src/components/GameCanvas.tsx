@@ -1028,7 +1028,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         />
       </div>
       {/* Mine button on right */}
-      <div className="absolute bottom-12 right-12 z-50 pointer-events-none">
+      <div className="absolute bottom-12 right-12 z-50 pointer-events-auto">
         {(() => {
           const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
           const timeSinceLastMine = Date.now() - lastMineTimeState;
