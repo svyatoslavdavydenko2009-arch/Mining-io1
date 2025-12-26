@@ -364,20 +364,23 @@ export function GameCanvas({ user }: GameCanvasProps) {
       else if (lookDir.dy === 1) bodyRotation = Math.PI;       // Down
       else if (lookDir.dy === -1) bodyRotation = 0;           // Up (default)
       
-      // Eyes are always on the "front" relative to the direction
+      // Draw Body
+      ctx.save();
+      ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8); ctx.fill();
+      ctx.restore();
+
+      // Draw Eyes (following rotation)
       ctx.save();
       ctx.rotate(bodyRotation);
       ctx.fillStyle = "black";
       ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
-
-      ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8); ctx.fill();
       
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       
       ctx.save(); 
-      // Pickaxe rotation should follow look direction
+      // Pickaxe rotation follows look direction
       ctx.rotate(bodyRotation);
       // Pickaxe is always on the "right" relative to the front-facing direction
       ctx.translate(pSize / 2, 0); 
@@ -386,12 +389,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
       const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
       ctx.fillStyle = pickaxeColor; ctx.fill();
       ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
-      ctx.restore();
-      
-      // Eyes are always on the "front" relative to the direction
-      ctx.fillStyle = "black";
-      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 
       const grad = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
