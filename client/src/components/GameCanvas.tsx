@@ -135,16 +135,40 @@ export function GameCanvas({ user }: GameCanvasProps) {
     // Hexagon rock collision in grey biome
     const tx = Math.floor(x);
     const ty = Math.floor(y);
-    const greyNoise = getNoise(tx + 5000, ty + 5000, 0.08);
-    if (greyNoise > 0.83) {
-      const rockSeed = pseudoRandom(tx + 777, ty + 777);
-      if (rockSeed > 0.85) {
-        const centerX = tx + 0.5;
-        const centerY = ty + 0.5;
-        const dx = x - centerX;
-        const dy = y - centerY;
-        const distSq = dx * dx + dy * dy;
-        if (distSq < 0.15) return true; // Collision radius for the rock
+    
+    // Check neighbors to handle large rock collision
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const ntx = tx + dx;
+        const nty = ty + dy;
+        const greyNoise = getNoise(ntx + 5000, nty + 5000, 0.08);
+        if (greyNoise > 0.83) {
+          const rockSeed = pseudoRandom(ntx + 777, nty + 777);
+          // Reduced probability (0.95 instead of 0.85) and check for neighbors to prevent touching
+          if (rockSeed > 0.95) {
+            // Basic neighbor check to prevent touching: only spawn if no rock in adjacent tiles
+            let hasNeighbor = false;
+            for (let ny = -1; ny <= 1; ny++) {
+              for (let nx = -1; nx <= 1; nx++) {
+                if (nx === 0 && ny === 0) continue;
+                if (pseudoRandom(ntx + nx + 777, nty + ny + 777) > 0.95) {
+                  hasNeighbor = true;
+                  break;
+                }
+              }
+              if (hasNeighbor) break;
+            }
+            if (hasNeighbor) continue;
+
+            const centerX = ntx + 0.5;
+            const centerY = nty + 0.5;
+            const distDx = x - centerX;
+            const distDy = y - centerY;
+            const distSq = distDx * distDx + distDy * distDy;
+            // Increased collision radius (0.6 instead of 0.15) to match visual size (32px / 48px radius ~ 0.6)
+            if (distSq < 0.4) return true; 
+          }
+        }
       }
     }
     return false;
@@ -411,21 +435,39 @@ export function GameCanvas({ user }: GameCanvasProps) {
               const greyNoise = getNoise(wx + 5000, wy + 5000, 0.08);
               if (greyNoise > 0.83) {
                 const rockSeed = pseudoRandom(wx + 777, wy + 777);
-                if (rockSeed > 0.85) {
-                  ctx.fillStyle = "#333";
-                  ctx.beginPath();
-                  for (let i = 0; i < 6; i++) {
-                    const angle = (Math.PI / 3) * i;
-                    const hx = sx + TILE_SIZE/2 + Math.cos(angle) * 16;
-                    const hy = sy + TILE_SIZE/2 + Math.sin(angle) * 16;
-                    if (i === 0) ctx.moveTo(hx, hy);
-                    else ctx.lineTo(hx, hy);
+                // Matched rarity (0.95)
+                if (rockSeed > 0.95) {
+                  // Neighbor check for rendering consistency
+                  let hasNeighbor = false;
+                  for (let ny = -1; ny <= 1; ny++) {
+                    for (let nx = -1; nx <= 1; nx++) {
+                      if (nx === 0 && ny === 0) continue;
+                      if (pseudoRandom(wx + nx + 777, wy + ny + 777) > 0.95) {
+                        hasNeighbor = true;
+                        break;
+                      }
+                    }
+                    if (hasNeighbor) break;
                   }
-                  ctx.closePath();
-                  ctx.fill();
-                  ctx.strokeStyle = "#111";
-                  ctx.lineWidth = 2;
-                  ctx.stroke();
+                  
+                  if (!hasNeighbor) {
+                    ctx.fillStyle = "#333";
+                    ctx.beginPath();
+                    // Increased size (32px instead of 16px)
+                    const rockSize = 32;
+                    for (let i = 0; i < 6; i++) {
+                      const angle = (Math.PI / 3) * i;
+                      const hx = sx + TILE_SIZE/2 + Math.cos(angle) * rockSize;
+                      const hy = sy + TILE_SIZE/2 + Math.sin(angle) * rockSize;
+                      if (i === 0) ctx.moveTo(hx, hy);
+                      else ctx.lineTo(hx, hy);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = "#111";
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                  }
                 }
               }
             }
