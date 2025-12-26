@@ -73,12 +73,15 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
       ref={baseRef}
       onMouseDown={handleStart}
       onTouchStart={handleStart}
-      className="w-24 h-24 bg-white/10 rounded-full border-2 border-white/20 flex items-center justify-center backdrop-blur-sm shadow-xl pointer-events-auto touch-none select-none"
+      className="w-24 h-24 bg-black/40 rounded-full border-4 border-[#3d2b1f] flex items-center justify-center pointer-events-auto touch-none select-none shadow-[0_0_15px_rgba(0,0,0,0.5)]"
     >
+      <div className="absolute inset-0 rounded-full border-2 border-white/5 pointer-events-none" />
       <div 
-        className="w-12 h-12 bg-white/40 rounded-full border-2 border-white/60 shadow-inner transition-transform duration-75"
+        className="w-12 h-12 bg-[#fbbf24] rounded-sm border-4 border-[#b45309] shadow-[inset_-4px_-4px_0_rgba(0,0,0,0.2)] flex items-center justify-center"
         style={{ transform: `translate(${knobPos.x}px, ${knobPos.y}px)` }}
-      />
+      >
+        <div className="w-6 h-6 border-2 border-[#b45309]/30 rounded-sm" />
+      </div>
     </div>
   );
 }
