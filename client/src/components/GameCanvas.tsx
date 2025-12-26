@@ -591,8 +591,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           
           ctx.fillStyle = getFloorColor(wx, wy); 
           if (isBiomeBorder(wx, wy)) {
+            const sizeBonus = TILE_SIZE * 0.2;
             ctx.beginPath();
-            ctx.roundRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1, 8);
+            ctx.roundRect(sx - sizeBonus / 2 - 0.5, sy - sizeBonus / 2 - 0.5, TILE_SIZE + sizeBonus + 1, TILE_SIZE + sizeBonus + 1, 10);
             ctx.fill();
           } else {
             ctx.fillRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
