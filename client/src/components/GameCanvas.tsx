@@ -588,7 +588,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       for (let dy = -drawRadius; dy <= drawRadius; dy++) {
         for (let dx = -drawRadius; dx <= drawRadius; dx++) {
-          const wx = Math.floor(localPos.x) + dx; const wy = Math.floor(localPos.y) + dy;
+          const wx = Math.round(localPos.x) + dx; const wy = Math.round(localPos.y) + dy;
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
           const color = getFloorColor(wx, wy);
