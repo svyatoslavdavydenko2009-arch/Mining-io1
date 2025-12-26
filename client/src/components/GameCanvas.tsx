@@ -53,6 +53,14 @@ function getFloorColor(x: number, y: number): string {
   // Use multi-scale noise for more organic "cloud-like" patches
   const noise = getNoise(x, y, 0.05) * 0.7 + getNoise(x, y, 0.15) * 0.3;
   
+  // Forest biome (dark green patches)
+  const forestNoise = getNoise(x + 3000, y + 3000, 0.08);
+  if (forestNoise > 0.75 && forestNoise < 0.95) {
+    if (forestNoise > 0.88) return "#1a4d2e"; // Darker forest green
+    if (forestNoise > 0.82) return "#2d5a3d"; // Medium forest green
+    return "#3a6b4a"; // Light forest green
+  }
+  
   // Rarity check for grey biome (smaller patches)
   const greyNoise = getNoise(x + 5000, y + 5000, 0.08); 
   if (greyNoise > 0.83) {
@@ -139,9 +147,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const [miningRotation, setMiningRotation] = useState(0);
   const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
   const [cooldownProgress, setCooldownProgress] = useState(1);
-  const [lastMineTimeState, setLastMineTimeState] = useState(0); 
+  const [lastMineTimeState, setLastMineTimeState] = useState(0);
+  const [, setButtonUpdateTrigger] = useState(0); // Force re-renders for button
 
   const joystickDirRef = useRef({ dx: 0, dy: 0 });
+  
+  // Update button state every 50ms so cooldown is responsive
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setButtonUpdateTrigger(t => t + 1);
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
 
   const toggleFullscreen = useCallback(() => {
     onFullscreenChange?.(!isFullscreen);
@@ -692,7 +709,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       <div className="absolute bottom-12 right-12 z-50 pointer-events-auto">
         {(() => {
           const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
-          const timeSinceLastMine = Date.now() - lastMineTime.current;
+          const timeSinceLastMine = Date.now() - lastMineTimeState;
           const isOnCooldown = timeSinceLastMine < cooldown;
           return (
             <button
@@ -702,9 +719,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               className="relative w-16 h-16 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 disabled:from-gray-600 disabled:to-gray-700 disabled:opacity-50 border-2 border-yellow-800 disabled:border-gray-700 rounded-lg flex items-center justify-center transition-all active:scale-95 shadow-lg disabled:shadow-none font-pixel text-sm font-bold text-white"
             >
               <Pickaxe size={28} className="drop-shadow-lg" />
-              {cooldownProgress < 1 && (
+              {isOnCooldown && (
                 <div className="absolute inset-1 rounded-md border-2 border-yellow-500 opacity-60" style={{
-                  clipPath: `inset(0 ${(1 - cooldownProgress) * 100}% 0 0)`
+                  clipPath: `inset(0 ${(1 - (Math.min(timeSinceLastMine, cooldown) / cooldown)) * 100}% 0 0)`
                 }} />
               )}
             </button>
