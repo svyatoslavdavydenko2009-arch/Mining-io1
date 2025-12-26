@@ -590,13 +590,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
           
           ctx.fillStyle = getFloorColor(wx, wy); 
+          // Always draw a base tile first to prevent gaps
+          ctx.fillRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
+          
           if (isBiomeBorder(wx, wy)) {
             const sizeBonus = TILE_SIZE * 0.2;
             ctx.beginPath();
             ctx.roundRect(sx - sizeBonus / 2 - 0.5, sy - sizeBonus / 2 - 0.5, TILE_SIZE + sizeBonus + 1, TILE_SIZE + sizeBonus + 1, 10);
             ctx.fill();
-          } else {
-            ctx.fillRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
           }
         }
       }
