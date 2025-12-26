@@ -56,7 +56,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
         />
 
         <div className="relative z-10 flex items-center justify-between mb-8">
-          <h2 className="text-primary text-4xl font-black uppercase tracking-widest">Inventory</h2>
+          <h2 className="text-primary text-3xl font-black uppercase tracking-widest">INVENTORY</h2>
           <button
             onClick={() => onOpenChange(false)}
             className="p-1 hover:bg-secondary/20 rounded transition-colors"
@@ -82,17 +82,17 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
           </div>
 
           <div className="border-t border-secondary/50 pt-6">
-            <p className="text-slate-800 dark:text-slate-700 text-2xl mb-5 font-black uppercase tracking-widest">Inventory</p>
+            <p className="text-slate-800 dark:text-slate-700 text-2xl mb-5 font-black uppercase tracking-widest">INVENTORY</p>
             <div className="flex flex-wrap gap-10">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
                   <div key={item} className="flex flex-col items-center gap-3">
                     <StoneIcon size={56} />
-                    <p className="text-slate-800 dark:text-slate-700 text-3xl font-black antialiased">{count}</p>
+                    <p className="text-gray-400 dark:text-gray-500 text-3xl font-black antialiased">{count}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-slate-800 dark:text-slate-700 text-2xl font-black uppercase tracking-widest">Empty</p>
+                <p className="text-gray-400 dark:text-gray-500 text-2xl font-black uppercase tracking-widest">Empty</p>
               )}
             </div>
           </div>
