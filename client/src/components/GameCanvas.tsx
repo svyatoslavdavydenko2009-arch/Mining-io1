@@ -948,13 +948,27 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.lineTo(0, 0); 
       ctx.stroke();
 
-      // Inner handle color (darker for shadow/realism)
+      // Inner handle color with gradient for depth/shadow
+      const handleGrad = ctx.createLinearGradient(-3, 0, 3, 0);
+      handleGrad.addColorStop(0, "#2d1f1a"); // Darker edge
+      handleGrad.addColorStop(0.5, "#3d2b25"); // Base shadow color
+      handleGrad.addColorStop(1, "#2d1f1a"); // Darker edge
+      
       ctx.beginPath(); 
       ctx.moveTo(0, headY); 
       ctx.lineTo(0, 0); 
-      ctx.strokeStyle = "#3d2b25"; 
+      ctx.strokeStyle = handleGrad; 
       ctx.lineWidth = 4; 
       ctx.stroke();
+      
+      // Add a subtle highlight line on the handle
+      ctx.beginPath();
+      ctx.moveTo(-1, headY);
+      ctx.lineTo(-1, 0);
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      
       ctx.restore();
 
       // Draw head on top of the handle
