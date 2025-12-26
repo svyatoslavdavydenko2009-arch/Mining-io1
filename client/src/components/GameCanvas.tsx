@@ -441,9 +441,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const playerTileX = Math.round(localPos.x);
     const playerTileY = Math.round(localPos.y);
     
-    // Target tile one step in the direction (using sign, not float)
-    const targetX = playerTileX + Math.sign(dirX);
-    const targetY = playerTileY + Math.sign(dirY);
+    // Target tile using rounded direction (allows 8 directions + diagonals)
+    const targetX = playerTileX + Math.round(dirX);
+    const targetY = playerTileY + Math.round(dirY);
     performMining(targetX, targetY);
   };
 
