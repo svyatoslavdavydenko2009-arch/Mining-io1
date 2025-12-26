@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { User } from "@shared/schema";
+import { StoneIcon } from "@/components/StoneIcon";
 
 interface InventoryModalProps {
   open: boolean;
@@ -17,7 +18,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
       onClick={() => onOpenChange(false)}
     >
       <div 
-        className="bg-black border-2 border-secondary rounded-md p-6 max-w-md w-full mx-4 animate-in slide-in-from-bottom-50 duration-300"
+        className="bg-amber-900 border-2 border-secondary rounded-md p-6 max-w-md w-full mx-4 animate-in slide-in-from-bottom-50 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -47,14 +48,17 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
           </div>
 
           <div className="border-t border-secondary/50 pt-4">
-            <p className="text-muted-foreground text-xs font-pixel mb-2 uppercase">Inventory</p>
-            <div className="text-xs space-y-1">
+            <p className="text-muted-foreground text-xs font-pixel mb-3 uppercase">Inventory</p>
+            <div className="space-y-2">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
-                  <p key={item} className="text-foreground">{item}: <span className="text-primary">{count}</span></p>
+                  <div key={item} className="flex items-center gap-2">
+                    <StoneIcon size={16} />
+                    <p className="text-foreground text-xs">{item}: <span className="text-primary font-pixel">{count}</span></p>
+                  </div>
                 ))
               ) : (
-                <p className="text-muted-foreground">Empty</p>
+                <p className="text-muted-foreground text-xs">Empty</p>
               )}
             </div>
           </div>
