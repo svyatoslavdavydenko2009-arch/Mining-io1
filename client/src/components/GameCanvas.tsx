@@ -407,23 +407,21 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8); ctx.fill();
       ctx.restore();
 
-      // Draw Eyes (following rotation)
-      ctx.save();
-      ctx.rotate(bodyRotation);
-      ctx.fillStyle = "black";
-      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
+      // Determine which side to draw the pickaxe (relative to movement direction)
+      // When moving right, pickaxe is on the right. When moving left, pickaxe is on the left.
+      const pickaxeSide = smoothLookDir.current.dx < 0 ? -1 : 1;
       
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       
       ctx.save(); 
       // Pickaxe rotation follows look direction
       ctx.rotate(bodyRotation);
-      // Pickaxe is always on the "left" relative to the front-facing direction (mirrored)
-      ctx.translate(-pSize / 2, 0); 
+      // Position pickaxe on the side of the body
+      ctx.translate(pSize / 2 * pickaxeSide, 0); 
       
       ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
+      if (pickaxeSide === -1) ctx.scale(-1, 1); // Flip pickaxe if on left side
+      
       const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
       ctx.fillStyle = pickaxeColor; ctx.fill();
       ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
