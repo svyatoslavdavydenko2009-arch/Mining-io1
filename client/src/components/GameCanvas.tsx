@@ -352,18 +352,25 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Combine keyboard and joystick, prioritizing joystick if active
       let moveX = Math.abs(joyX) > 0.01 ? joyX : dx;
       let moveY = Math.abs(joyY) > 0.01 ? joyY : dy;
-      
-      // If joystick is active but not moving yet, use last direction to avoid snapping
-      if ((Math.abs(joyX) > 0.01 || Math.abs(joyY) > 0.01) && Math.abs(moveX) < 0.001 && Math.abs(moveY) < 0.001) {
-        moveX = lastLookDirRef.current.dx;
-        moveY = lastLookDirRef.current.dy;
-      }
 
       // Normalize diagonal keyboard movement
       if (dx !== 0 && dy !== 0 && Math.abs(joyX) <= 0.01 && Math.abs(joyY) <= 0.01) {
         const mag = Math.sqrt(dx * dx + dy * dy);
         moveX = dx / mag;
         moveY = dy / mag;
+      }
+
+      // Always update lookDir from joystick or keyboard to prevent snapping
+      if (Math.abs(joyX) > 0.01 || Math.abs(joyY) > 0.01) {
+        // Joystick active - update look direction immediately
+        setLookDir({ dx: joyX, dy: joyY });
+        lastLookDirRef.current = { dx: joyX, dy: joyY };
+      } else if (dx !== 0 || dy !== 0) {
+        // Keyboard active - update look direction
+        const normalizedDx = dx / Math.max(1, Math.sqrt(dx * dx + dy * dy));
+        const normalizedDy = dy / Math.max(1, Math.sqrt(dx * dx + dy * dy));
+        setLookDir({ dx: normalizedDx, dy: normalizedDy });
+        lastLookDirRef.current = { dx: normalizedDx, dy: normalizedDy };
       }
 
       if (Math.abs(moveX) > 0.001 || Math.abs(moveY) > 0.001) {
@@ -380,12 +387,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           if (canMoveX) updatedX = nextX;
           if (canMoveY) updatedY = nextY;
           
-          if (updatedX !== prev.x || updatedY !== prev.y) {
-            setLookDir({ dx: moveX, dy: moveY });
-            lastLookDirRef.current = { dx: moveX, dy: moveY };
-            return { x: updatedX, y: updatedY };
-          }
-          return prev;
+          return { x: updatedX, y: updatedY };
         });
       }
       frameId = requestAnimationFrame(updateMovement);
