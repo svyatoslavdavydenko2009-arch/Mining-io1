@@ -55,44 +55,44 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
           }}
         />
 
-        <div className="relative z-10 flex items-center justify-between mb-6">
-          <h2 className="text-primary text-2xl font-bold uppercase tracking-wider">Inventory</h2>
+        <div className="relative z-10 flex items-center justify-between mb-8">
+          <h2 className="text-primary text-4xl font-black uppercase tracking-widest">Inventory</h2>
           <button
             onClick={() => onOpenChange(false)}
             className="p-1 hover:bg-secondary/20 rounded transition-colors"
             data-testid="button-close-inventory"
           >
-            <X size={20} className="text-secondary" />
+            <X size={24} className="text-secondary" />
           </button>
         </div>
 
-        <div className="relative z-10 space-y-5">
-          <div className="border-t border-secondary/50 pt-5">
-            <p className="text-muted-foreground text-base mb-4 font-bold tracking-wide">Explorer</p>
-            <div className="grid grid-cols-2 gap-4 text-base">
+        <div className="relative z-10 space-y-6">
+          <div className="border-t border-secondary/50 pt-6">
+            <p className="text-secondary text-2xl mb-5 font-black uppercase tracking-widest">Explorer</p>
+            <div className="grid grid-cols-2 gap-6 text-2xl">
               <div>
-                <p className="text-muted-foreground text-sm mb-1">Username</p>
-                <p className="text-foreground font-bold antialiased">{user.username}</p>
+                <p className="text-muted-foreground text-lg mb-2 uppercase font-bold">Username</p>
+                <p className="text-foreground font-black antialiased text-2xl">{user.username}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-sm mb-1">Playtime</p>
-                <p className="text-foreground font-bold antialiased">{playtime}</p>
+                <p className="text-muted-foreground text-lg mb-2 uppercase font-bold">Playtime</p>
+                <p className="text-foreground font-black antialiased text-2xl">{playtime}</p>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-secondary/50 pt-5">
-            <p className="text-muted-foreground text-base mb-4 font-bold tracking-wide">Inventory</p>
-            <div className="flex flex-wrap gap-8">
+          <div className="border-t border-secondary/50 pt-6">
+            <p className="text-secondary text-2xl mb-5 font-black uppercase tracking-widest">Inventory</p>
+            <div className="flex flex-wrap gap-10">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
-                  <div key={item} className="flex flex-col items-center gap-2">
-                    <StoneIcon size={40} />
-                    <p className="text-foreground text-lg font-bold antialiased">{count}</p>
+                  <div key={item} className="flex flex-col items-center gap-3">
+                    <StoneIcon size={56} />
+                    <p className="text-foreground text-3xl font-black antialiased">{count}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground text-base">Empty</p>
+                <p className="text-muted-foreground text-2xl">Empty</p>
               )}
             </div>
           </div>
@@ -100,7 +100,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
 
         <button
           onClick={() => onOpenChange(false)}
-          className="relative z-10 w-full mt-8 p-3 bg-black/60 hover:bg-black/80 border-2 border-secondary rounded-md text-white transition-all active:scale-95 text-base font-bold uppercase tracking-wide"
+          className="relative z-10 w-full mt-10 p-4 bg-black/60 hover:bg-black/80 border-2 border-secondary rounded-md text-white transition-all active:scale-95 text-xl font-black uppercase tracking-widest"
         >
           Close
         </button>
