@@ -815,49 +815,33 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.save();
       ctx.rotate(bodyRotation);
       
-      // Pivot point for the arm (shoulder)
-      const shoulderX = -handOffsetSide * 0.5;
-      const shoulderY = -handOffsetFront * 0.2;
-      ctx.translate(shoulderX, shoulderY);
+      // Pivot around the original hand position
+      ctx.translate(-handOffsetSide, -handOffsetFront);
       
-      // Arm rotation includes both base pose and the swing
-      // Added 80 degrees offset to the left for the arm
+      // Apply swing rotation to the hand/pickaxe group
+      // Added 80 degrees offset to the left for the swing start
       const ARM_LEFT_OFFSET = -(80 * Math.PI / 180);
-      const baseArmRotation = -Math.PI / 3 + ARM_LEFT_OFFSET;
-      ctx.rotate(baseArmRotation + swingAngle);
+      const baseSwingRotation = -(Math.PI / 4) + ARM_LEFT_OFFSET;
+      ctx.rotate(baseSwingRotation + swingAngle);
 
-      // Draw Arm
+      // Draw hand circle centered at (0,0)
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
-      
-      const armLength = 24;
-      const armWidth = 10;
-      
-      // Draw arm rectangle
       ctx.beginPath();
-      ctx.roundRect(0, -armWidth/2, armLength, armWidth, 5);
-      ctx.fill();
-      ctx.stroke();
-
-      // Draw hand at the end of the arm
-      ctx.translate(armLength, 0);
-      ctx.beginPath();
-      ctx.arc(0, 0, handSize + 1, 0, Math.PI * 2);
+      ctx.arc(0, 0, handSize, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
       // Draw Pickaxe attached to the hand
       ctx.save();
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
-      // Pickaxe handle is perpendicular to the arm
-      ctx.rotate(Math.PI / 2);
       
       const headY = -24; 
-      // Draw handle
+      // Draw handle starting from the hand (0,0)
       ctx.beginPath(); 
       ctx.moveTo(0, headY); 
-      ctx.lineTo(0, 10); // Handle extends slightly past hand
+      ctx.lineTo(0, 0); 
       ctx.strokeStyle = "#5D4037"; 
       ctx.lineWidth = 4; 
       ctx.stroke();
