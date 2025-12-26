@@ -199,6 +199,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const [particles, setParticles] = useState<Particle[]>([]);
   const [isMining, setIsMining] = useState(false);
   const [miningAnimation, setMiningAnimation] = useState({ rotation: 0, offsetX: 0, offsetY: 0 });
+  const [shakingTiles, setShakingTiles] = useState<Record<string, { x: number, y: number }>>({});
   const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
   const [cooldownProgress, setCooldownProgress] = useState(1);
   const [lastMineTimeState, setLastMineTimeState] = useState(0);
@@ -437,6 +438,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const processMiningHit = () => {
       targets.forEach(t => {
         const key = `${t.x},${t.y}`;
+        
+        // Add shake effect
+        setShakingTiles(prev => ({ ...prev, [key]: { x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8 } }));
+        setTimeout(() => {
+          setShakingTiles(prev => {
+            const next = { ...prev };
+            delete next[key];
+            return next;
+          });
+        }, 100);
+
         const newHealth = (getTileHealth(t.x, t.y) || RESOURCE_HEALTH[t.resource]) - 1;
         setTileHealth(prev => ({ ...prev, [key]: newHealth }));
         
@@ -683,10 +695,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             const resType = getTileAt(wx, wy);
             if (resType) {
               const res = RESOURCES[resType]; 
+              const shake = shakingTiles[`${wx},${wy}`] || { x: 0, y: 0 };
               
               // Deterministic visual offset for variety
-              const offsetX = (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12;
-              const offsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12;
+              const offsetX = (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12 + shake.x;
+              const offsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12 + shake.y;
               const dsx = sx + offsetX;
               const dsy = sy + offsetY;
 
@@ -750,9 +763,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   }
                   
                   if (!hasNeighbor) {
+                    const shake = shakingTiles[`${wx},${wy}`] || { x: 0, y: 0 };
                     // Deterministic visual offset for rocks
-                    const offsetX = (pseudoRandom(wx + 888, wy + 888) - 0.5) * 16;
-                    const offsetY = (pseudoRandom(wx + 999, wy + 999) - 0.5) * 16;
+                    const offsetX = (pseudoRandom(wx + 888, wy + 888) - 0.5) * 16 + shake.x;
+                    const offsetY = (pseudoRandom(wx + 999, wy + 999) - 0.5) * 16 + shake.y;
                     const dsx = sx + offsetX;
                     const dsy = sy + offsetY;
 
