@@ -940,14 +940,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.fill();
       
       // The handle starts from the hand (0,0 now due to translate)
-      // Draw handle outline first
+      // Draw handle outline (black stroke on all sides of the line)
       ctx.strokeStyle = "rgba(0,0,0,0.6)";
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 7; // Thicker for visible outline on both sides
       ctx.beginPath(); 
       ctx.moveTo(0, headY); 
       ctx.lineTo(0, 0); 
       ctx.stroke();
 
+      // Inner handle color
       ctx.beginPath(); 
       ctx.moveTo(0, headY); 
       ctx.lineTo(0, 0); 
