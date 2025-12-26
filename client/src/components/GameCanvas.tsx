@@ -591,13 +591,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       for (let dy = -drawRadius; dy <= drawRadius; dy++) {
         for (let dx = -drawRadius; dx <= drawRadius; dx++) {
           const wx = Math.round(localPos.x) + dx; const wy = Math.round(localPos.y) + dy;
-          const sx = Math.floor(cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2);
-          const sy = Math.floor(cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2);
+          const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
+          const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
           
           ctx.fillStyle = getFloorColor(wx, wy); 
           
-          // Use Math.floor and +1.5 to ensure pixel-perfect coverage without sub-pixel gaps
-          ctx.fillRect(sx, sy, TILE_SIZE + 1.5, TILE_SIZE + 1.5);
+          // Using slightly larger fill to prevent gaps without snapping to pixels
+          ctx.fillRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
           
           if (isBiomeBorder(wx, wy)) {
             // Draw an overlaying rounded rectangle to create the smooth transition
