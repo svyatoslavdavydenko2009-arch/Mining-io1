@@ -586,7 +586,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Draw a solid dark brown layer first to ensure no gaps at all
       ctx.fillStyle = "#1e150f";
-      ctx.fillRect(cx - (drawRadius + 1) * TILE_SIZE, cy - (drawRadius + 1) * TILE_SIZE, (drawRadius + 1) * 2 * TILE_SIZE, (drawRadius + 1) * 2 * TILE_SIZE);
+      ctx.fillRect(0, 0, rect.width, rect.height);
 
       for (let dy = -drawRadius; dy <= drawRadius; dy++) {
         for (let dx = -drawRadius; dx <= drawRadius; dx++) {
@@ -596,16 +596,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           
           ctx.fillStyle = getFloorColor(wx, wy); 
           
+          // Draw a standard tile first to fill the grid completely
+          ctx.fillRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
+          
           if (isBiomeBorder(wx, wy)) {
-            // Draw a rounded rectangle that is slightly larger but uses the same color
-            // This creates a "blobby" border effect without gaps because it overlays the base grid
-            const sizeBonus = TILE_SIZE * 0.4; // Significantly more bonus for overlap
+            // Draw an overlaying rounded rectangle to create the smooth transition
+            const sizeBonus = TILE_SIZE * 0.4;
             ctx.beginPath();
             ctx.roundRect(sx - sizeBonus / 2, sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 16);
             ctx.fill();
-          } else {
-            // Standard tile fill, slightly oversized to overlap
-            ctx.fillRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
           }
         }
       }
