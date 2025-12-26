@@ -53,12 +53,12 @@ interface Particle {
 
 // Pickaxe color mapping
 const PICKAXE_COLORS: Record<number, string> = {
-  1: "#5D4037", 
-  2: "#808080", 
-  3: "#D2691E", 
-  4: "#C0C0C0", 
-  5: "#FFD700", 
-  6: "#00BFFF", 
+  1: "#8B4513", // Wood (Brown)
+  2: "#808080", // Stone (Gray)
+  3: "#D2691E", // Copper (Orange-ish)
+  4: "#C0C0C0", // Iron (Silver)
+  5: "#FFD700", // Gold (Yellow)
+  6: "#00BFFF", // Diamond (Deep Sky Blue)
 };
 
 // Mining cooldown mapping (in ms)
@@ -74,47 +74,51 @@ const MINING_COOLDOWNS: Record<number, number> = {
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
-  const [lookDir, setLookDir] = useState({ dx: 0, dy: 0 }); 
-  const smoothLookDir = useRef({ dx: 0, dy: 0 }); 
-  const smoothPickaxeSide = useRef(0); 
-  const dashScale = useRef({ x: 1, y: 1 });
+  const [lookDir, setLookDir] = useState({ dx: 0, dy: 0 }); // Direction player is looking
+  const smoothLookDir = useRef({ dx: 0, dy: 0 }); // Smoothly interpolated look direction
+  const smoothPickaxeSide = useRef(0); // 0 for right, 1 for left
+  const dashScale = useRef({ x: 1, y: 1 }); // Squash and stretch
   const displayPlayerPos = useRef({ x: user.x, y: user.y });
-  const smoothedPos = useRef({ x: user.x, y: user.y }); 
+  const smoothedPos = useRef({ x: user.x, y: user.y }); // Smooth camera position
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
   const lastMineTime = useRef(Date.now());
-  const lastMoveTimeForInterp = useRef(Date.now()); 
+  const lastMoveTimeForInterp = useRef(Date.now()); // Track move time for interpolation
   const { move, mine } = useGame();
   const { toast } = useToast();
   const [miningTarget, setMiningTarget] = useState<{x: number, y: number} | null>(null);
   
+  // Track tile health: "x,y" -> health value
   const [tileHealth, setTileHealth] = useState<Record<string, number>>({});
   const [minedTiles, setMinedTiles] = useState<Set<string>>(new Set());
   
+  // Particle effects
   const [particles, setParticles] = useState<Particle[]>([]);
   const [isMining, setIsMining] = useState(false);
   const [miningRotation, setMiningRotation] = useState(0);
   const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
-  const [cooldownProgress, setCooldownProgress] = useState(1); 
+  const [cooldownProgress, setCooldownProgress] = useState(1); // 0 to 1
 
-  const isTileMined = (x: number, y: number) => minedTiles.has(`${x},${y}`);
-  const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
-
+  // Check if a tile can be walked through (has collision)
   const hasCollision = (x: number, y: number): boolean => {
-    if (isTileMined(x, y)) return false;
+    // Can't walk through unmined tiles with resources
+    if (minedTiles.has(`${x},${y}`)) return false;
     const resource = getTileAt(x, y);
     return resource !== null;
   };
 
+  // Trigger dash animation effect
   const triggerDash = (dx: number, dy: number) => {
     if (dx !== 0) {
-      dashScale.current = { x: 1.3, y: 0.8 };
+      dashScale.current = { x: 1.3, y: 0.8 }; // Stretch horizontally
     } else if (dy !== 0) {
-      dashScale.current = { x: 0.8, y: 1.3 };
+      dashScale.current = { x: 0.8, y: 1.3 }; // Stretch vertically
     }
   };
 
+  // Handle mobile D-pad button press
   const handleMobileMove = (dx: number, dy: number) => {
+    // Movement debounce - 250ms delay
     const now = Date.now();
     if (now - lastMoveTime.current < 250) return;
     lastMoveTime.current = now;
@@ -126,40 +130,84 @@ export function GameCanvas({ user }: GameCanvasProps) {
         lastMoveTimeForInterp.current = now;
         setLookDir({ dx, dy });
         triggerDash(dx, dy);
+        
+        // Cancel mining immediately
         setIsMining(false);
         setMiningTarget(null);
         setMiningRotation(0);
+        
         return { x: nextX, y: nextY };
       }
-      return prev;
+      return prev; // Don't move if there's collision
     });
   };
 
+  // Sync local pos with server user pos when it changes remotely (e.g. login)
+  // but don't overwrite local movement immediately to prevent jitter
   useEffect(() => {
     const dist = Math.abs(user.x - localPos.x) + Math.abs(user.y - localPos.y);
-    if (dist > 5) setLocalPos({ x: user.x, y: user.y });
+    if (dist > 5) { // Only snap if desync is large
+      setLocalPos({ x: user.x, y: user.y });
+    }
   }, [user.x, user.y]);
 
+  // Handle Input with movement delay
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) e.preventDefault();
+      // Prevent scrolling
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) {
+        e.preventDefault();
+      }
+
+      // Movement debounce - 250ms delay between moves (increased from 200ms)
       const now = Date.now();
       if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"].includes(e.key)) {
-        if (now - lastMoveTime.current < 250) return;
+        if (now - lastMoveTime.current < 250) return; // Ignore if too soon
         lastMoveTime.current = now;
       }
+
       setLocalPos(prev => {
         let next = { ...prev };
-        let dx = 0, dy = 0;
-        if (e.key === "ArrowUp" || e.key === "w") { if (!hasCollision(prev.x, prev.y - 1)) { next.y -= 1; dy = -1; } }
-        else if (e.key === "ArrowDown" || e.key === "s") { if (!hasCollision(prev.x, prev.y + 1)) { next.y += 1; dy = 1; } }
-        else if (e.key === "ArrowLeft" || e.key === "a") { if (!hasCollision(prev.x - 1, prev.y)) { next.x -= 1; dx = -1; } }
-        else if (e.key === "ArrowRight" || e.key === "d") { if (!hasCollision(prev.x + 1, prev.y)) { next.x += 1; dx = 1; } }
+        
+        let dx = 0;
+        let dy = 0;
 
+        if (e.key === "ArrowUp" || e.key === "w") {
+          const testPos = { x: prev.x, y: prev.y - 1 };
+          if (!hasCollision(testPos.x, testPos.y)) {
+            next.y -= 1;
+            dy = -1;
+          }
+        }
+        if (e.key === "ArrowDown" || e.key === "s") {
+          const testPos = { x: prev.x, y: prev.y + 1 };
+          if (!hasCollision(testPos.x, testPos.y)) {
+            next.y += 1;
+            dy = 1;
+          }
+        }
+        if (e.key === "ArrowLeft" || e.key === "a") {
+          const testPos = { x: prev.x - 1, y: prev.y };
+          if (!hasCollision(testPos.x, testPos.y)) {
+            next.x -= 1;
+            dx = -1;
+          }
+        }
+        if (e.key === "ArrowRight" || e.key === "d") {
+          const testPos = { x: prev.x + 1, y: prev.y };
+          if (!hasCollision(testPos.x, testPos.y)) {
+            next.x += 1;
+            dx = 1;
+          }
+        }
+
+        // Update looking direction and cancel mining if moved
         if (next.x !== prev.x || next.y !== prev.y) {
           setLookDir({ dx, dy });
           triggerDash(dx, dy);
           lastMoveTimeForInterp.current = Date.now();
+          
+          // Cancel mining immediately on logical move
           setIsMining(false);
           setMiningTarget(null);
           setMiningRotation(0);
@@ -167,193 +215,524 @@ export function GameCanvas({ user }: GameCanvasProps) {
         return next;
       });
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [minedTiles]);
+  }, [minedTiles]); // Include minedTiles in dependency
 
+  // Sync to server debounced
   useEffect(() => {
     const now = Date.now();
     if (now - lastServerUpdate > 500 && (localPos.x !== user.x || localPos.y !== user.y)) {
       move.mutate(localPos);
       setLastServerUpdate(now);
     }
+    const timeout = setTimeout(() => {
+        if (localPos.x !== user.x || localPos.y !== user.y) {
+            move.mutate(localPos);
+            setLastServerUpdate(Date.now());
+        }
+    }, 1000);
+    return () => clearTimeout(timeout);
   }, [localPos, user.x, user.y, move]);
 
+
+  // Create mining particles
   const createParticles = (x: number, y: number, color: string) => {
     const newParticles: Particle[] = [];
-    for (let i = 0; i < 6; i++) {
+    const particleCount = 6; // Reduced volume
+    for (let i = 0; i < particleCount; i++) {
       const speed = 0.5 + Math.random() * 1.5;
       newParticles.push({
-        x: x + 0.5, y: y + 0.5,
+        x: x + 0.5, // Center of block
+        y: y + 0.5, // Center of block
         vx: (Math.random() - 0.5) * speed,
         vy: (Math.random() - 0.5) * speed - 1,
-        life: 1, color: color,
+        life: 1,
+        color: color,
       });
     }
     setParticles(prev => [...prev, ...newParticles]);
   };
 
+  // Handle Mining Click
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    
+    // Get click position in CSS pixels
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    // Convert screen coords to grid coords relative to player center
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    const relX = Math.round((e.clientX - rect.left - centerX) / TILE_SIZE);
-    const relY = Math.round((e.clientY - rect.top - centerY) / TILE_SIZE);
+    
+    const relX = Math.round((clickX - centerX) / TILE_SIZE);
+    const relY = Math.round((clickY - centerY) / TILE_SIZE);
+
     const targetX = localPos.x + relX;
     const targetY = localPos.y + relY;
-    if (Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y)) > 1) return;
-    if (isTileMined(targetX, targetY)) return;
-    const resource = getTileAt(targetX, targetY);
-    if (!resource) return;
-    const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
-    if (isMining || Date.now() - lastMineTime.current < cooldown) return;
-    const resDef = RESOURCES[resource];
-    if (user.pickaxeLevel < resDef.minPickaxeLevel) {
-      toast({ title: "Pickaxe too weak!", variant: "destructive" });
+
+    // Check distance - only adjacent (include diagonals)
+    const dist = Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y));
+    if (dist > 1) {
+      return; // Silent fail - too far away
+    }
+
+    // Skip if already fully mined
+    if (minedTiles.has(`${targetX},${targetY}`)) {
       return;
     }
+
+    const resource = getTileAt(targetX, targetY);
+    if (!resource) {
+      return; // Silent fail - nothing to mine
+    }
+
+    // Mining cooldown based on level
+    const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
+    const now = Date.now();
+    if (isMining || now - lastMineTime.current < cooldown) return;
+
+    // Check requirements
+    const resDef = RESOURCES[resource];
+    if (user.pickaxeLevel < resDef.minPickaxeLevel) {
+      toast({ 
+        title: "Pickaxe too weak!", 
+        description: `Need level ${resDef.minPickaxeLevel} pickaxe. Upgrade in Crafting menu.`, 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    // Start mining sequence
     setIsMining(true);
     setMiningTarget({ x: targetX, y: targetY });
+
+    const animDuration = 1000; // Wind-up + strike duration (slower for realistic feel)
+    const returnDuration = 400; // Return animation duration
     let animStartTime = performance.now();
+    
     const animateMining = (time: number) => {
       const elapsed = time - animStartTime;
-      const progress = Math.min(elapsed / 1000, 1);
-      setMiningRotation(progress < 0.75 ? (progress / 0.75) * -55 : -55 + (((progress - 0.75) / 0.25) * 120));
-      if (progress < 1) requestAnimationFrame(animateMining);
-      else {
+      const progress = Math.min(elapsed / animDuration, 1);
+      
+      // Smooth wind-up and strike animation with easing
+      let angle;
+      if (progress < 0.75) { // Wind-up phase (75% of time) - slower, smooth pull back
+        const p = progress / 0.75;
+        // Ease-in-out for smooth wind-up
+        const eased = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
+        angle = eased * -55; // Pull pickaxe back 55 degrees smoothly
+      } else { // Strike phase (25% of time) - much faster swing forward
+        const p = (progress - 0.75) / 0.25;
+        // Ease-out cubic for a snappier strike
+        const eased = 1 - Math.pow(1 - p, 3);
+        angle = -55 + (eased * 120); // Strike forward 120 degrees total swing
+      }
+      
+      setMiningRotation(angle);
+      
+      if (progress < 1) {
+        requestAnimationFrame(animateMining);
+      } else {
+        // --- STRIKE EFFECT ---
         const key = `${targetX},${targetY}`;
-        const newHealth = (getTileHealth(targetX, targetY) || RESOURCE_HEALTH[resource]) - 1;
+        const currentHealth = tileHealth[key] || RESOURCE_HEALTH[resource];
+        const newHealth = currentHealth - 1;
+
+        // Update tile health
         setTileHealth(prev => ({ ...prev, [key]: newHealth }));
+
         if (newHealth <= 0) {
-          createParticles(targetX, targetY, resDef.color);
-          mine.mutate(resource, { onSuccess: () => {
-            const id = Date.now();
-            setMiningNotifications(prev => [...prev, { id, resource, x: targetX, y: targetY }]);
-            setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
-          }});
+          createParticles(targetX, targetY, RESOURCES[resource].color);
+          mine.mutate(resource, {
+            onSuccess: () => {
+              const id = Date.now();
+              setMiningNotifications(prev => [...prev, { id, resource, x: targetX, y: targetY }]);
+              setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
+              setMiningTarget(null);
+            },
+            onError: (err) => {
+              toast({ title: "Failed to mine", description: err.message, variant: "destructive" });
+              setMiningTarget(null);
+              setMinedTiles(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(key);
+                return newSet;
+              });
+              setTileHealth(prev => {
+                const h = { ...prev };
+                delete h[key];
+                return h;
+              });
+            }
+          });
           setMinedTiles(prev => new Set(prev).add(key));
+        } else {
+          setMiningTarget(null);
         }
-        let returnStartTime = performance.now();
-        const animateReturn = (t: number) => {
-          const p = Math.min((t - returnStartTime) / 400, 1);
-          setMiningRotation(65 * (1 - p));
-          if (p < 1) requestAnimationFrame(animateReturn);
-          else { setIsMining(false); setMiningRotation(0); lastMineTime.current = Date.now(); setCooldownProgress(0); }
+
+        // --- START RETURN ANIMATION ---
+        const strikeEndAngle = 65; // The angle at the end of strike phase
+        const returnStartTime = performance.now();
+        
+        const animateReturn = (returnTime: number) => {
+          const returnElapsed = returnTime - returnStartTime;
+          const returnProgress = Math.min(returnElapsed / returnDuration, 1);
+          
+          // Ease-out cubic for smooth return
+          const eased = 1 - Math.pow(1 - returnProgress, 3);
+          const returnAngle = strikeEndAngle - (eased * strikeEndAngle); // Return to 0
+          
+          setMiningRotation(returnAngle);
+          
+          if (returnProgress < 1) {
+            requestAnimationFrame(animateReturn);
+          } else {
+            setIsMining(false);
+            setMiningRotation(0);
+            
+            // --- START COOLDOWN AFTER RETURN COMPLETES ---
+            lastMineTime.current = Date.now();
+            setCooldownProgress(0);
+            const cooldownStartTime = Date.now();
+            const updateCooldown = () => {
+              const elapsed = Date.now() - cooldownStartTime;
+              const cp = Math.min(elapsed / cooldown, 1);
+              setCooldownProgress(cp);
+              if (cp < 1) requestAnimationFrame(updateCooldown);
+            };
+            requestAnimationFrame(updateCooldown);
+          }
         };
+        
         requestAnimationFrame(animateReturn);
       }
     };
     requestAnimationFrame(animateMining);
   };
 
+  // Particle updates
   useEffect(() => {
-    const update = () => {
-      setParticles(prev => prev.map(p => ({ ...p, x: p.x + p.vx * 0.05, y: p.y + p.vy * 0.05, vy: p.vy + 0.15, life: p.life - 0.04 })).filter(p => p.life > 0));
+    let lastTime = performance.now();
+    const update = (time: number) => {
+      const dt = time - lastTime;
+      lastTime = time;
+
+      // Update particles
+      setParticles(prev => {
+        if (prev.length === 0) return prev;
+        return prev
+          .map(p => ({
+            ...p,
+            x: p.x + p.vx * 0.05,
+            y: p.y + p.vy * 0.05,
+            vy: p.vy + 0.15,
+            life: p.life - 0.04,
+          }))
+          .filter(p => p.life > 0);
+      });
+
       requestAnimationFrame(update);
     };
-    requestAnimationFrame(update);
+    
+    const frameId = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(frameId);
   }, []);
 
+  // Render loop using requestAnimationFrame for maximum smoothness
   useEffect(() => {
+    let frameId: number;
+    
     const render = () => {
       const canvas = canvasRef.current;
-      if (!canvas) { requestAnimationFrame(render); return; }
+      if (!canvas) {
+        frameId = requestAnimationFrame(render);
+        return;
+      }
+      
       const ctx = canvas.getContext("2d");
-      if (!ctx) { requestAnimationFrame(render); return; }
+      if (!ctx) {
+        frameId = requestAnimationFrame(render);
+        return;
+      }
+
+      // Handle HiDPI
       const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
       if (canvas.width !== rect.width * dpr || canvas.height !== rect.height * dpr) {
-        canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
       }
+      
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = false;
 
-      smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * 0.1;
-      smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * 0.1;
-      displayPlayerPos.current.x += (localPos.x - displayPlayerPos.current.x) * 0.1;
-      displayPlayerPos.current.y += (localPos.y - displayPlayerPos.current.y) * 0.1;
-      smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * 0.15;
-      smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * 0.15;
-      smoothPickaxeSide.current += ((lookDir.dx < 0 ? 1 : 0) - smoothPickaxeSide.current) * 0.15;
+      // Update positions EVERY frame
+      const lerpFactor = 0.1;
+      const lookLerpFactor = 0.15;
+
+      // Smooth look direction
+      smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * lookLerpFactor;
+      smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * lookLerpFactor;
+
+      // Smooth pickaxe side transition
+      const targetSide = lookDir.dx < 0 ? 1 : 0;
+      smoothPickaxeSide.current += (targetSide - smoothPickaxeSide.current) * lookLerpFactor;
+
+      // Smooth camera follows logical position
+      smoothedPos.current.x += (localPos.x - smoothedPos.current.x) * lerpFactor;
+      smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * lerpFactor;
+      
+      // Smooth player follows logical position (independent of camera)
+      displayPlayerPos.current.x += (localPos.x - displayPlayerPos.current.x) * lerpFactor;
+      displayPlayerPos.current.y += (localPos.y - displayPlayerPos.current.y) * lerpFactor;
+      
+      // Recover squash and stretch
       dashScale.current.x += (1 - dashScale.current.x) * 0.15;
       dashScale.current.y += (1 - dashScale.current.y) * 0.15;
 
       const displayPos = smoothedPos.current;
       const playerPos = displayPlayerPos.current;
-      const cx = rect.width / 2;
-      const cy = rect.height / 2;
 
+      // Clear
       ctx.fillStyle = "#1a1a1a";
       ctx.fillRect(0, 0, rect.width, rect.height);
 
-      for (let dy = -10; dy <= 10; dy++) {
-        for (let dx = -10; dx <= 10; dx++) {
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+
+      // Draw Grid
+      const drawRadius = VIEW_RADIUS + 2;
+      for (let dy = -drawRadius; dy <= drawRadius; dy++) {
+        for (let dx = -drawRadius; dx <= drawRadius; dx++) {
           const wx = Math.round(localPos.x) + dx;
           const wy = Math.round(localPos.y) + dy;
+
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+
           ctx.fillStyle = (wx + wy) % 2 === 0 ? "#262626" : "#2a2a2a";
           ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
-          if (!isTileMined(wx, wy)) {
-            const resType = getTileAt(wx, wy);
-            if (resType) {
-              const res = RESOURCES[resType];
-              ctx.fillStyle = "#444"; ctx.beginPath(); ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
-              ctx.fillStyle = res.color; ctx.fillRect(sx + 10, sy + 10, 8, 8); ctx.fillRect(sx + 24, sy + 16, 6, 6); ctx.fillRect(sx + 16, sy + 28, 8, 8);
+
+          if (!minedTiles.has(`${wx},${wy}`)) {
+            const resourceType = getTileAt(wx, wy);
+            if (resourceType) {
+              const res = RESOURCES[resourceType];
+              ctx.fillStyle = "#444";
+              ctx.beginPath();
+              ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4);
+              ctx.fill();
+
+              ctx.fillStyle = res.color;
+              ctx.fillRect(sx + 10, sy + 10, 8, 8);
+              ctx.fillRect(sx + 24, sy + 16, 6, 6);
+              ctx.fillRect(sx + 16, sy + 28, 8, 8);
+
+              const health = tileHealth[`${wx},${wy}`] || RESOURCE_HEALTH[resourceType];
+              const maxHealth = RESOURCE_HEALTH[resourceType];
+              if (health > 0 && health < maxHealth) {
+                const healthPercent = health / maxHealth;
+                const barWidth = TILE_SIZE - 8;
+                const barHeight = 5;
+                const bx = sx + 4;
+                const by = sy + TILE_SIZE - 8;
+                ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+                ctx.beginPath();
+                ctx.roundRect(bx, by, barWidth, barHeight, 2);
+                ctx.fill();
+                const fillColor = healthPercent > 0.5 ? "#22c55e" : healthPercent > 0.25 ? "#eab308" : "#ef4444";
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.roundRect(bx, by, barWidth * healthPercent, barHeight, 2);
+                ctx.fill();
+              }
             }
           }
         }
       }
 
+      // Draw Player
       const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const py = cy + (playerPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const pSize = TILE_SIZE - 16;
       
       ctx.save();
+      // Apply squash and stretch
       ctx.translate(px + pSize / 2, py + pSize / 2);
       ctx.scale(dashScale.current.x, dashScale.current.y);
-      ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8); ctx.fill();
 
+      // Rounded corners for the player
+      ctx.fillStyle = "#fbbf24";
+      ctx.beginPath();
+      ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8);
+      ctx.fill();
+
+      // Draw Held Pickaxe
+      const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
+      
       ctx.save();
       const side = smoothPickaxeSide.current;
-      ctx.translate((pSize / 2) * (1 - side * 2), 0);
-      ctx.scale(1 - side * 2, 1);
+      const pickaxeX = (pSize / 2) * (1 - side * 2);
+      ctx.translate(pickaxeX, 0);
+      const scaleX = 1 - (side * 2); 
+      ctx.scale(scaleX, 1);
+      
       ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
-      const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
-      ctx.fillStyle = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513"; ctx.fill();
-      ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
+      ctx.lineWidth = 5;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      const headY = -24;
+      ctx.beginPath();
+      ctx.moveTo(-14, headY + 4);
+      ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4);
+      ctx.lineTo(10, headY + 6);
+      ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6);
+      ctx.closePath();
+      ctx.fillStyle = pickaxeColor;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0, headY); 
+      ctx.lineTo(0, 0); 
+      ctx.strokeStyle = "#5D4037";
+      ctx.lineWidth = 4;
+      ctx.stroke();
       ctx.restore();
 
+      // Eyes
       ctx.fillStyle = "black";
-      const eX = smoothLookDir.current.dx * 4; const eY = smoothLookDir.current.dy * 4;
-      ctx.beginPath(); ctx.arc(-pSize / 2 + 10 + eX, -pSize / 2 + 13 + eY, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(-pSize / 2 + 22 + eX, -pSize / 2 + 13 + eY, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
+      const lookX = smoothLookDir.current.dx;
+      const lookY = smoothLookDir.current.dy;
+      const eyeOffsetX = lookX * 4;
+      const eyeOffsetY = lookY * 4;
+      
+      ctx.beginPath();
+      ctx.arc(-pSize / 2 + 10 + eyeOffsetX, -pSize / 2 + 13 + eyeOffsetY, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(-pSize / 2 + 22 + eyeOffsetX, -pSize / 2 + 13 + eyeOffsetY, 3, 0, Math.PI * 2);
+      ctx.fill();
 
-      const grad = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
-      grad.addColorStop(0, "rgba(0,0,0,0)"); grad.addColorStop(1, "rgba(0,0,0,0.9)");
-      ctx.globalCompositeOperation = "multiply"; ctx.fillStyle = grad; ctx.fillRect(0, 0, rect.width, rect.height); ctx.globalCompositeOperation = "source-over";
+      ctx.restore(); // Restore from squash and stretch
 
+      // Vignette
+      const gradient = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
+      gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
+      gradient.addColorStop(1, "rgba(0, 0, 0, 0.9)");
+      ctx.globalCompositeOperation = "multiply";
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, rect.width, rect.height);
+      ctx.globalCompositeOperation = "source-over";
+
+      // Particles
       particles.forEach(p => {
-        const sx = cx + (p.x - displayPos.x) * TILE_SIZE; const sy = cy + (p.y - displayPos.y) * TILE_SIZE;
-        ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(sx - 2, sy - 2, 4, 4); ctx.globalAlpha = 1;
+        const screenX = cx + (p.x - displayPos.x) * TILE_SIZE;
+        const screenY = cy + (p.y - displayPos.y) * TILE_SIZE;
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.fillRect(screenX - 2, screenY - 2, 4, 4);
+        ctx.globalAlpha = 1;
       });
-      requestAnimationFrame(render);
+
+      frameId = requestAnimationFrame(render);
     };
-    requestAnimationFrame(render);
+
+    frameId = requestAnimationFrame(render);
+    return () => cancelAnimationFrame(frameId);
   }, [localPos, user.pickaxeLevel, tileHealth, minedTiles, particles, miningRotation, lookDir]);
 
   return (
-    <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden">
-      <canvas ref={canvasRef} onClick={handleCanvasClick} className="w-full h-full cursor-crosshair" />
-      <div className="absolute top-4 left-4 font-pixel text-white text-xs opacity-70">X: {localPos.x} Y: {localPos.y}</div>
+    <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl">
+      <canvas
+        ref={canvasRef}
+        onClick={handleCanvasClick}
+        className="w-full h-full cursor-crosshair active:cursor-grabbing"
+      />
+      
+      {/* HUD Overlay */}
+      <div className="absolute top-4 left-4 font-pixel text-white text-xs opacity-70">
+        X: {localPos.x} Y: {localPos.y}
+      </div>
+
+      {/* Mining Cooldown Bar */}
+      <AnimatePresence>
+        {cooldownProgress < 1 && (
+          <motion.div 
+            initial={ { opacity: 0, scale: 0.8 } }
+            animate={ { opacity: 1, scale: 1 } }
+            exit={ { 
+              opacity: 0, 
+              scale: 1.1, 
+              filter: "blur(10px)",
+              transition: { duration: 0.8, ease: "easeOut" } 
+            } }
+            className="absolute top-[calc(50%+28px)] left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 border border-secondary rounded-full overflow-hidden pointer-events-none shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+          >
+            <motion.div 
+              className="h-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]"
+              initial={ { width: "0%" } }
+              animate={ { width: `${cooldownProgress * 100}%` } }
+              transition={ { duration: 0.1 } }
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mining Notifications */}
+      <div className="absolute top-4 right-4 flex flex-col gap-2 items-end pointer-events-none">
+        <AnimatePresence>
+          {miningNotifications.map((notif) => (
+            <motion.div
+              key={notif.id}
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 50, opacity: 0 }}
+              className="bg-black/80 border border-secondary px-3 py-1.5 rounded-md flex items-center gap-2 shadow-lg"
+            >
+              <div 
+                className="w-3 h-3 rounded-full" 
+                style={{ backgroundColor: RESOURCES[notif.resource].color }} 
+              />
+              <span className="text-white text-xs font-pixel uppercase tracking-wider">
+                Mined {RESOURCES[notif.resource].name}
+              </span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* Mobile Controls */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-4 sm:hidden">
         <div className="grid grid-cols-3 gap-2">
-          <div /> <button onClick={() => handleMobileMove(0, -1)} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20"><ChevronUp className="text-white" /></button> <div />
-          <button onClick={() => handleMobileMove(-1, 0)} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20"><ChevronLeft className="text-white" /></button>
-          <button onClick={() => handleMobileMove(0, 1)} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20"><ChevronDown className="text-white" /></button>
-          <button onClick={() => handleMobileMove(1, 0)} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20"><ChevronRight className="text-white" /></button>
+          <div />
+          <button
+            onClick={() => handleMobileMove(0, -1)}
+            className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"
+          >
+            <ChevronUp className="text-white" />
+          </button>
+          <div />
+          <button
+            onClick={() => handleMobileMove(-1, 0)}
+            className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"
+          >
+            <ChevronLeft className="text-white" />
+          </button>
+          <button
+            onClick={() => handleMobileMove(0, 1)}
+            className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"
+          >
+            <ChevronDown className="text-white" />
+          </button>
+          <button
+            onClick={() => handleMobileMove(1, 0)}
+            className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"
+          >
+            <ChevronRight className="text-white" />
+          </button>
         </div>
       </div>
     </div>
