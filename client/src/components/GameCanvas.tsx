@@ -124,7 +124,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
   const [cooldownProgress, setCooldownProgress] = useState(1); 
 
-  const [joystickDir, setJoystickDir] = useState({ dx: 0, dy: 0 });
+  const joystickDirRef = useRef({ dx: 0, dy: 0 });
 
   const isTileMined = (x: number, y: number) => minedTiles.has(`${x},${y}`);
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
@@ -193,18 +193,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
       if (keys["a"] || keys["arrowleft"]) dx -= 1;
       if (keys["d"] || keys["arrowright"]) dx += 1;
 
-      // Ensure joystick is checked correctly
-      const finalDx = (dx !== 0) ? dx : joystickDir.dx;
-      const finalDy = (dy !== 0) ? dy : joystickDir.dy;
+      // Use a consistent speed for both joystick and keyboard
+      const finalDx = (dx !== 0) ? dx : joystickDirRef.current.dx;
+      const finalDy = (dy !== 0) ? dy : joystickDirRef.current.dy;
 
-      if (finalDx !== 0 || finalDy !== 0) {
+      // Only proceed if there is actual input
+      if (Math.abs(finalDx) > 0.01 || Math.abs(finalDy) > 0.01) {
         const mag = Math.sqrt(finalDx * finalDx + finalDy * finalDy);
         const normDx = (finalDx / mag) * moveSpeed;
         const normDy = (finalDy / mag) * moveSpeed;
         
         setLocalPos(prev => {
-          let nextX = prev.x + normDx;
-          let nextY = prev.y + normDy;
+          let nextX = prev.x + (finalDx * moveSpeed);
+          let nextY = prev.y + (finalDy * moveSpeed);
           
           // Collision resolution (simple)
           if (hasCollision(nextX, prev.y)) nextX = prev.x;
@@ -469,8 +470,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
       </div>
       <div className="sm:hidden pointer-events-none">
         <Joystick 
-          onMove={(dx, dy) => setJoystickDir({ dx, dy })} 
-          onEnd={() => setJoystickDir({ dx: 0, dy: 0 })} 
+          onMove={(dx, dy) => { joystickDirRef.current = { dx, dy }; }} 
+          onEnd={() => { joystickDirRef.current = { dx: 0, dy: 0 }; }} 
         />
       </div>
     </div>
