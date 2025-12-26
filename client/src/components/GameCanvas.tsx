@@ -50,11 +50,11 @@ function getFloorColor(x: number, y: number): string {
   // Use multi-scale noise for more organic "cloud-like" patches
   const noise = getNoise(x, y, 0.05) * 0.7 + getNoise(x, y, 0.15) * 0.3;
   
-  // Rarity check for grey biome (larger patches)
-  const greyNoise = getNoise(x + 5000, y + 5000, 0.05); 
-  if (greyNoise > 0.8) {
-    if (greyNoise > 0.95) return "#4a4a4a"; // Dark grey
-    if (greyNoise > 0.88) return "#5c5c5c"; // Medium grey
+  // Rarity check for grey biome (smaller patches)
+  const greyNoise = getNoise(x + 5000, y + 5000, 0.08); 
+  if (greyNoise > 0.83) {
+    if (greyNoise > 0.96) return "#4a4a4a"; // Dark grey
+    if (greyNoise > 0.90) return "#5c5c5c"; // Medium grey
     return "#6e6e6e"; // Light grey
   }
 
@@ -132,6 +132,21 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
   const hasCollision = (x: number, y: number): boolean => {
+    // Hexagon rock collision in grey biome
+    const tx = Math.floor(x);
+    const ty = Math.floor(y);
+    const greyNoise = getNoise(tx + 5000, ty + 5000, 0.08);
+    if (greyNoise > 0.83) {
+      const rockSeed = pseudoRandom(tx + 777, ty + 777);
+      if (rockSeed > 0.85) {
+        const centerX = tx + 0.5;
+        const centerY = ty + 0.5;
+        const dx = x - centerX;
+        const dy = y - centerY;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < 0.15) return true; // Collision radius for the rock
+      }
+    }
     return false;
   };
 
@@ -390,6 +405,28 @@ export function GameCanvas({ user }: GameCanvasProps) {
               if (h < mh) {
                 const hp = h / mh; ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.beginPath(); ctx.roundRect(sx + 4, sy + TILE_SIZE - 8, TILE_SIZE - 8, 5, 2); ctx.fill();
                 ctx.fillStyle = hp > 0.5 ? "#22c55e" : hp > 0.25 ? "#eab308" : "#ef4444"; ctx.beginPath(); ctx.roundRect(sx + 4, sy + TILE_SIZE - 8, (TILE_SIZE - 8) * hp, 5, 2); ctx.fill();
+              }
+            } else {
+              // Draw hexagon rocks in grey biome
+              const greyNoise = getNoise(wx + 5000, wy + 5000, 0.08);
+              if (greyNoise > 0.83) {
+                const rockSeed = pseudoRandom(wx + 777, wy + 777);
+                if (rockSeed > 0.85) {
+                  ctx.fillStyle = "#333";
+                  ctx.beginPath();
+                  for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i;
+                    const hx = sx + TILE_SIZE/2 + Math.cos(angle) * 16;
+                    const hy = sy + TILE_SIZE/2 + Math.sin(angle) * 16;
+                    if (i === 0) ctx.moveTo(hx, hy);
+                    else ctx.lineTo(hx, hy);
+                  }
+                  ctx.closePath();
+                  ctx.fill();
+                  ctx.strokeStyle = "#111";
+                  ctx.lineWidth = 2;
+                  ctx.stroke();
+                }
               }
             }
           }
