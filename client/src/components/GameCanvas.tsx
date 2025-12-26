@@ -443,14 +443,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       if (progress < 0.3) {
         // Wind up backwards (to the right side for right hand)
         const p = progress / 0.3;
-        rot = p * -45; 
+        rot = p * 45; 
         offX = p * 12; 
         offY = p * -2; 
       } else if (progress < 0.8) {
         // Swing from right to left
         const p = (progress - 0.3) / 0.5;
         const easedP = p * p * (3 - 2 * p);
-        rot = -45 + (easedP * 135); 
+        rot = 45 - (easedP * 135); 
         
         const angle = easedP * Math.PI;
         offX = 12 - (Math.sin(angle) * 20); 
@@ -458,7 +458,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       } else {
         // Settle at the end
         const p = (progress - 0.8) / 0.2;
-        rot = 90 - (p * 15);
+        rot = -90 + (p * 15);
         offX = -8 * (1 - p);
         offY = 22 * (1 - p);
       }
