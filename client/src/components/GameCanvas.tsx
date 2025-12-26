@@ -133,20 +133,15 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
   const hasCollision = (x: number, y: number): boolean => {
     // Hexagon rock collision in grey biome
-    const tx = Math.floor(x);
-    const ty = Math.floor(y);
-    
-    // Check local and neighbors since rocks are large (size 32px > 24px tile center)
-    // We check a 3x3 grid around the current tile
+    // We check a 3x3 grid around the precise position
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
-        const ntx = tx + dx;
-        const nty = ty + dy;
+        const ntx = Math.floor(x) + dx;
+        const nty = Math.floor(y) + dy;
         const greyNoise = getNoise(ntx + 5000, nty + 5000, 0.08);
         if (greyNoise > 0.83) {
           const rockSeed = pseudoRandom(ntx + 777, nty + 777);
           if (rockSeed > 0.95) {
-            // Neighbor check for consistency
             let hasNeighbor = false;
             for (let ny = -1; ny <= 1; ny++) {
               for (let nx = -1; nx <= 1; nx++) {
@@ -160,18 +155,15 @@ export function GameCanvas({ user }: GameCanvasProps) {
             }
             if (hasNeighbor) continue;
 
-            // Rock visual center is ntx + 0.5, nty + 0.5
             const centerX = ntx + 0.5;
             const centerY = nty + 0.5;
             const distDx = x - centerX;
             const distDy = y - centerY;
             const distSq = distDx * distDx + distDy * distDy;
             
-            // Rock size is 32px. Tile size is 48px. 
-            // 32/48 = 0.666 tiles radius.
-            // distSq should be compared with (0.666)^2 = 0.444
-            // Let's use 0.5 for a slightly more forgiving collision
-            if (distSq < 0.5) return true; 
+            // Rock size 32px, TILE_SIZE 48px. Radius is 32/48 = 0.666.
+            // distSq should be < (0.666)^2 = 0.444
+            if (distSq < 0.44) return true;
           }
         }
       }
