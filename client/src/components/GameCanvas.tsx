@@ -430,7 +430,30 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const animateMining = (time: number) => {
       const elapsed = time - animStartTime;
       const progress = Math.min(elapsed / 1000, 1);
-      setMiningRotation(progress < 0.75 ? (progress / 0.75) * -55 : -55 + (((progress - 0.75) / 0.25) * 120));
+      
+      // New circular animation:
+      // 1. Wind up: move backwards and slightly up (0% to 30%)
+      // 2. Powerful swing: move forward in a circular arc (30% to 80%)
+      // 3. Impact and follow-through: settle (80% to 100%)
+      
+      let rot = 0;
+      if (progress < 0.3) {
+        // Wind up backwards (-60 degrees)
+        const p = progress / 0.3;
+        rot = p * -60;
+      } else if (progress < 0.8) {
+        // Powerful swing forward (-60 to +90 degrees)
+        const p = (progress - 0.3) / 0.5;
+        // Using ease-in-out for more weight
+        const easedP = p * p * (3 - 2 * p);
+        rot = -60 + (easedP * 150);
+      } else {
+        // Settle at the end
+        const p = (progress - 0.8) / 0.2;
+        rot = 90 - (p * 20);
+      }
+      
+      setMiningRotation(rot);
       
       if (progress < 1) requestAnimationFrame(animateMining);
       else {
@@ -460,7 +483,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         let returnStartTime = performance.now();
         const animateReturn = (t: number) => {
           const p = Math.min((t - returnStartTime) / 400, 1);
-          setMiningRotation(65 * (1 - p));
+          // Return from final position back to 0
+          const finalRot = 70; 
+          setMiningRotation(finalRot * (1 - p));
           if (p < 1) requestAnimationFrame(animateReturn);
           else { 
             const now = Date.now();
