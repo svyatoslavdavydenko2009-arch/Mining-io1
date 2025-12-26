@@ -761,7 +761,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const bodyRotation = smoothBodyRotation.current;
       
       // Mining swing animation: we calculate it once to use for both pickaxe and hand
-      const swingAngle = -(Math.PI / 4) + (miningRotation * Math.PI / 180);
+      const swingAngle = (miningRotation * Math.PI / 180);
       
       // Draw Body and Hands
       ctx.save();
@@ -776,8 +776,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
 
-      // Draw Rear Hand first (if needed, but here both are side-ish)
-      // Actually, let's draw the body first, then pickaxe, then hands to layering it correctly
+      // Draw Body
       ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2); ctx.fill();
 
       // Eyes
@@ -793,8 +792,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(bodyRotation);
       
       // Adjusted translation to align the handle with the left hand
-      // -handOffsetSide is -22, so we align the pickaxe base there
       ctx.translate(-handOffsetSide, -handOffsetFront); 
+      // Base rotation of -45 degrees + swing
       ctx.rotate(-(Math.PI / 4) + swingAngle);
       
       const headY = -24; 
@@ -819,13 +818,16 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.save();
       ctx.rotate(bodyRotation);
       
-      // The hand needs to rotate around the body center to follow the pickaxe's arc
-      if (isMining) {
-        ctx.rotate(swingAngle);
-      }
-      
-      // Move out to the hand's rest position
+      // The hand should pivot around its shoulder point and follow the pickaxe exactly
       ctx.translate(-handOffsetSide, -handOffsetFront);
+      
+      // Apply the EXACT SAME rotation as the pickaxe (Base -45 deg + swing)
+      if (isMining) {
+        ctx.rotate(-(Math.PI / 4) + swingAngle);
+      } else {
+        // When not mining, stay at -45 deg
+        ctx.rotate(-(Math.PI / 4));
+      }
 
       // Draw hand circle centered at (0,0)
       ctx.fillStyle = "#fbbf24";
