@@ -4,7 +4,7 @@ import { RESOURCES, type ResourceType, type User, PICKAXES } from "@shared/schem
 import { useGame } from "@/hooks/use-game";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Pickaxe, Hammer, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pickaxe, Hammer, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from "lucide-react";
 
 const TILE_SIZE = 48; 
 const VIEW_RADIUS = 8; 
@@ -104,6 +104,8 @@ const MINING_COOLDOWNS: Record<number, number> = {
 
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
   const [velocity, setVelocity] = useState({ x: 0, y: 0 });
   const [lookDir, setLookDir] = useState({ dx: 0, dy: 0 }); 
@@ -130,6 +132,29 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [cooldownProgress, setCooldownProgress] = useState(1); 
 
   const joystickDirRef = useRef({ dx: 0, dy: 0 });
+
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+    try {
+      if (isFullscreen) {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      } else {
+        await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err);
+    }
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   const isTileMined = (x: number, y: number) => minedTiles.has(`${x},${y}`);
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
@@ -546,7 +571,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   }, [localPos, user.pickaxeLevel, tileHealth, minedTiles, particles, miningRotation, lookDir]);
 
   return (
-    <div className="relative w-full h-[60vh] sm:h-[70vh] bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl">
+    <div ref={containerRef} className={`relative ${isFullscreen ? 'w-screen h-screen' : 'w-full h-[60vh] sm:h-[70vh]'} bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl transition-all`}>
       <canvas ref={canvasRef} onClick={handleCanvasClick} className="w-full h-full cursor-crosshair active:cursor-grabbing" />
       <AnimatePresence>{cooldownProgress < 1 && (
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }} className="absolute top-[calc(50%+28px)] left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 border border-secondary rounded-full overflow-hidden shadow-[0_0_10px_rgba(0,0,0,0.5)]">
@@ -554,6 +579,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
         </motion.div>
       )}</AnimatePresence>
       <div className="absolute top-4 right-4 flex flex-col gap-2 items-end pointer-events-none">
+        <button 
+          onClick={toggleFullscreen} 
+          data-testid="button-fullscreen-toggle"
+          className="pointer-events-auto p-2 bg-black/80 hover:bg-black/95 border border-secondary rounded-md text-white transition-colors"
+        >
+          {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
+        </button>
         <AnimatePresence>{miningNotifications.map((n) => (
           <motion.div key={n.id} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 50, opacity: 0 }} className="bg-black/80 border border-secondary px-3 py-1.5 rounded-md flex items-center gap-2 shadow-lg">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: RESOURCES[n.resource].color }} />
@@ -572,7 +604,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
         />
       </div>
       {/* Mini-map */}
-      <div className="absolute bottom-4 left-4 w-32 h-32 bg-black/60 border-2 border-secondary rounded-lg overflow-hidden pointer-events-none shadow-xl">
+      <div className="absolute top-4 left-4 w-32 h-32 bg-black/60 border-2 border-secondary rounded-lg overflow-hidden pointer-events-none shadow-xl">
         <canvas 
           id="minimap-canvas"
           width={128}
