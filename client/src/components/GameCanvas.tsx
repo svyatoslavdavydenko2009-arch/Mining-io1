@@ -436,7 +436,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     let animStartTime = performance.now();
     const animateMining = (time: number) => {
       const elapsed = time - animStartTime;
-      const totalDuration = 1200; // Increased total duration from 1000ms
+      const totalDuration = 1620; // Increased total duration by 35% (1200 * 1.35)
       const progress = Math.min(elapsed / totalDuration, 1);
       
       let rot = 0;
@@ -453,11 +453,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const p = (progress - 0.4) / 0.2;
         const easedP = p * p * (3 - 2 * p); // Smoothstep
         rot = -50 + (easedP * 110);
-      } else if (progress < 0.7) { // Hold impact slightly less to give more time to return
+      } else if (progress < 0.7) { // Hold impact for 10% of total time
         // Hold impact for longer
         rot = 60;
       } else {
-        // Much slower and extra smooth return to neutral (from 70% to 100%)
+        // Much slower and extra smooth return to neutral (30% of total time)
         const p = (progress - 0.7) / 0.3;
         const easedP = 1 - Math.pow(1 - p, 4); // Quartic easing for maximum smoothness
         rot = 60 * (1 - easedP);
