@@ -251,8 +251,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const animateMining = (time: number) => {
       const elapsed = time - animStartTime;
       const progress = Math.min(elapsed / 1000, 1);
-      // Changed miningRotation to go from 55 down to -65 (left to right swing)
-      setMiningRotation(progress < 0.75 ? 55 - (progress / 0.75) * 120 : -65 + (((progress - 0.75) / 0.25) * 65));
+      // Mirrored swing logic: start negative, go positive (relative to mirrored base)
+      setMiningRotation(progress < 0.75 ? (progress / 0.75) * -55 : -55 + (((progress - 0.75) / 0.25) * 120));
       if (progress < 1) requestAnimationFrame(animateMining);
       else {
         const key = `${targetX},${targetY}`;
@@ -271,8 +271,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
         let returnStartTime = performance.now();
         const animateReturn = (t: number) => {
           const p = Math.min((t - returnStartTime) / 400, 1);
-          // Return from final position back to start
-          setMiningRotation(-65 * (1 - p));
+          // Mirrored return logic
+          setMiningRotation(65 * (1 - p));
           if (p < 1) requestAnimationFrame(animateReturn);
           else { setIsMining(false); setMiningRotation(0); lastMineTime.current = Date.now(); setCooldownProgress(0); const cs = Date.now(); const uc = () => { const el = Date.now() - cs; const cp = Math.min(el/cooldown, 1); setCooldownProgress(cp); if (cp < 1) requestAnimationFrame(uc); }; requestAnimationFrame(uc); }
         };
@@ -384,10 +384,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.save(); 
       // Pickaxe rotation follows look direction
       ctx.rotate(bodyRotation);
-      // Pickaxe is always on the "right" relative to the front-facing direction
-      ctx.translate(pSize / 2, 0); 
+      // Pickaxe is always on the "left" relative to the front-facing direction (mirrored)
+      ctx.translate(-pSize / 2, 0); 
       
-      ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
+      ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
       const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
       ctx.fillStyle = pickaxeColor; ctx.fill();
       ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
