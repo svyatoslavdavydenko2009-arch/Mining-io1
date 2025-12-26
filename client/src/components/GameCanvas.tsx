@@ -197,7 +197,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const [minedTiles, setMinedTiles] = useState<Set<string>>(new Set());
   const [particles, setParticles] = useState<Particle[]>([]);
   const [isMining, setIsMining] = useState(false);
-  const [miningRotation, setMiningRotation] = useState(0);
+  const [miningAnimation, setMiningAnimation] = useState({ rotation: 0, offsetX: 0, offsetY: 0 });
   const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
   const [cooldownProgress, setCooldownProgress] = useState(1);
   const [lastMineTimeState, setLastMineTimeState] = useState(0);
@@ -431,29 +431,35 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const elapsed = time - animStartTime;
       const progress = Math.min(elapsed / 1000, 1);
       
-      // New circular animation:
-      // 1. Wind up: move backwards and slightly up (0% to 30%)
-      // 2. Powerful swing: move forward in a circular arc (30% to 80%)
-      // 3. Impact and follow-through: settle (80% to 100%)
-      
       let rot = 0;
+      let offX = 0;
+      let offY = 0;
+
       if (progress < 0.3) {
-        // Wind up backwards (-60 degrees)
+        // Wind up backwards and outwards
         const p = progress / 0.3;
         rot = p * -60;
+        offX = p * -10;
+        offY = p * -5;
       } else if (progress < 0.8) {
-        // Powerful swing forward (-60 to +90 degrees)
+        // Powerful elliptical swing forward
         const p = (progress - 0.3) / 0.5;
-        // Using ease-in-out for more weight
         const easedP = p * p * (3 - 2 * p);
         rot = -60 + (easedP * 150);
+        
+        // Ellipse path
+        const angle = easedP * Math.PI;
+        offX = -10 + Math.sin(angle) * 20;
+        offY = -5 + (1 - Math.cos(angle)) * 10;
       } else {
         // Settle at the end
         const p = (progress - 0.8) / 0.2;
         rot = 90 - (p * 20);
+        offX = 10 * (1 - p);
+        offY = 15 * (1 - p);
       }
       
-      setMiningRotation(rot);
+      setMiningAnimation({ rotation: rot, offsetX: offX, offsetY: offY });
       
       if (progress < 1) requestAnimationFrame(animateMining);
       else {
@@ -483,14 +489,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         let returnStartTime = performance.now();
         const animateReturn = (t: number) => {
           const p = Math.min((t - returnStartTime) / 400, 1);
-          // Return from final position back to 0
           const finalRot = 70; 
-          setMiningRotation(finalRot * (1 - p));
+          setMiningAnimation({ 
+            rotation: finalRot * (1 - p),
+            offsetX: 0,
+            offsetY: 0
+          });
           if (p < 1) requestAnimationFrame(animateReturn);
           else { 
             const now = Date.now();
             setIsMining(false);
-            setMiningRotation(0);
+            setMiningAnimation({ rotation: 0, offsetX: 0, offsetY: 0 });
             lastMineTime.current = now;
             setLastMineTimeState(now);
             setCooldownProgress(0);
@@ -786,7 +795,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const bodyRotation = smoothBodyRotation.current;
       
       // Mining swing animation: we calculate it once to use for both pickaxe and hand
-      const swingAngle = (miningRotation * Math.PI / 180);
+      const swingAngle = (miningAnimation.rotation * Math.PI / 180);
+      const swingOffsetX = miningAnimation.offsetX;
+      const swingOffsetY = miningAnimation.offsetY;
       
       // Draw Body and Hands
       ctx.save();
@@ -817,7 +828,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(bodyRotation);
       
       // Adjusted translation to align the handle with the left hand
-      ctx.translate(-handOffsetSide, -handOffsetFront); 
+      ctx.translate(-handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY); 
       // Base rotation of -45 degrees + swing
       ctx.rotate(-(Math.PI / 4) + swingAngle);
       
@@ -844,7 +855,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(bodyRotation);
       
       // The hand should pivot around its shoulder point and follow the pickaxe exactly
-      ctx.translate(-handOffsetSide, -handOffsetFront);
+      ctx.translate(-handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY);
       
       // Apply the EXACT SAME rotation as the pickaxe (Base -45 deg + swing)
       if (isMining) {
@@ -884,7 +895,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     };
     frameId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(frameId);
-  }, [localPos, user.pickaxeLevel, tileHealth, minedTiles, particles, miningRotation, lookDir]);
+  }, [localPos, user.pickaxeLevel, tileHealth, minedTiles, particles, miningAnimation, lookDir]);
 
   return (
     <div ref={containerRef} className={`relative bg-black overflow-hidden shadow-2xl transition-all ${isFullscreen ? 'fixed inset-0 w-screen h-screen border-0 rounded-none z-50' : 'w-full h-[60vh] sm:h-[70vh] border-4 border-secondary rounded-lg'}`}>
