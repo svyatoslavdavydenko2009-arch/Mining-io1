@@ -55,32 +55,59 @@ function getFloorColor(x: number, y: number): string {
   
   // Forest biome (dark green patches)
   const forestNoise = getNoise(x + 3000, y + 3000, 0.08);
-  if (forestNoise > 0.75 && forestNoise < 0.95) {
-    if (forestNoise > 0.88) return "#1a4d2e"; // Darker forest green
-    if (forestNoise > 0.82) return "#2d5a3d"; // Medium forest green
-    return "#3a6b4a"; // Light forest green
-  }
   
-  // Rarity check for grey biome (smaller patches)
-  const greyNoise = getNoise(x + 5000, y + 5000, 0.08); 
-  if (greyNoise > 0.83) {
-    if (greyNoise > 0.96) return "#4a4a4a"; // Dark grey
-    if (greyNoise > 0.90) return "#5c5c5c"; // Medium grey
-    return "#6e6e6e"; // Light grey
-  }
+  // rarity check for grey biome (smaller patches)
+  const greyNoise = getNoise(x + 5000, y + 5000, 0.08);
 
   // Grass/Plains biome (main biome - grassland)
   const grassNoise = getNoise(x + 1000, y + 1000, 0.06);
-  if (grassNoise > 0.55) {
-    if (grassNoise > 0.8) return "#367346"; // Dark grass
-    if (grassNoise > 0.7) return "#449154"; // Medium grass
-    return "#56ac66"; // Light grass
+
+  // Blend colors based on noise values for smoother transitions
+  let r = 30, g = 21, b = 15; // Default deep brown
+
+  if (forestNoise > 0.75) {
+    const t = Math.min((forestNoise - 0.75) / 0.1, 1);
+    // Blend with forest colors
+    const targetR = forestNoise > 0.88 ? 26 : (forestNoise > 0.82 ? 45 : 58);
+    const targetG = forestNoise > 0.88 ? 77 : (forestNoise > 0.82 ? 90 : 107);
+    const targetB = forestNoise > 0.88 ? 46 : (forestNoise > 0.82 ? 61 : 74);
+    r = r * (1 - t) + targetR * t;
+    g = g * (1 - t) + targetG * t;
+    b = b * (1 - t) + targetB * t;
+  }
+  
+  if (greyNoise > 0.80) {
+    const t = Math.min((greyNoise - 0.80) / 0.1, 1);
+    const targetR = greyNoise > 0.96 ? 74 : (greyNoise > 0.90 ? 92 : 110);
+    const targetG = targetR;
+    const targetB = targetR;
+    r = r * (1 - t) + targetR * t;
+    g = g * (1 - t) + targetG * t;
+    b = b * (1 - t) + targetB * t;
   }
 
-  if (noise > 0.75) return "#3d2b1f"; // Lighter brown patch
-  if (noise > 0.5) return "#322319";  // Medium brown patch
-  if (noise > 0.25) return "#2b1e15"; // Default dark brown
-  return "#1e150f"; // Deep brown patch
+  if (grassNoise > 0.50) {
+    const t = Math.min((grassNoise - 0.50) / 0.1, 1);
+    const targetR = grassNoise > 0.8 ? 54 : (grassNoise > 0.7 ? 68 : 86);
+    const targetG = grassNoise > 0.8 ? 115 : (grassNoise > 0.7 ? 145 : 172);
+    const targetB = grassNoise > 0.8 ? 70 : (grassNoise > 0.7 ? 84 : 102);
+    r = r * (1 - t) + targetR * t;
+    g = g * (1 - t) + targetG * t;
+    b = b * (1 - t) + targetB * t;
+  }
+
+  // Base ground noise blending
+  if (noise > 0.2) {
+    const t = Math.min((noise - 0.2) / 0.5, 1);
+    const targetR = noise > 0.75 ? 61 : (noise > 0.5 ? 50 : 43);
+    const targetG = noise > 0.75 ? 43 : (noise > 0.5 ? 35 : 30);
+    const targetB = noise > 0.75 ? 31 : (noise > 0.5 ? 25 : 21);
+    r = r * (1 - t) + targetR * t;
+    g = g * (1 - t) + targetG * t;
+    b = b * (1 - t) + targetB * t;
+  }
+
+  return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
@@ -559,9 +586,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             const resType = getTileAt(wx, wy);
             if (resType) {
               const res = RESOURCES[resType]; 
-              ctx.fillStyle = "#444";
+              
+              // Draw outline
+              ctx.strokeStyle = "rgba(0,0,0,0.4)";
+              ctx.lineWidth = 2;
               
               if (resType === "stone") {
+                ctx.fillStyle = "#444";
                 // Draw pentagon for stone with random rotation
                 ctx.beginPath();
                 const centerX = sx + TILE_SIZE / 2;
@@ -578,8 +609,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 }
                 ctx.closePath();
                 ctx.fill();
+                ctx.stroke();
               } else {
+                ctx.fillStyle = "#444";
                 ctx.beginPath(); ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
+                ctx.stroke();
               }
               
               if (resType !== "stone") {
@@ -611,6 +645,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   
                   if (!hasNeighbor) {
                     ctx.fillStyle = "#333";
+                    ctx.strokeStyle = "rgba(0,0,0,0.4)";
+                    ctx.lineWidth = 2;
                     ctx.beginPath();
                     const rockSize = 32;
                     // Visual offset to center the hexagon on the tile center (sx + TILE_SIZE/2, sy + TILE_SIZE/2)
@@ -625,6 +661,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     }
                     ctx.closePath();
                     ctx.fill();
+                    ctx.stroke();
                   }
                 }
               }
