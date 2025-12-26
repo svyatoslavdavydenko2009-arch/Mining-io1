@@ -443,23 +443,25 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       if (progress < 0.3) {
         // Wind up backwards (to the right side for right hand)
         const p = progress / 0.3;
-        rot = p * 45; 
+        rot = p * -45; 
         offX = p * 12; 
         offY = p * -2; 
       } else if (progress < 0.8) {
         // Swing from right to left
         const p = (progress - 0.3) / 0.5;
         const easedP = p * p * (3 - 2 * p);
-        rot = 45 - (easedP * 135); 
+        rot = -45 + (easedP * 135); 
         
         const angle = easedP * Math.PI;
-        offX = 12 - (Math.sin(angle) * 20); 
+        // The original logic for right to left was to move from right (positive offX) to left (negative offX)
+        // offX = 12 - (Math.sin(angle) * 24); // Swung from 12 to -12
+        offX = 12 - (Math.sin(angle) * 40); 
         offY = -2 + (1 - Math.cos(angle)) * 14; 
       } else {
         // Settle at the end
         const p = (progress - 0.8) / 0.2;
-        rot = -90 + (p * 15);
-        offX = -8 * (1 - p);
+        rot = 90 - (p * 15);
+        offX = -28 * (1 - p); 
         offY = 22 * (1 - p);
       }
       
