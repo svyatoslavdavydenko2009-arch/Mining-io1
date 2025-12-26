@@ -361,15 +361,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     // Calculate direction based on tile positions (not float positions)
     const dx = targetX - playerTileX;
     const dy = targetY - playerTileY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
     
-    if (dist > 0) {
+    // Check distance using tile coordinates (not float position)
+    // Allow mining if the target tile is within a 1-tile radius (including diagonals)
+    if (Math.abs(dx) > 1 || Math.abs(dy) > 1) return;
+
+    if (dx !== 0 || dy !== 0) {
+      const dist = Math.sqrt(dx * dx + dy * dy);
       setLookDir({ dx: dx / dist, dy: dy / dist });
     }
-
-    // Check distance using tile coordinates (not float position)
-    // Allow mining on diagonal (distance up to sqrt(2) ≈ 1.42)
-    if (Math.sqrt(dx * dx + dy * dy) > 1.5) return;
 
     setIsMining(true);
     setMiningTarget(hasResource ? { x: targetX, y: targetY } : null);
@@ -473,13 +473,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
     const dx = targetX - localPos.x;
     const dy = targetY - localPos.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
     
-    if (dist > 0) {
-      setLookDir({ dx: dx / dist, dy: dy / dist });
-    }
-
-    if (Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y)) > 1) return;
+    // Allow mining if the target tile is within a 1-tile radius (including diagonals)
+    if (Math.abs(targetX - localPos.x) > 1.5 || Math.abs(targetY - localPos.y) > 1.5) return;
 
     const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
     if (isMining || Date.now() - lastMineTime.current < cooldown) return;
