@@ -200,8 +200,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
       const joyX = joystickDirRef.current.dx;
       const joyY = joystickDirRef.current.dy;
       
-      const finalDx = (dx !== 0) ? dx : joyX;
-      const finalDy = (dy !== 0) ? dy : joyY;
+      const finalDx = (Math.abs(dx) > 0) ? dx : joyX;
+      const finalDy = (Math.abs(dy) > 0) ? dy : joyY;
 
       // Only proceed if there is actual input
       if (Math.abs(finalDx) > 0.001 || Math.abs(finalDy) > 0.001) {
@@ -231,7 +231,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
           if (canMoveY) finalY = nextY;
           
           if (finalX !== prev.x || finalY !== prev.y) {
-             setLookDir({ dx: finalDx, dy: finalDy });
+             setLookDir({ dx: finalX - prev.x, dy: finalY - prev.y });
              return { x: finalX, y: finalY };
           }
           return prev;
