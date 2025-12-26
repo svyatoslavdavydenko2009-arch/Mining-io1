@@ -32,6 +32,11 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
     updateJoystick(e);
   };
 
+  const handleJoystickPointerDown = (e: React.PointerEvent) => {
+    // Only handle pointer events on the joystick itself
+    handleStart(e as any);
+  };
+
   const updateJoystick = (e: any) => {
     const activeTouchId = activeTouchIdRef.current;
     if (activeTouchId === null) return;
@@ -109,16 +114,46 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
       activeTouchIdRef.current = null;
     };
 
+    const handleGlobalMoveWithPrevent = (e: Event) => {
+      handleGlobalMove(e);
+      // Only prevent default for the specific touch we're tracking
+      const touchEvent = e as TouchEvent;
+      const activeTouchId = activeTouchIdRef.current;
+      if (touchEvent.touches && activeTouchId !== null && activeTouchId !== -1) {
+        for (let i = 0; i < touchEvent.touches.length; i++) {
+          if (touchEvent.touches[i].identifier === activeTouchId) {
+            e.preventDefault();
+            break;
+          }
+        }
+      }
+    };
+
+    const handleGlobalEndWithPrevent = (e: Event) => {
+      handleGlobalEnd(e);
+      // Only prevent default if it was our tracked touch
+      const activeTouchId = activeTouchIdRef.current;
+      const touchEvent = e as TouchEvent;
+      if (touchEvent.changedTouches && activeTouchId !== null && activeTouchId !== -1) {
+        for (let i = 0; i < touchEvent.changedTouches.length; i++) {
+          if (touchEvent.changedTouches[i].identifier === activeTouchId) {
+            e.preventDefault();
+            break;
+          }
+        }
+      }
+    };
+
     window.addEventListener("mousemove", handleGlobalMove);
     window.addEventListener("mouseup", handleGlobalEnd);
-    window.addEventListener("touchmove", handleGlobalMove, { passive: false });
-    window.addEventListener("touchend", handleGlobalEnd, { passive: false });
+    window.addEventListener("touchmove", handleGlobalMoveWithPrevent, { passive: false });
+    window.addEventListener("touchend", handleGlobalEndWithPrevent, { passive: false });
 
     return () => {
       window.removeEventListener("mousemove", handleGlobalMove);
       window.removeEventListener("mouseup", handleGlobalEnd);
-      window.removeEventListener("touchmove", handleGlobalMove);
-      window.removeEventListener("touchend", handleGlobalEnd);
+      window.removeEventListener("touchmove", handleGlobalMoveWithPrevent);
+      window.removeEventListener("touchend", handleGlobalEndWithPrevent);
     };
   }, [isActive, onMove, onEnd]);
 
