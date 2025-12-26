@@ -201,6 +201,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const [miningAnimation, setMiningAnimation] = useState({ rotation: 0, offsetX: 0, offsetY: 0 });
   const [shakingTiles, setShakingTiles] = useState<Record<string, { x: number, y: number }>>({});
   const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
+  const [miningDirection, setMiningDirection] = useState<{x: number, y: number} | null>(null);
   const [cooldownProgress, setCooldownProgress] = useState(1);
   const [lastMineTimeState, setLastMineTimeState] = useState(0);
   const [, setButtonUpdateTrigger] = useState(0); // Force re-renders for button
@@ -405,6 +406,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
     if (isMining || Date.now() - lastMineTime.current < cooldown) return;
     
+    // Set mining direction for animation
+    const dirX = targetX - localPos.x;
+    const dirY = targetY - localPos.y;
+    setMiningDirection({ x: dirX, y: dirY });
+    
     // Use rounded player position for all calculations
     const playerTileX = Math.round(localPos.x);
     const playerTileY = Math.round(localPos.y);
@@ -515,6 +521,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         // Process mining completion directly
         const now = Date.now();
         setIsMining(false);
+        setMiningDirection(null);
         setMiningAnimation({ rotation: 0, offsetX: 0, offsetY: 0 });
         lastMineTime.current = now;
         setLastMineTimeState(now);
@@ -563,30 +570,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   };
 
   const handleCanvasClick = (e: React.MouseEvent) => {
-    // If the click was on any interactive element (like the mine button or joystick),
-    // don't process it as a world click. We check against the absolute coordinates
-    // and the specific target to ensure we don't trigger world-mining.
-    if (e.defaultPrevented) return;
-    
-    if (!canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const relX = Math.round((clickX - centerX) / TILE_SIZE);
-    const relY = Math.round((clickY - centerY) / TILE_SIZE);
-    const targetX = Math.round(localPos.x + relX);
-    const targetY = Math.round(localPos.y + relY);
-    
-    // For manual clicks, we still want to look at what we click
-    const dx = targetX - localPos.x;
-    const dy = targetY - localPos.y;
-    if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
-      setLookDir({ dx, dy });
-    }
-    
-    performMining(targetX, targetY);
+    // Mining via clicking the world has been disabled to focus on the button-based controls.
+    // Clicks on the canvas no longer trigger mining.
+    return;
   };
 
   useEffect(() => {
@@ -821,9 +807,16 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const swingOffsetX = miningAnimation.offsetX;
       const swingOffsetY = miningAnimation.offsetY;
       
+      // Determine base rotation for mining if currently mining
+      let miningBaseRot = 0;
+      if (isMining && miningDirection) {
+        miningBaseRot = Math.atan2(miningDirection.y, miningDirection.x) + Math.PI / 2;
+      }
+      
       // Draw Body and Hands
       ctx.save();
-      ctx.rotate(bodyRotation);
+      // Use body rotation unless mining, in which case we face the mining direction
+      ctx.rotate(isMining && miningDirection ? miningBaseRot : bodyRotation);
       
       const pHalf = pSize / 2;
       const handOffsetSide = 22; // Back to wider position
@@ -855,7 +848,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Draw Pickaxe
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       ctx.save(); 
-      ctx.rotate(bodyRotation);
+      ctx.rotate(isMining && miningDirection ? miningBaseRot : bodyRotation);
       
       // Rotate pickaxe with the hand
       const pickaxeHandRot = (miningAnimation.rotation * Math.PI / 180);
@@ -885,7 +878,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Drawing Left Hand (Holding Pickaxe)
       ctx.save();
-      ctx.rotate(bodyRotation);
+      ctx.rotate(isMining && miningDirection ? miningBaseRot : bodyRotation);
       
       // Pivot hand based on animation rotation to keep it attached to body
       const leftHandRot = (miningAnimation.rotation * Math.PI / 180);
@@ -918,7 +911,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Drawing Right Hand (Static with limb)
       ctx.save();
-      ctx.rotate(bodyRotation);
+      ctx.rotate(isMining && miningDirection ? miningBaseRot : bodyRotation);
       ctx.translate(handOffsetSide, -handOffsetFront);
       
       // Draw a "limb" connecting hand to body (now hidden but kept in code)
