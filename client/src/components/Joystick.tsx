@@ -30,12 +30,7 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
     const dy = clientY - touchPos.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
-    if (distance < 5) {
-      setKnobPos({ x: 0, y: 0 });
-      onMove(0, 0);
-      return;
-    }
-
+    // Analog movement - no hard deadzone that stops logic
     const limitedDistance = Math.min(distance, radius);
     const angle = Math.atan2(dy, dx);
     
@@ -47,7 +42,12 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
     // Normalize and send
     const normDx = nx / radius;
     const normDy = ny / radius;
-    onMove(normDx, normDy);
+    
+    if (distance > 5) {
+      onMove(normDx, normDy);
+    } else {
+      onMove(0, 0);
+    }
   };
 
   const handleEnd = () => {

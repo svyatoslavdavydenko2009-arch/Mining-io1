@@ -193,15 +193,14 @@ export function GameCanvas({ user }: GameCanvasProps) {
       if (keys["a"] || keys["arrowleft"]) dx -= 1;
       if (keys["d"] || keys["arrowright"]) dx += 1;
 
-      if (dx === 0 && dy === 0 && (joystickDir.dx !== 0 || joystickDir.dy !== 0)) {
-        dx = joystickDir.dx;
-        dy = joystickDir.dy;
-      }
+      // Ensure joystick is checked correctly
+      const finalDx = (dx !== 0) ? dx : joystickDir.dx;
+      const finalDy = (dy !== 0) ? dy : joystickDir.dy;
 
-      if (dx !== 0 || dy !== 0) {
-        const mag = Math.sqrt(dx * dx + dy * dy);
-        const normDx = (dx / mag) * moveSpeed;
-        const normDy = (dy / mag) * moveSpeed;
+      if (finalDx !== 0 || finalDy !== 0) {
+        const mag = Math.sqrt(finalDx * finalDx + finalDy * finalDy);
+        const normDx = (finalDx / mag) * moveSpeed;
+        const normDy = (finalDy / mag) * moveSpeed;
         
         setLocalPos(prev => {
           let nextX = prev.x + normDx;
@@ -212,7 +211,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
           if (hasCollision(prev.x, nextY)) nextY = prev.y;
           
           if (nextX !== prev.x || nextY !== prev.y) {
-             setLookDir({ dx: normDx, dy: normDy });
+             setLookDir({ dx: finalDx, dy: finalDy });
              return { x: nextX, y: nextY };
           }
           return prev;
