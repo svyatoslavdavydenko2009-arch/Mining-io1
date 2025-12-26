@@ -193,7 +193,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       if (keys["a"] || keys["arrowleft"]) dx -= 1;
       if (keys["d"] || keys["arrowright"]) dx += 1;
 
-      if (dx === 0 && dy === 0) {
+      if (dx === 0 && dy === 0 && (joystickDir.dx !== 0 || joystickDir.dy !== 0)) {
         dx = joystickDir.dx;
         dy = joystickDir.dy;
       }

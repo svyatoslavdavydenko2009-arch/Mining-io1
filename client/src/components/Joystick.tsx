@@ -30,6 +30,12 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
     const dy = clientY - touchPos.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
+    if (distance < 5) {
+      setKnobPos({ x: 0, y: 0 });
+      onMove(0, 0);
+      return;
+    }
+
     const limitedDistance = Math.min(distance, radius);
     const angle = Math.atan2(dy, dx);
     
@@ -68,7 +74,7 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
   return (
     <div 
       ref={containerRef}
-      className="fixed bottom-12 left-12 w-32 h-32 flex items-center justify-center pointer-events-auto"
+      className="fixed bottom-12 left-12 w-32 h-32 flex items-center justify-center pointer-events-auto z-50"
       onMouseDown={handleStart}
       onTouchStart={handleStart}
       style={{ touchAction: 'none' }}
