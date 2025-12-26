@@ -194,48 +194,57 @@ export function GameCanvas({ user }: GameCanvasProps) {
       let dx = 0;
       let dy = 0;
 
+      // Keyboard input
       if (keys["w"] || keys["arrowup"]) dy -= 1;
       if (keys["s"] || keys["arrowdown"]) dy += 1;
       if (keys["a"] || keys["arrowleft"]) dx -= 1;
       if (keys["d"] || keys["arrowright"]) dx += 1;
 
+      // Joystick input
       const joyX = joystickDirRef.current.dx;
       const joyY = joystickDirRef.current.dy;
 
       let finalDx = dx;
       let finalDy = dy;
 
-      if (Math.abs(joyX) > 0.1 || Math.abs(joyY) > 0.1) {
+      // Prioritize joystick if moved significantly
+      if (Math.abs(joyX) > 0.05 || Math.abs(joyY) > 0.05) {
         finalDx = joyX;
         finalDy = joyY;
       }
 
+      // If any movement input exists
       if (Math.abs(finalDx) > 0.001 || Math.abs(finalDy) > 0.001) {
         setLocalPos(prev => {
           let moveX = finalDx;
           let moveY = finalDy;
           
+          // Normalize keyboard diagonal movement
           if (Math.abs(dx) > 0 && Math.abs(dy) > 0) {
             const mag = Math.sqrt(dx * dx + dy * dy);
             moveX = dx / mag;
             moveY = dy / mag;
           }
 
+          // Calculate next positions with speed
           const nextX = prev.x + (moveX * moveSpeed);
           const nextY = prev.y + (moveY * moveSpeed);
           
+          // Separate axes collision check for sliding against walls
           const canMoveX = !hasCollision(nextX, prev.y);
           const canMoveY = !hasCollision(prev.x, nextY);
           
-          let finalX = prev.x;
-          let finalY = prev.y;
+          let updatedX = prev.x;
+          let updatedY = prev.y;
 
-          if (canMoveX) finalX = nextX;
-          if (canMoveY) finalY = nextY;
+          if (canMoveX) updatedX = nextX;
+          if (canMoveY) updatedY = nextY;
           
-          if (finalX !== prev.x || finalY !== prev.y) {
-            setLookDir({ dx: finalX - prev.x, dy: finalY - prev.y });
-            return { x: finalX, y: finalY };
+          // Only update if position actually changed
+          if (updatedX !== prev.x || updatedY !== prev.y) {
+            // Update look direction based on actual movement delta
+            setLookDir({ dx: updatedX - prev.x, dy: updatedY - prev.y });
+            return { x: updatedX, y: updatedY };
           }
           return prev;
         });
