@@ -307,7 +307,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * 0.15;
       smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * 0.15;
       
-      const targetSide = lookDir.dx < 0 ? 1 : 0;
+      const targetSide = Math.abs(lookDir.dy) > Math.abs(lookDir.dx) ? (lookDir.dy < 0 ? 1 : 0) : (lookDir.dx < 0 ? 1 : 0);
       smoothPickaxeSide.current += (targetSide - smoothPickaxeSide.current) * 0.05;
       
       const distanceFromCenter = Math.abs(smoothPickaxeSide.current - 0.5);
@@ -368,7 +368,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
       }
       
       ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
-      const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
+      const headYOffset = lookDir.dy < 0 ? -5 : 0;
+      const headY = -24 + headYOffset; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
       ctx.fillStyle = pickaxeColor; ctx.fill();
       ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
       ctx.restore();
