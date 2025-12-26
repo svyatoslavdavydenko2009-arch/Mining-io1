@@ -969,7 +969,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Adjust hand position during mining swing to follow pickaxe rotation
       const miningOffsetX = -handOffsetSide;
-      const miningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05);
+      const miningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05) + miningAnimation.offsetY;
       
       ctx.translate(miningOffsetX, miningOffsetY); 
       ctx.rotate(-(90 * Math.PI / 180));
@@ -1055,7 +1055,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Match pickaxe hand position exactly
       const handMiningOffsetX = -handOffsetSide;
-      const handMiningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05);
+      const handMiningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05) + miningAnimation.offsetY;
       
       ctx.translate(handMiningOffsetX, handMiningOffsetY);
       ctx.fillStyle = "#fbbf24";
