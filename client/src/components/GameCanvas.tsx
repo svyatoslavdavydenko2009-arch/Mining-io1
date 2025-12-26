@@ -818,13 +818,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Pivot around the original hand position
       ctx.translate(-handOffsetSide, -handOffsetFront);
       
-      // Apply swing rotation to the hand/pickaxe group
-      // Added 80 degrees offset to the left for the swing start
-      const ARM_LEFT_OFFSET = -(80 * Math.PI / 180);
-      const baseSwingRotation = -(Math.PI / 4) + ARM_LEFT_OFFSET;
-      ctx.rotate(baseSwingRotation + swingAngle);
-
-      // Draw hand circle centered at (0,0)
+      // Draw hand circle centered at (0,0) - STATIC (no swing rotation)
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
@@ -833,8 +827,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.fill();
       ctx.stroke();
 
-      // Draw Pickaxe attached to the hand
+      // Draw Pickaxe attached to the hand - ANIMATED
       ctx.save();
+      // Apply swing rotation ONLY to the pickaxe
+      const ARM_LEFT_OFFSET = -(80 * Math.PI / 180);
+      const baseSwingRotation = -(Math.PI / 4) + ARM_LEFT_OFFSET;
+      ctx.rotate(baseSwingRotation + swingAngle);
+      
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       
       const headY = -24; 
