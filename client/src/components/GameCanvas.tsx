@@ -124,24 +124,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
   const hasCollision = (x: number, y: number): boolean => {
-    const radius = 0.2; // Reduced collision radius for easier movement
-    const tx = Math.floor(x);
-    const ty = Math.floor(y);
-    
-    // Check current and neighbors
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const ntx = tx + dx;
-        const nty = ty + dy;
-        if (!isTileMined(ntx, nty) && getTileAt(ntx, nty)) {
-          const closestX = Math.max(ntx, Math.min(x, ntx + 1));
-          const closestY = Math.max(nty, Math.min(y, nty + 1));
-          const distanceX = x - closestX;
-          const distanceY = y - closestY;
-          if ((distanceX * distanceX + distanceY * distanceY) < (radius * radius)) return true;
-        }
-      }
-    }
     return false;
   };
 
@@ -215,21 +197,15 @@ export function GameCanvas({ user }: GameCanvasProps) {
           const canMoveX = !hasCollision(nextX, prev.y);
           const canMoveY = !hasCollision(prev.x, nextY);
           
-          let finalX = prev.x;
-          let finalY = prev.y;
+          let updatedX = prev.x;
+          let updatedY = prev.y;
 
-          if (canMoveX) finalX = nextX;
-          if (canMoveY) finalY = nextY;
+          if (canMoveX) updatedX = nextX;
+          if (canMoveY) updatedY = nextY;
           
-          if (finalX !== prev.x || finalY !== prev.y) {
-            setLookDir({ dx: finalX - prev.x, dy: finalY - prev.y });
-            // Round to nearest tile for server synchronization to prevent database errors with floating point numbers
-            const roundedX = Math.round(finalX);
-            const roundedY = Math.round(finalY);
-            if (roundedX !== Math.round(prev.x) || roundedY !== Math.round(prev.y)) {
-              // We'll let the useEffect handle the actual move mutation with rounded values
-            }
-            return { x: finalX, y: finalY };
+          if (updatedX !== prev.x || updatedY !== prev.y) {
+            setLookDir({ dx: moveX, dy: moveY });
+            return { x: updatedX, y: updatedY };
           }
           return prev;
         });
