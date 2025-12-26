@@ -68,7 +68,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
 
         <div className="relative z-10 space-y-6">
           <div className="border-t border-secondary/50 pt-6">
-            <p className="text-slate-800 dark:text-slate-700 text-2xl mb-5 font-black uppercase tracking-widest">Explorer</p>
+            <p className="text-slate-800 dark:text-slate-700 text-2xl mb-5 font-black uppercase tracking-widest">Player</p>
             <div className="grid grid-cols-2 gap-6 text-2xl">
               <div>
                 <p className="text-slate-800 dark:text-slate-700 text-lg mb-2 uppercase font-black tracking-widest">Username</p>
@@ -82,7 +82,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
           </div>
 
           <div className="border-t border-secondary/50 pt-6">
-            <p className="text-slate-800 dark:text-slate-700 text-2xl mb-5 font-black uppercase tracking-widest">INVENTORY</p>
+            <p className="text-slate-800 dark:text-slate-700 text-2xl mb-5 font-black uppercase tracking-widest">Backpack</p>
             <div className="flex flex-wrap gap-10">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
