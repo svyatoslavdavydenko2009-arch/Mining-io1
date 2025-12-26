@@ -453,7 +453,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           });
         }, 100);
 
-        const newHealth = (getTileHealth(t.x, t.y) || RESOURCE_HEALTH[t.resource]) - 1;
+        // Calculate dynamic health based on scale seed used in render
+        const sizeSeed = pseudoRandom(t.x + 3000, t.y + 3000);
+        const rockScale = 0.7 + sizeSeed * 1.5;
+        const maxHealth = rockScale <= 1.0 ? 2 : rockScale <= 1.5 ? 3 : 4;
+
+        const currentHealth = tileHealth[key] !== undefined ? tileHealth[key] : maxHealth;
+        const newHealth = currentHealth - 1;
         setTileHealth(prev => ({ ...prev, [key]: newHealth }));
         
         if (newHealth <= 0) {
@@ -739,10 +745,27 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               }
               ctx.restore();
               
-              const h = tileHealth[`${wx},${wy}`] || RESOURCE_HEALTH[resType]; const mh = RESOURCE_HEALTH[resType];
+              const h = tileHealth[`${wx},${wy}`] !== undefined ? tileHealth[`${wx},${wy}`] : (
+                rockScale <= 1.0 ? 2 :
+                rockScale <= 1.5 ? 3 : 4
+              );
+              const mh = rockScale <= 1.0 ? 2 : rockScale <= 1.5 ? 3 : 4;
+              
               if (h < mh) {
-                const hp = h / mh; ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.beginPath(); ctx.roundRect(dsx + 4, dsy + TILE_SIZE - 8, TILE_SIZE - 8, 5, 2); ctx.fill();
-                ctx.fillStyle = hp > 0.5 ? "#22c55e" : hp > 0.25 ? "#eab308" : "#ef4444"; ctx.beginPath(); ctx.roundRect(dsx + 4, dsy + TILE_SIZE - 8, (TILE_SIZE - 8) * hp, 5, 2); ctx.fill();
+                const hp = h / mh; 
+                // Adjust health bar size based on rock scale
+                const barWidth = (TILE_SIZE - 8) * rockScale;
+                const barX = dsx + TILE_SIZE / 2 - barWidth / 2;
+                
+                ctx.fillStyle = "rgba(0,0,0,0.5)"; 
+                ctx.beginPath(); 
+                ctx.roundRect(barX, dsy + TILE_SIZE - 8, barWidth, 5, 2); 
+                ctx.fill();
+                
+                ctx.fillStyle = hp > 0.5 ? "#22c55e" : hp > 0.25 ? "#eab308" : "#ef4444"; 
+                ctx.beginPath(); 
+                ctx.roundRect(barX, dsy + TILE_SIZE - 8, barWidth * hp, 5, 2); 
+                ctx.fill();
               }
             } else {
               // Draw hexagon rocks in grey biome
