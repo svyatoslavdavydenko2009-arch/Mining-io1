@@ -815,32 +815,37 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.stroke();
       ctx.restore();
 
-      // Draw Hands ON TOP of everything (Body and Pickaxe)
+      // Drawing Left Hand (Holding Pickaxe)
       ctx.save();
       ctx.rotate(bodyRotation);
+      ctx.translate(-handOffsetSide, -handOffsetFront);
+      
+      // APPLY THE SAME TRANSFORMATION AS THE PICKAXE
+      // The pickaxe uses: ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
+      // But swingAngle is ALREADY -(Math.PI / 4) + (miningRotation * Math.PI / 180)
+      ctx.rotate(swingAngle);
+
+      // Draw hand circle
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
-
-      // Left hand (holding pickaxe) - synchronized with swing
-      ctx.save();
-      // Translate to hand position relative to body center
-      ctx.translate(-handOffsetSide, -handOffsetFront);
-      // Continuous synchronization with swingAngle
-      ctx.rotate(swingAngle); 
-      // Draw hand at (0,0) after translation and rotation
       ctx.beginPath();
       ctx.arc(0, 0, handSize, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
       ctx.restore();
 
-      // Right hand (static)
+      // Drawing Right Hand (Static)
+      ctx.save();
+      ctx.rotate(bodyRotation);
+      ctx.translate(handOffsetSide, -handOffsetFront);
+      ctx.fillStyle = "#fbbf24";
+      ctx.strokeStyle = "rgba(0,0,0,0.3)";
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(handOffsetSide, -handOffsetFront, handSize, 0, Math.PI * 2);
+      ctx.arc(0, 0, handSize, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-
       ctx.restore();
       ctx.restore(); // Restore main player transform
 
