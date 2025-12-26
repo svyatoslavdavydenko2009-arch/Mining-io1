@@ -391,9 +391,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
       ctx.restore();
 
+      ctx.restore(); // Restore main player transform
+
       const grad = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
-      grad.addColorStop(0, "rgba(0,0,0,0)"); grad.addColorStop(1, "rgba(0,0,0,0.9)");
-      ctx.globalCompositeOperation = "multiply"; ctx.fillStyle = grad; ctx.fillRect(0, 0, rect.width, rect.height); ctx.globalCompositeOperation = "source-over";
       particles.forEach(p => { const sx = cx + (p.x - displayPos.x) * TILE_SIZE; const sy = cy + (p.y - displayPos.y) * TILE_SIZE; ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(sx - 2, sy - 2, 4, 4); ctx.globalAlpha = 1; });
       frameId = requestAnimationFrame(render);
     };
