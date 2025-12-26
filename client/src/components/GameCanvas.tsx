@@ -23,7 +23,7 @@ function pseudoRandom(x: number, y: number) {
   return sin - Math.floor(sin);
 }
 
-// Simplex-like noise for more organic biomes
+// Organic noise using value noise approach
 function getNoise(x: number, y: number, scale: number) {
   const x0 = Math.floor(x * scale);
   const y0 = Math.floor(y * scale);
@@ -311,7 +311,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       smoothPickaxeSide.current += (targetSide - smoothPickaxeSide.current) * 0.05;
       
       const distanceFromCenter = Math.abs(smoothPickaxeSide.current - 0.5);
-      const isNearCenter = distanceFromCenter < 0.25; 
+      const isNearCenter = distanceFromCenter < 0.3; 
 
       dashScale.current.x += (1 - dashScale.current.x) * 0.15;
       dashScale.current.y += (1 - dashScale.current.y) * 0.15;
@@ -335,7 +335,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
             if (resType) {
               const res = RESOURCES[resType]; ctx.fillStyle = "#444"; ctx.beginPath(); ctx.roundRect(sx + 4, sy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
               
-              // Only draw inner pixels for ores, not plain stone
               if (resType !== "stone") {
                 ctx.fillStyle = res.color; ctx.fillRect(sx + 10, sy + 10, 8, 8); ctx.fillRect(sx + 24, sy + 16, 6, 6); ctx.fillRect(sx + 16, sy + 28, 8, 8);
               }
@@ -364,8 +363,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.scale(1 - side * 2, 1);
       
       if (isNearCenter) {
-          // Increased blur intensity as requested
-          ctx.filter = "blur(4px)";
+          // Increased blur intensity and range
+          const intensity = Math.max(0, (0.3 - distanceFromCenter) / 0.3) * 8;
+          ctx.filter = `blur(${intensity}px)`;
       }
       
       ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
