@@ -925,15 +925,29 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(-(90 * Math.PI / 180));
       
       const headY = -24; 
+      // Draw outline for head
+      ctx.strokeStyle = "rgba(0,0,0,0.6)";
+      ctx.lineWidth = 3;
       ctx.beginPath(); 
       ctx.moveTo(-14, headY + 4); 
       ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); 
       ctx.lineTo(10, headY + 6); 
       ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); 
       ctx.closePath();
-      ctx.fillStyle = pickaxeColor; ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = pickaxeColor; 
+      ctx.fill();
       
       // The handle starts from the hand (0,0 now due to translate)
+      // Draw handle outline first
+      ctx.strokeStyle = "rgba(0,0,0,0.6)";
+      ctx.lineWidth = 6;
+      ctx.beginPath(); 
+      ctx.moveTo(0, headY); 
+      ctx.lineTo(0, 0); 
+      ctx.stroke();
+
       ctx.beginPath(); 
       ctx.moveTo(0, headY); 
       ctx.lineTo(0, 0); 
