@@ -188,10 +188,28 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const relY = Math.round((clickY - centerY) / TILE_SIZE);
     const targetX = localPos.x + relX;
     const targetY = localPos.y + relY;
-    if (Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y)) > 1) return;
-    if (isTileMined(targetX, targetY)) return;
+    
+    // Check if target is a mineable resource
     const resource = getTileAt(targetX, targetY);
-    if (!resource) return;
+    if (!resource || isTileMined(targetX, targetY)) return;
+
+    // Turn character to face the clicked resource
+    const dx = targetX - localPos.x;
+    const dy = targetY - localPos.y;
+    
+    // Character can only look in 4 directions (normalized)
+    const normalizedDx = dx !== 0 ? Math.sign(dx) : 0;
+    const normalizedDy = dy !== 0 ? Math.sign(dy) : 0;
+    
+    // Prioritize horizontal looking if both are present for pickaxe side switching
+    if (normalizedDx !== 0) {
+      setLookDir({ dx: normalizedDx, dy: 0 });
+    } else if (normalizedDy !== 0) {
+      setLookDir({ dx: 0, dy: normalizedDy });
+    }
+
+    if (Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y)) > 1) return;
+
     const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
     if (isMining || Date.now() - lastMineTime.current < cooldown) return;
     const resDef = RESOURCES[resource];
