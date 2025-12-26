@@ -553,17 +553,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         // Add bounce effect only if pickaxe hit a stone (after 0.55 progress)
         if (hitStone.current) {
           const bouncePhase = (progress - 0.55) / 0.45; // 0 to 1
-          // Tilt pickaxe backward with snappy easing
-          let tiltAmount = 0;
-          if (bouncePhase < 0.4) {
-            // Fast tilt backward
-            const p = bouncePhase / 0.4;
-            tiltAmount = Math.pow(p, 2) * 25; // Positive = tilt backward
-          } else {
-            // Fast return forward
-            const p = (bouncePhase - 0.4) / 0.6;
-            tiltAmount = 25 - Math.pow(p, 2) * 25;
-          }
+          // Tilt pickaxe backward with snappy easing (no return)
+          const p = Math.min(bouncePhase / 0.3, 1); // Quick tilt in first 30% of bounce
+          const tiltAmount = Math.pow(p, 2) * 25; // Positive = tilt backward
           rot += tiltAmount;
         }
       }
