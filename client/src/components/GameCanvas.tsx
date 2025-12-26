@@ -1,3 +1,4 @@
+import { Joystick } from "./Joystick";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { RESOURCES, type ResourceType, type User, PICKAXES } from "@shared/schema";
 import { useGame } from "@/hooks/use-game";
@@ -123,6 +124,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
   const [cooldownProgress, setCooldownProgress] = useState(1); 
 
+  const [joystickDir, setJoystickDir] = useState({ dx: 0, dy: 0 });
+
   const isTileMined = (x: number, y: number) => minedTiles.has(`${x},${y}`);
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
@@ -189,6 +192,11 @@ export function GameCanvas({ user }: GameCanvasProps) {
       if (keys["s"] || keys["arrowdown"]) dy += 1;
       if (keys["a"] || keys["arrowleft"]) dx -= 1;
       if (keys["d"] || keys["arrowright"]) dx += 1;
+
+      if (dx === 0 && dy === 0) {
+        dx = joystickDir.dx;
+        dy = joystickDir.dy;
+      }
 
       if (dx !== 0 || dy !== 0) {
         const mag = Math.sqrt(dx * dx + dy * dy);
@@ -460,13 +468,11 @@ export function GameCanvas({ user }: GameCanvasProps) {
           </motion.div>
         ))}</AnimatePresence>
       </div>
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-4 sm:hidden">
-        <div className="grid grid-cols-3 gap-2">
-          <div /> <button onPointerDown={(e) => { e.preventDefault(); handleMobileMove(0, -1); }} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronUp className="text-white" /></button> <div />
-          <button onPointerDown={(e) => { e.preventDefault(); handleMobileMove(-1, 0); }} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronLeft className="text-white" /></button>
-          <button onPointerDown={(e) => { e.preventDefault(); handleMobileMove(0, 1); }} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronDown className="text-white" /></button>
-          <button onPointerDown={(e) => { e.preventDefault(); handleMobileMove(1, 0); }} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronRight className="text-white" /></button>
-        </div>
+      <div className="sm:hidden pointer-events-none">
+        <Joystick 
+          onMove={(dx, dy) => setJoystickDir({ dx, dy })} 
+          onEnd={() => setJoystickDir({ dx: 0, dy: 0 })} 
+        />
       </div>
     </div>
   );
