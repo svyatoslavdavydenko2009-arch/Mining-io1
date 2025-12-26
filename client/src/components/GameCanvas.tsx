@@ -543,9 +543,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const p = (progress - 0.55) / 0.45;
         const easedP = 1 - Math.pow(1 - p, 4); // Quartic easing for maximum smoothness
         rot = 60 * (1 - easedP);
+        
+        // Add bounce effect when pickaxe hits (after 0.55 progress)
+        const bouncePhase = (progress - 0.55) / 0.45; // 0 to 1
+        const bounceAmount = Math.sin(bouncePhase * Math.PI) * -6; // Negative = upward bounce
+        offY = bounceAmount;
       }
       
-      setMiningAnimation({ rotation: rot, offsetX: 0, offsetY: 0 });
+      setMiningAnimation({ rotation: rot, offsetX: 0, offsetY: offY });
       
       // Sync damage application with the hit moment (0.55 progress)
       if (progress >= 0.55 && !hitProcessed.current) {
