@@ -957,7 +957,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         <button 
           onClick={toggleFullscreen} 
           data-testid="button-fullscreen-toggle"
-          className="pointer-events-auto p-2 bg-black/80 hover:bg-black/95 border border-secondary rounded-md text-white transition-colors"
+          className="hidden p-2 bg-black/80 hover:bg-black/95 border border-secondary rounded-md text-white transition-colors"
         >
           {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
         </button>
