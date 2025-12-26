@@ -765,8 +765,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(bodyRotation);
       
       const pHalf = pSize / 2;
-      const handOffsetSide = 22; 
-      const handOffsetFront = 10; // Move hands slightly forward
+      const handOffsetSide = 18; // Closer to body
+      const handOffsetFront = 12; // Slightly more forward
       const handSize = 6;
 
       ctx.fillStyle = "#fbbf24";
@@ -788,7 +788,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       ctx.save(); 
       ctx.rotate(bodyRotation);
-      ctx.translate(-pSize / 2, 0); 
+      ctx.translate(-pSize / 2 + 8, 0); // Move pickaxe forward to be "held" by hands
       ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
       const headY = -24; 
       ctx.beginPath(); 
