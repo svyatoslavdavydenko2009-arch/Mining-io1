@@ -957,8 +957,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       if (isWalking) {
         walkCycle.current += dt * 0.01;
       } else {
-        // Immediately reset when stopping to prevent trembling
-        walkCycle.current = 0;
+        // Smoothly return to 0 when stopping for smooth hand animation
+        walkCycle.current += (0 - walkCycle.current) * 0.08;
+        // If very close to 0, snap to 0 to prevent floating point drift
+        if (Math.abs(walkCycle.current) < 0.01) walkCycle.current = 0;
       }
       
       const handBob = Math.sin(walkCycle.current) * 4;
