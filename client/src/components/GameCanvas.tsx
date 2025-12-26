@@ -598,24 +598,35 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         }
       }
 
-      // Draw each biome region as a unified shape
-      Object.entries(biomeTiles).forEach(([color, tiles]) => {
-        ctx.fillStyle = color;
-        
-        tiles.forEach(t => {
-          if (isBiomeBorder(t.wx, t.wy)) {
-            // Use a significantly larger rounded rectangle for border tiles
-            // This creates the "blobby" region effect by overlapping neighboring tiles
-            const sizeBonus = TILE_SIZE * 0.5;
-            ctx.beginPath();
-            ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 24);
-            ctx.fill();
-          } else {
-            // Internal tiles draw with a small overlap to ensure no gaps
-            ctx.fillRect(t.sx - 0.5, t.sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
-          }
+      // Helper to calculate perceived brightness for layering
+      const getBrightness = (color: string) => {
+        const hex = color.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        return (r * 299 + g * 587 + b * 114) / 1000;
+      };
+
+      // Draw each biome region as a unified shape, sorted by brightness
+      Object.entries(biomeTiles)
+        .sort(([colorA], [colorB]) => getBrightness(colorA) - getBrightness(colorB))
+        .forEach(([color, tiles]) => {
+          ctx.fillStyle = color;
+          
+          tiles.forEach(t => {
+            if (isBiomeBorder(t.wx, t.wy)) {
+              // Use a significantly larger rounded rectangle for border tiles
+              // This creates the "blobby" region effect by overlapping neighboring tiles
+              const sizeBonus = TILE_SIZE * 0.5;
+              ctx.beginPath();
+              ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 24);
+              ctx.fill();
+            } else {
+              // Internal tiles draw with a small overlap to ensure no gaps
+              ctx.fillRect(t.sx - 0.5, t.sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
+            }
+          });
         });
-      });
 
       // Render Resources and Rocks in a separate pass to ensure proper layering and prevent clipping
       for (let dy = -drawRadius; dy <= drawRadius; dy++) {
