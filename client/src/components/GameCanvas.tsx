@@ -348,13 +348,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     
     const dx = targetX - localPos.x;
     const dy = targetY - localPos.y;
-    const normalizedDx = dx !== 0 ? Math.sign(dx) : 0;
-    const normalizedDy = dy !== 0 ? Math.sign(dy) : 0;
+    const dist = Math.sqrt(dx * dx + dy * dy);
     
-    if (normalizedDx !== 0) {
-      setLookDir({ dx: normalizedDx, dy: 0 });
-    } else if (normalizedDy !== 0) {
-      setLookDir({ dx: 0, dy: normalizedDy });
+    if (dist > 0) {
+      setLookDir({ dx: dx / dist, dy: dy / dist });
     }
 
     if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) return;
@@ -442,13 +439,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
     const dx = targetX - localPos.x;
     const dy = targetY - localPos.y;
-    const normalizedDx = dx !== 0 ? Math.sign(dx) : 0;
-    const normalizedDy = dy !== 0 ? Math.sign(dy) : 0;
+    const dist = Math.sqrt(dx * dx + dy * dy);
     
-    if (normalizedDx !== 0) {
-      setLookDir({ dx: normalizedDx, dy: 0 });
-    } else if (normalizedDy !== 0) {
-      setLookDir({ dx: 0, dy: normalizedDy });
+    if (dist > 0) {
+      setLookDir({ dx: dx / dist, dy: dy / dist });
     }
 
     if (Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y)) > 1) return;
