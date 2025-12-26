@@ -442,22 +442,22 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       let offY = 0;
 
       if (progress < 0.4) {
-        // Wind up backwards (to the left/back for left hand)
+        // Wind up backwards with smoother cubic easing
         const p = progress / 0.4;
-        const easedP = p * p;
+        const easedP = p * p * p;
         rot = easedP * -50; 
       } else if (progress < 0.6) {
-        // Fast swing forward (from 40% to 60%)
+        // Fast swing forward with elastic easing for "impact"
         const p = (progress - 0.4) / 0.2;
-        const easedP = p * p * (3 - 2 * p);
+        const easedP = p * p * (3 - 2 * p); // Smoothstep
         rot = -50 + (easedP * 110);
-      } else if (progress < 0.8) {
-        // Hold the impact position (from 60% to 80%)
+      } else if (progress < 0.7) {
+        // Hold impact for a bit
         rot = 60;
       } else {
-        // Very slow return to neutral (from 80% to 100%)
-        const p = (progress - 0.8) / 0.2;
-        const easedP = 1 - Math.pow(1 - p, 4); // Even smoother cubic easing
+        // Very slow and extra smooth return to neutral
+        const p = (progress - 0.7) / 0.3;
+        const easedP = 1 - Math.pow(1 - p, 5); // Quintic easing for maximum smoothness
         rot = 60 * (1 - easedP);
       }
       
@@ -584,8 +584,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * 0.2;
       displayPlayerPos.current.x += (localPos.x - displayPlayerPos.current.x) * 0.2;
       displayPlayerPos.current.y += (localPos.y - displayPlayerPos.current.y) * 0.2;
-      smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * 0.15;
-      smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * 0.15;
+      
+      // Increased smoothness for character rotation (lowered factor from 0.15 to 0.08)
+      smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * 0.08;
+      smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * 0.08;
       
       let targetSide = lookDir.dx < 0 ? 1 : 0;
       if (Math.abs(lookDir.dy) > Math.abs(lookDir.dx) && lookDir.dy < 0) {
