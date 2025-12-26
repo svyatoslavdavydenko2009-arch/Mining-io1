@@ -431,26 +431,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const elapsed = time - animStartTime;
       const progress = Math.min(elapsed / 1000, 1);
       
-      // circular animation:
-      // 1. Wind up: move backwards and slightly up (0% to 30%)
-      // 2. Powerful swing: move forward in a circular arc (30% to 80%)
-      // 3. Impact and follow-through: settle (80% to 100%)
+      // Mirroring the rotation: 
+      // Wind up goes to +60, swing goes to -90
       
       let rot = 0;
       if (progress < 0.3) {
-        // Wind up backwards (-60 degrees)
+        // Wind up forward/left (+60 degrees)
         const p = progress / 0.3;
-        rot = p * -60;
+        rot = p * 60;
       } else if (progress < 0.8) {
-        // Powerful swing forward (-60 to +90 degrees)
+        // Powerful swing backwards (+60 to -90 degrees)
         const p = (progress - 0.3) / 0.5;
-        // Using ease-in-out for more weight
         const easedP = p * p * (3 - 2 * p);
-        rot = -60 + (easedP * 150);
+        rot = 60 - (easedP * 150);
       } else {
         // Settle at the end
         const p = (progress - 0.8) / 0.2;
-        rot = 90 - (p * 20);
+        rot = -90 + (p * 20);
       }
       
       setMiningRotation(rot);
@@ -483,8 +480,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         let returnStartTime = performance.now();
         const animateReturn = (t: number) => {
           const p = Math.min((t - returnStartTime) / 400, 1);
-          // Return from final position back to 0
-          const finalRot = 70; 
+          const finalRot = -70; 
           setMiningRotation(finalRot * (1 - p));
           if (p < 1) requestAnimationFrame(animateReturn);
           else { 
@@ -815,42 +811,29 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.save();
       ctx.rotate(bodyRotation);
       
-      // Calculate swing offset for circular motion
+      // Calculate swing offset for circular motion (even without forearm)
       let swingXOffset = 0;
       let swingYOffset = 0;
       
       if (isMining || miningRotation !== 0) {
         const rad = (miningRotation * Math.PI) / 180;
+        // Circular offset: mirrored
         swingXOffset = Math.cos(rad) * 12; 
         swingYOffset = Math.sin(rad) * 8;
       }
       
-      // Pivot around the original hand position + offset
-      const baseX = -handOffsetSide;
-      const baseY = -handOffsetFront;
-      ctx.translate(baseX + swingXOffset, baseY + swingYOffset);
+      // Original hand position + dynamic swing offset
+      ctx.translate(-handOffsetSide + swingXOffset, -handOffsetFront + swingYOffset);
       
-      // Group arm, hand and pickaxe together for rotation
+      // Group hand and pickaxe together for rotation
       const ARM_LEFT_OFFSET = -(80 * Math.PI / 180);
       const baseSwingRotation = -(Math.PI / 4) + ARM_LEFT_OFFSET;
       ctx.rotate(baseSwingRotation + (miningRotation * Math.PI / 180));
 
-      // Draw forearm (centered on the hand position)
-      // We draw it backwards from the hand to the body
+      // Draw hand circle
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
-      
-      // The forearm extends from (0,0) - which is the hand - back towards the body
-      // We use negative X to draw it "behind" the hand
-      const forearmLength = 12;
-      const forearmWidth = 8;
-      ctx.beginPath();
-      ctx.roundRect(-forearmLength, -forearmWidth / 2, forearmLength, forearmWidth, 4);
-      ctx.fill();
-      ctx.stroke();
-
-      // Draw hand circle
       ctx.beginPath();
       ctx.arc(0, 0, handSize, 0, Math.PI * 2);
       ctx.fill();
