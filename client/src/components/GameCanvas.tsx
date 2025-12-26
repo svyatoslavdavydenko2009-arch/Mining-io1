@@ -378,7 +378,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const now = Date.now();
     // Reduce update frequency and distance threshold to prevent jitter
     // Ensure we send rounded integers to the server to match schema
-    if (now - lastServerUpdate > 100 && (Math.abs(localPos.x - user.x) > 0.01 || Math.abs(localPos.y - user.y) > 0.01)) {
+    // Use Math.floor/ceil based on movement to be more deterministic
+    if (now - lastServerUpdate > 100 && (Math.abs(localPos.x - user.x) > 0.05 || Math.abs(localPos.y - user.y) > 0.05)) {
       move.mutate({ x: Math.round(localPos.x), y: Math.round(localPos.y) });
       setLastServerUpdate(now);
     }
@@ -435,7 +436,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     let animStartTime = performance.now();
     const animateMining = (time: number) => {
       const elapsed = time - animStartTime;
-      const progress = Math.min(elapsed / 1000, 1);
+      const totalDuration = 1200; // Increased total duration from 1000ms
+      const progress = Math.min(elapsed / totalDuration, 1);
       
       let rot = 0;
       let offX = 0;
@@ -451,12 +453,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const p = (progress - 0.4) / 0.2;
         const easedP = p * p * (3 - 2 * p); // Smoothstep
         rot = -50 + (easedP * 110);
-      } else if (progress < 0.7) {
-        // Hold impact for a bit
+      } else if (progress < 0.75) { // Increased hold time from 0.7
+        // Hold impact for longer
         rot = 60;
       } else {
         // Very slow and extra smooth return to neutral
-        const p = (progress - 0.7) / 0.3;
+        const p = (progress - 0.75) / 0.25;
         const easedP = 1 - Math.pow(1 - p, 5); // Quintic easing for maximum smoothness
         rot = 60 * (1 - easedP);
       }
