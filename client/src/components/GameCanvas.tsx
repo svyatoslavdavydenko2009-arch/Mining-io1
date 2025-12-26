@@ -387,24 +387,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
         }
       }
 
-      // Determine scale based on movement direction (mirroring the whole character)
-      const moveScaleX = smoothLookDir.current.dx < 0 ? -1 : 1;
-      
       const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const py = cy + (playerPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const pSize = TILE_SIZE - 16;
-      ctx.save(); 
-      ctx.translate(px + pSize / 2, py + pSize / 2); 
-      ctx.scale(dashScale.current.x * moveScaleX, dashScale.current.y);
+      ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
 
       // Determine rotation based on look direction
-      // When mirrored (moveScaleX = -1), we need to adjust the rotation logic
-      // Also account for the fact that Math.atan2(0, 0) is undefined, though smoothLookDir should handle it
-      let targetRotation = 0;
-      const mag = Math.sqrt(smoothLookDir.current.dx * smoothLookDir.current.dx + smoothLookDir.current.dy * smoothLookDir.current.dy);
-      if (mag > 0.01) {
-        targetRotation = Math.atan2(smoothLookDir.current.dy, Math.abs(smoothLookDir.current.dx)) + Math.PI / 2;
-      }
+      let targetRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
       
       // Smoothly interpolate rotation
       let diff = targetRotation - smoothBodyRotation.current;
@@ -412,53 +401,30 @@ export function GameCanvas({ user }: GameCanvasProps) {
       while (diff > Math.PI) diff -= Math.PI * 2;
       smoothBodyRotation.current += diff * 0.15;
       const bodyRotation = smoothBodyRotation.current;
-
+      
       // Draw Body
       ctx.save();
-      ctx.fillStyle = "#fbbf24"; 
-      ctx.beginPath(); 
-      ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8); 
-      ctx.fill();
-      // Add a subtle bottom "shadow" or base line for grounding
-      ctx.fillStyle = "rgba(0,0,0,0.1)";
-      ctx.fillRect(-pSize/2, pSize/2 - 4, pSize, 4);
+      ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8); ctx.fill();
       ctx.restore();
 
-      // Draw Eyes (relative to rotation)
-      ctx.save();
-      ctx.rotate(bodyRotation);
-      ctx.fillStyle = "black";
-      // Slightly adjust eye position for better "forward" look
-      ctx.beginPath(); ctx.arc(-pSize / 4.5, -pSize / 3, 3.5, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(pSize / 4.5, -pSize / 3, 3.5, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
+      // Determine which side to draw the pickaxe (relative to movement direction)
+      // When moving right, pickaxe is on the right. When moving left, pickaxe is on the left.
+      const pickaxeSide = smoothLookDir.current.dx < 0 ? -1 : 1;
       
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       
       ctx.save(); 
-      // Pickaxe follows rotation and is positioned on the "front" or "side"
+      // Pickaxe rotation follows look direction
       ctx.rotate(bodyRotation);
-      // Position pickaxe relative to the body's rotation
-      ctx.translate(pSize / 2.2, -pSize / 4); 
+      // Position pickaxe on the side of the body
+      ctx.translate(pSize / 2 * pickaxeSide, 0); 
       
       ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
+      if (pickaxeSide === -1) ctx.scale(-1, 1); // Flip pickaxe if on left side
       
-      const headY = -24; 
-      ctx.beginPath(); 
-      ctx.moveTo(-14, headY + 4); 
-      ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); 
-      ctx.lineTo(10, headY + 6); 
-      ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); 
-      ctx.closePath();
-      ctx.fillStyle = pickaxeColor; 
-      ctx.fill();
-      
-      ctx.beginPath(); 
-      ctx.moveTo(0, headY); 
-      ctx.lineTo(0, 8); // Stick goes slightly more into the body
-      ctx.strokeStyle = "#5D4037"; 
-      ctx.lineWidth = 4; 
-      ctx.stroke();
+      const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
+      ctx.fillStyle = pickaxeColor; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
       ctx.restore();
 
       ctx.restore(); // Restore main player transform
