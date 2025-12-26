@@ -436,7 +436,37 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const elapsed = time - animStartTime;
       const progress = Math.min(elapsed / 1000, 1);
       
-      setMiningAnimation({ rotation: 0, offsetX: 0, offsetY: 0 });
+      let rot = 0;
+      let offX = 0;
+      let offY = 0;
+
+      if (progress < 0.3) {
+        // Wind up backwards (45 degrees)
+        const p = progress / 0.3;
+        rot = p * 45; 
+        // Arc movement during windup
+        offX = -Math.sin(p * Math.PI / 4) * 15;
+        offY = (1 - Math.cos(p * Math.PI / 4)) * 15;
+      } else if (progress < 0.8) {
+        // Swing forward
+        const p = (progress - 0.3) / 0.5;
+        const easedP = p * p * (3 - 2 * p);
+        // From 45 to -90
+        rot = 45 - (easedP * 135);
+        
+        const angle = (45 - (easedP * 135)) * Math.PI / 180;
+        // Circular arc based on rotation
+        offX = Math.sin(angle) * 25;
+        offY = -Math.cos(angle) * 25 + 25;
+      } else {
+        // Return to neutral
+        const p = (progress - 0.8) / 0.2;
+        rot = -90 * (1 - p);
+        offX = Math.sin(-90 * Math.PI / 180 * (1-p)) * 25;
+        offY = (-Math.cos(-90 * Math.PI / 180 * (1-p)) * 25 + 25) * (1-p);
+      }
+      
+      setMiningAnimation({ rotation: rot, offsetX: offX, offsetY: offY });
       
       if (progress < 1) requestAnimationFrame(animateMining);
       else {
