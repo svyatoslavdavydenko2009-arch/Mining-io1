@@ -765,8 +765,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(bodyRotation);
       
       const pHalf = pSize / 2;
-      const handOffsetSide = 18; // Closer to body
-      const handOffsetFront = 12; // Slightly more forward
+      const handOffsetSide = 22; // Back to wider position
+      const handOffsetFront = 10; // Back to previous forward offset
       const handSize = 6;
 
       ctx.fillStyle = "#fbbf24";
