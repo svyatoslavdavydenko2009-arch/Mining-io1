@@ -938,7 +938,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         walkCycle.current += dt * 0.01; // Speed of hand movement
       } else {
         // Smoothly return to 0 when stopped
-        walkCycle.current *= 0.9;
+        // Using a time-based decay for consistent smoothness regardless of framerate
+        const decay = Math.pow(0.9, dt / 16); 
+        walkCycle.current *= decay;
         if (Math.abs(walkCycle.current) < 0.01) walkCycle.current = 0;
       }
       
