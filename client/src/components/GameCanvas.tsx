@@ -823,8 +823,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.save();
       // Move pivot to center, then apply same swing rotation as pickaxe
       ctx.translate(-handOffsetSide, -handOffsetFront);
-      // We need to apply the miningRotation here to make the hand move with the pickaxe
-      ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
+      // Synchronize hand rotation with mining animation
+      const handSwing = isMining ? (miningRotation * Math.PI / 180) : 0;
+      ctx.rotate(-(Math.PI / 4) + handSwing);
       ctx.beginPath();
       ctx.arc(0, 0, handSize, 0, Math.PI * 2);
       ctx.fill();
