@@ -940,9 +940,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         walkCycle.current += dt * 0.01;
       } else {
         // Smooth decay when stopping
-        const decay = Math.pow(0.92, frameRateFactor);
+        const decay = Math.pow(0.88, frameRateFactor);
         walkCycle.current *= decay;
-        if (Math.abs(walkCycle.current) < 0.05) walkCycle.current = 0;
+        if (Math.abs(walkCycle.current) < 0.5) walkCycle.current = 0;
       }
       
       const handBob = Math.sin(walkCycle.current) * 4;
