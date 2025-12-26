@@ -23,14 +23,25 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
   };
 
   const handleUpdate = (e: any) => {
-    if (!baseRef.current) return;
+    if (!baseRef.current || activeTouchId.current === null) return;
     
     const rect = baseRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    let clientX: number, clientY: number;
+    
+    if (e.touches) {
+      // Find the touch with the matching ID
+      const touch = Array.from(e.touches).find((t: any) => t.identifier === activeTouchId.current);
+      if (!touch) return; // Our touch is no longer active
+      clientX = (touch as any).clientX;
+      clientY = (touch as any).clientY;
+    } else {
+      // Mouse event
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
     
     const dx = clientX - centerX;
     const dy = clientY - centerY;
