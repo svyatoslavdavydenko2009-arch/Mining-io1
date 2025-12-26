@@ -581,33 +581,41 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       ctx.fillStyle = "#1e150f"; ctx.fillRect(0, 0, rect.width, rect.height);
 
-      // Render Biome Floors
-      const drawRadius = 12; // Increased radius to ensure large rocks don't clip at edges
+      // Render Biome Regions
+      // Group tiles by biome color to draw them as unified shapes
+      const drawRadius = 12;
+      const biomeTiles: Record<string, {wx: number, wy: number, sx: number, sy: number}[]> = {};
       
-      // Draw a solid dark brown layer first to ensure no gaps at all
-      ctx.fillStyle = "#1e150f";
-      ctx.fillRect(0, 0, rect.width, rect.height);
-
       for (let dy = -drawRadius; dy <= drawRadius; dy++) {
         for (let dx = -drawRadius; dx <= drawRadius; dx++) {
           const wx = Math.round(localPos.x) + dx; const wy = Math.round(localPos.y) + dy;
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+          const color = getFloorColor(wx, wy);
           
-          ctx.fillStyle = getFloorColor(wx, wy); 
-          
-          // Using slightly larger fill to prevent gaps without snapping to pixels
-          ctx.fillRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
-          
-          if (isBiomeBorder(wx, wy)) {
-            // Draw an overlaying rounded rectangle to create the smooth transition
-            const sizeBonus = Math.floor(TILE_SIZE * 0.4);
-            ctx.beginPath();
-            ctx.roundRect(sx - sizeBonus / 2, sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 16);
-            ctx.fill();
-          }
+          if (!biomeTiles[color]) biomeTiles[color] = [];
+          biomeTiles[color].push({wx, wy, sx, sy});
         }
       }
+
+      // Draw each biome region as a unified shape
+      Object.entries(biomeTiles).forEach(([color, tiles]) => {
+        ctx.fillStyle = color;
+        
+        tiles.forEach(t => {
+          if (isBiomeBorder(t.wx, t.wy)) {
+            // Use a significantly larger rounded rectangle for border tiles
+            // This creates the "blobby" region effect by overlapping neighboring tiles
+            const sizeBonus = TILE_SIZE * 0.5;
+            ctx.beginPath();
+            ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 24);
+            ctx.fill();
+          } else {
+            // Internal tiles draw with a small overlap to ensure no gaps
+            ctx.fillRect(t.sx - 0.5, t.sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
+          }
+        });
+      });
 
       // Render Resources and Rocks in a separate pass to ensure proper layering and prevent clipping
       for (let dy = -drawRadius; dy <= drawRadius; dy++) {
