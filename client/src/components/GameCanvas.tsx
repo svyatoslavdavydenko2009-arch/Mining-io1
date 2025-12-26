@@ -766,11 +766,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Render Character Hands (as circles)
       const handOffset = 22; // Offset from character center
-      const handSize = 8;
+      const handSize = 6;
       
-      ctx.fillStyle = "#fff"; // Light color for hands like in the photo
-      ctx.strokeStyle = "rgba(0,0,0,0.2)";
-      ctx.lineWidth = 1;
+      ctx.fillStyle = "#fbbf24"; // Same color as character body
+      ctx.strokeStyle = "rgba(0,0,0,0.3)";
+      ctx.lineWidth = 1.5;
 
       // Left hand
       ctx.beginPath();
