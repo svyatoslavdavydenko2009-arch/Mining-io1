@@ -778,6 +778,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Determine rotation based on look direction
       let targetRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
       
+      // Add 60 degrees (in radians) to the target rotation to turn left
+      const ROTATION_OFFSET = -(60 * Math.PI / 180);
+      targetRotation += ROTATION_OFFSET;
+      
       // Smoothly interpolate rotation for both body and pickaxe base
       let diff = targetRotation - smoothBodyRotation.current;
       while (diff < -Math.PI) diff += Math.PI * 2;
