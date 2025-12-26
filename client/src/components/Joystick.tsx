@@ -81,6 +81,22 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
     if (!isActive) return;
 
     const handleGlobalMove = (e: Event) => {
+      const activeTouchId = activeTouchIdRef.current;
+      if (activeTouchId === null) return;
+      
+      // Only update if this is our tracked input
+      const touchEvent = e as TouchEvent;
+      if (touchEvent.touches) {
+        let found = false;
+        for (let i = 0; i < touchEvent.touches.length; i++) {
+          if (touchEvent.touches[i].identifier === activeTouchId) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) return;
+      }
+      
       updateJoystick(e);
     };
     
@@ -89,7 +105,6 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
       if (activeTouchId === null) return;
       
       const touchEvent = e as TouchEvent;
-      const mouseEvent = e as MouseEvent;
       
       if (touchEvent.changedTouches) {
         // Check if our tracked touch ended
@@ -114,46 +129,16 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
       activeTouchIdRef.current = null;
     };
 
-    const handleGlobalMoveWithPrevent = (e: Event) => {
-      handleGlobalMove(e);
-      // Only prevent default for the specific touch we're tracking
-      const touchEvent = e as TouchEvent;
-      const activeTouchId = activeTouchIdRef.current;
-      if (touchEvent.touches && activeTouchId !== null && activeTouchId !== -1) {
-        for (let i = 0; i < touchEvent.touches.length; i++) {
-          if (touchEvent.touches[i].identifier === activeTouchId) {
-            e.preventDefault();
-            break;
-          }
-        }
-      }
-    };
-
-    const handleGlobalEndWithPrevent = (e: Event) => {
-      handleGlobalEnd(e);
-      // Only prevent default if it was our tracked touch
-      const activeTouchId = activeTouchIdRef.current;
-      const touchEvent = e as TouchEvent;
-      if (touchEvent.changedTouches && activeTouchId !== null && activeTouchId !== -1) {
-        for (let i = 0; i < touchEvent.changedTouches.length; i++) {
-          if (touchEvent.changedTouches[i].identifier === activeTouchId) {
-            e.preventDefault();
-            break;
-          }
-        }
-      }
-    };
-
     window.addEventListener("mousemove", handleGlobalMove);
     window.addEventListener("mouseup", handleGlobalEnd);
-    window.addEventListener("touchmove", handleGlobalMoveWithPrevent, { passive: false });
-    window.addEventListener("touchend", handleGlobalEndWithPrevent, { passive: false });
+    window.addEventListener("touchmove", handleGlobalMove, { passive: true });
+    window.addEventListener("touchend", handleGlobalEnd, { passive: true });
 
     return () => {
       window.removeEventListener("mousemove", handleGlobalMove);
       window.removeEventListener("mouseup", handleGlobalEnd);
-      window.removeEventListener("touchmove", handleGlobalMoveWithPrevent);
-      window.removeEventListener("touchend", handleGlobalEndWithPrevent);
+      window.removeEventListener("touchmove", handleGlobalMove);
+      window.removeEventListener("touchend", handleGlobalEnd);
     };
   }, [isActive, onMove, onEnd]);
 
