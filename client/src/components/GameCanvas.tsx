@@ -952,7 +952,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.moveTo(0, headY); 
       ctx.lineTo(0, 0); 
       ctx.strokeStyle = "#5D4037"; 
-      ctx.lineWidth = 1.5; 
+      ctx.lineWidth = 4; 
       ctx.stroke();
       ctx.restore();
 
