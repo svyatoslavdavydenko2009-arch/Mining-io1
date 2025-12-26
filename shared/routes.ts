@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { insertUserSchema, users } from "./schema";
 
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
 export const errorSchemas = {
   validation: z.object({
     message: z.string(),
