@@ -613,19 +613,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         .forEach(([color, tiles]) => {
           ctx.fillStyle = color;
           
+          // First pass: draw the base rectangles for all tiles in the biome to prevent gaps
+          tiles.forEach(t => {
+            ctx.fillRect(t.sx - 0.5, t.sy - 0.5, TILE_SIZE + 1.1, TILE_SIZE + 1.1);
+          });
+          
+          // Second pass: draw rounded corners only on the edges of the biome region
           tiles.forEach(t => {
             if (isBiomeBorder(t.wx, t.wy)) {
-              // Use a much more subtle organic "blob" effect
-              // Instead of huge circles, we use slightly overlapping rounded rects
-              // and a smaller size bonus to make it look like a unified landmass
-              const sizeBonus = TILE_SIZE * 0.25;
+              const sizeBonus = TILE_SIZE * 0.4;
               ctx.beginPath();
-              // Increased corner radius for a more "liquid" transition
-              ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 32);
+              ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 24);
               ctx.fill();
-            } else {
-              // Internal tiles draw with a small overlap to ensure no gaps
-              ctx.fillRect(t.sx - 0.5, t.sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
             }
           });
         });
