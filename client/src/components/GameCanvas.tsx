@@ -845,7 +845,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(leftHandRot);
       ctx.translate(-handOffsetSide, -handOffsetFront);
       
-      // Draw a "limb" connecting hand to body (now stays fixed relative to rotated hand)
+      // Draw a "limb" connecting hand to body (now hidden but kept in code)
+      /*
       ctx.beginPath();
       ctx.moveTo(0, 0); // At hand
       ctx.lineTo(handOffsetSide, handOffsetFront); // Towards body center
@@ -853,6 +854,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.lineWidth = 8;
       ctx.lineCap = "round";
       ctx.stroke();
+      */
 
       // Apply pickaxe rotation relative to hand
       ctx.rotate(-(90 * Math.PI / 180));
@@ -872,7 +874,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(bodyRotation);
       ctx.translate(handOffsetSide, -handOffsetFront);
       
-      // Draw a "limb" connecting hand to body
+      // Draw a "limb" connecting hand to body (now hidden but kept in code)
+      /*
       ctx.beginPath();
       ctx.moveTo(0, 0);
       ctx.lineTo(-handOffsetSide, handOffsetFront);
@@ -880,6 +883,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.lineWidth = 8;
       ctx.lineCap = "round";
       ctx.stroke();
+      */
 
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
