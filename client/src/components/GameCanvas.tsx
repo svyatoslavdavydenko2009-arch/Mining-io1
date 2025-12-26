@@ -818,14 +818,16 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Drawing Left Hand (Holding Pickaxe)
       ctx.save();
       ctx.rotate(bodyRotation);
+      
+      // Pivot for rotation must be at the shoulder/hand joint
+      // But the hand itself needs to rotate with the pickaxe
       ctx.translate(-handOffsetSide, -handOffsetFront);
       
-      // APPLY THE SAME TRANSFORMATION AS THE PICKAXE
-      // The pickaxe uses: ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
-      // But swingAngle is ALREADY -(Math.PI / 4) + (miningRotation * Math.PI / 180)
+      // The hand should rotate around its connection point to the body
+      // and follow the pickaxe's rotation
       ctx.rotate(swingAngle);
 
-      // Draw hand circle
+      // Draw hand circle centered at (0,0) after rotation
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
