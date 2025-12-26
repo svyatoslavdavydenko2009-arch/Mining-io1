@@ -615,11 +615,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           
           tiles.forEach(t => {
             if (isBiomeBorder(t.wx, t.wy)) {
-              // Use a significantly larger rounded rectangle for border tiles
-              // This creates the "blobby" region effect by overlapping neighboring tiles
-              const sizeBonus = TILE_SIZE * 0.5;
+              // Use a much more subtle organic "blob" effect
+              // Instead of huge circles, we use slightly overlapping rounded rects
+              // and a smaller size bonus to make it look like a unified landmass
+              const sizeBonus = TILE_SIZE * 0.25;
               ctx.beginPath();
-              ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 24);
+              // Increased corner radius for a more "liquid" transition
+              ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 32);
               ctx.fill();
             } else {
               // Internal tiles draw with a small overlap to ensure no gaps
