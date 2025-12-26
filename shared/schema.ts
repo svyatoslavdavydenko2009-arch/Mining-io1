@@ -6,7 +6,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  x: integer("x").default(0).notNull(),
+  x: integer("x").default(0).notNull(), // Using integer but will interpret as fixed-point or just keep as float in runtime
   y: integer("y").default(0).notNull(),
   pickaxeLevel: integer("pickaxe_level").default(1).notNull(),
   // Store inventory as a JSON map: { "stone": 10, "copper_ore": 5 }

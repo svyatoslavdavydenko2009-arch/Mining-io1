@@ -99,6 +99,7 @@ const MINING_COOLDOWNS: Record<number, number> = {
 export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
+  const [velocity, setVelocity] = useState({ x: 0, y: 0 });
   const [lookDir, setLookDir] = useState({ dx: 0, dy: 0 }); 
   const smoothBodyRotation = useRef(0);
   const smoothLookDir = useRef({ dx: 0, dy: 0 }); 
@@ -126,9 +127,22 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
   const hasCollision = (x: number, y: number): boolean => {
-    if (isTileMined(x, y)) return false;
-    const resource = getTileAt(x, y);
-    return resource !== null;
+    const radius = 0.3; // Collision radius
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const tx = Math.floor(x + dx);
+        const ty = Math.floor(y + dy);
+        if (!isTileMined(tx, ty) && getTileAt(tx, ty)) {
+          // Circle-AABB collision
+          const closestX = Math.max(tx, Math.min(x, tx + 1));
+          const closestY = Math.max(ty, Math.min(y, ty + 1));
+          const distanceX = x - closestX;
+          const distanceY = y - closestY;
+          if ((distanceX * distanceX + distanceY * distanceY) < (radius * radius)) return true;
+        }
+      }
+    }
+    return false;
   };
 
   const triggerDash = (dx: number, dy: number) => {
@@ -161,32 +175,50 @@ export function GameCanvas({ user }: GameCanvasProps) {
   }, [user.x, user.y]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)) e.preventDefault();
-      const now = Date.now();
-      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d"].includes(e.key)) {
-        if (now - lastMoveTime.current < 250) return;
-        lastMoveTime.current = now;
-      }
-      setLocalPos(prev => {
-        let next = { ...prev };
-        let dx = 0, dy = 0;
-        if (e.key === "ArrowUp" || e.key === "w") { if (!hasCollision(prev.x, prev.y - 1)) { next.y -= 1; dy = -1; } }
-        else if (e.key === "ArrowDown" || e.key === "s") { if (!hasCollision(prev.x, prev.y + 1)) { next.y += 1; dy = 1; } }
-        else if (e.key === "ArrowLeft" || e.key === "a") { if (!hasCollision(prev.x - 1, prev.y)) { next.x -= 1; dx = -1; } }
-        else if (e.key === "ArrowRight" || e.key === "d") { if (!hasCollision(prev.x + 1, prev.y)) { next.x += 1; dx = 1; } }
-
-        if (next.x !== prev.x || next.y !== prev.y) {
-          setLookDir({ dx, dy });
-          triggerDash(dx, dy);
-          lastMoveTimeForInterp.current = Date.now();
-          setIsMining(false); setMiningTarget(null); setMiningRotation(0);
-        }
-        return next;
-      });
-    };
+    const keys: Record<string, boolean> = {};
+    const handleKeyDown = (e: KeyboardEvent) => { keys[e.key.toLowerCase()] = true; };
+    const handleKeyUp = (e: KeyboardEvent) => { keys[e.key.toLowerCase()] = false; };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    let frameId: number;
+    const moveSpeed = 0.15;
+    const updateMovement = () => {
+      let dx = 0; let dy = 0;
+      if (keys["w"] || keys["arrowup"]) dy -= 1;
+      if (keys["s"] || keys["arrowdown"]) dy += 1;
+      if (keys["a"] || keys["arrowleft"]) dx -= 1;
+      if (keys["d"] || keys["arrowright"]) dx += 1;
+
+      if (dx !== 0 || dy !== 0) {
+        const mag = Math.sqrt(dx * dx + dy * dy);
+        const normDx = (dx / mag) * moveSpeed;
+        const normDy = (dy / mag) * moveSpeed;
+        
+        setLocalPos(prev => {
+          let nextX = prev.x + normDx;
+          let nextY = prev.y + normDy;
+          
+          // Collision resolution (simple)
+          if (hasCollision(nextX, prev.y)) nextX = prev.x;
+          if (hasCollision(prev.x, nextY)) nextY = prev.y;
+          
+          if (nextX !== prev.x || nextY !== prev.y) {
+             setLookDir({ dx: normDx, dy: normDy });
+             return { x: nextX, y: nextY };
+          }
+          return prev;
+        });
+      }
+      frameId = requestAnimationFrame(updateMovement);
+    };
+    frameId = requestAnimationFrame(updateMovement);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      cancelAnimationFrame(frameId);
+    };
   }, [minedTiles]);
 
   useEffect(() => {
