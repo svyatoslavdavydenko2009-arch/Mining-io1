@@ -382,12 +382,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   };
 
   const handleMineButtonClick = () => {
-    if (lookDir.dx === 0 && lookDir.dy === 0) {
-      toast({ title: "Face a direction first!", variant: "destructive" });
-      return;
-    }
-    const targetX = localPos.x + lookDir.dx;
-    const targetY = localPos.y + lookDir.dy;
+    // Use current look direction or default to down
+    const dx = lookDir.dx !== 0 || lookDir.dy !== 0 ? lookDir.dx : 0;
+    const dy = lookDir.dx !== 0 || lookDir.dy !== 0 ? lookDir.dy : 1;
+    const targetX = localPos.x + dx;
+    const targetY = localPos.y + dy;
     performMining(targetX, targetY);
   };
 
