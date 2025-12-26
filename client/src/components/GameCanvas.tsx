@@ -761,8 +761,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 // Adjust health bar size based on rock scale
                 const barWidth = (TILE_SIZE - 8) * rockScale;
                 const barX = dsx + TILE_SIZE / 2 - barWidth / 2;
-                // Position health bar below the stone texture
-                const barY = dsy + TILE_SIZE + 4;
+                // Position health bar below the stone texture, scaled with rock size
+                const stoneRadius = (TILE_SIZE - 8) / 2;
+                const barY = dsy + TILE_SIZE / 2 + stoneRadius * rockScale + 4;
                 
                 ctx.fillStyle = "rgba(0,0,0,0.5)"; 
                 ctx.beginPath(); 
