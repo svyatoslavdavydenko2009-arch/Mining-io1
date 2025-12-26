@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -11,6 +11,7 @@ export const users = pgTable("users", {
   pickaxeLevel: integer("pickaxe_level").default(1).notNull(),
   // Store inventory as a JSON map: { "stone": 10, "copper_ore": 5 }
   inventory: jsonb("inventory").$type<Record<string, number>>().default({}).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
