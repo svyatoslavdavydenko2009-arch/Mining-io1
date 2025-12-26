@@ -970,24 +970,34 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.closePath();
       ctx.stroke();
 
-      // Create a gradient for the head texture (inner shadow/depth)
-      const headGrad = ctx.createLinearGradient(-14, headY, 14, headY + 6);
-      headGrad.addColorStop(0, "rgba(0,0,0,0.2)"); // Darker side
-      headGrad.addColorStop(0.2, pickaxeColor);
-      headGrad.addColorStop(0.8, pickaxeColor);
-      headGrad.addColorStop(1, "rgba(0,0,0,0.2)"); // Darker side
+      // Create a gradient for the head texture (inner shadow/depth) - Side-to-side gradient for "corners"
+      const headGrad = ctx.createLinearGradient(-14, headY, 14, headY);
+      headGrad.addColorStop(0, "rgba(0,0,0,0.4)"); // Dark corner left
+      headGrad.addColorStop(0.3, pickaxeColor);
+      headGrad.addColorStop(0.7, pickaxeColor);
+      headGrad.addColorStop(1, "rgba(0,0,0,0.4)"); // Dark corner right
       
       ctx.fillStyle = headGrad; 
       ctx.fill();
       
-      // Add an inner "light" layer to match the look in the photo
+      // Add top-to-bottom shading for the curved part
+      const topGrad = ctx.createLinearGradient(0, headY - 8, 0, headY + 6);
+      topGrad.addColorStop(0, "rgba(0,0,0,0.3)");
+      topGrad.addColorStop(0.4, "transparent");
+      topGrad.addColorStop(0.6, "transparent");
+      topGrad.addColorStop(1, "rgba(0,0,0,0.2)");
+      
+      ctx.fillStyle = topGrad;
+      ctx.fill();
+      
+      // Add an inner "light" layer (highlight on top edge)
       ctx.beginPath();
-      ctx.moveTo(-10, headY + 3);
-      ctx.quadraticCurveTo(0, headY - 5, 10, headY + 3);
-      ctx.lineTo(8, headY + 4);
-      ctx.quadraticCurveTo(0, headY - 1, -8, headY + 4);
+      ctx.moveTo(-12, headY + 3.5);
+      ctx.quadraticCurveTo(0, headY - 6, 12, headY + 3.5);
+      ctx.lineTo(10, headY + 4.5);
+      ctx.quadraticCurveTo(0, headY - 2, -10, headY + 4.5);
       ctx.closePath();
-      ctx.fillStyle = pickaxeColor;
+      ctx.fillStyle = "rgba(255,255,255,0.1)";
       ctx.fill();
       
       ctx.restore();
