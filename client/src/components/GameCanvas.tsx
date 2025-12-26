@@ -761,7 +761,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const bodyRotation = smoothBodyRotation.current;
       
       // Mining swing animation: we calculate it once to use for both pickaxe and hand
-      const swingAngle = (miningRotation * Math.PI / 180);
+      const swingAngle = -(Math.PI / 4) + (miningRotation * Math.PI / 180);
       
       // Draw Body and Hands
       ctx.save();
@@ -827,7 +827,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Move pivot to center, then apply same swing rotation as pickaxe
       ctx.translate(-handOffsetSide, -handOffsetFront);
       // Continuous synchronization with swingAngle
-      ctx.rotate(-(Math.PI / 4) + swingAngle);
+      ctx.rotate(swingAngle); // FIXED: Removed the additional -(Math.PI/4) because it's already in swingAngle calculation logic or should be inherited
       ctx.beginPath();
       ctx.arc(0, 0, handSize, 0, Math.PI * 2);
       ctx.fill();
