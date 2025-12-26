@@ -778,10 +778,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Determine rotation based on look direction
       let targetRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
       
-      // Add 60 degrees (in radians) to the target rotation to turn left
-      const ROTATION_OFFSET = -(60 * Math.PI / 180);
-      targetRotation += ROTATION_OFFSET;
-      
       // Smoothly interpolate rotation for both body and pickaxe base
       let diff = targetRotation - smoothBodyRotation.current;
       while (diff < -Math.PI) diff += Math.PI * 2;
@@ -825,7 +821,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.translate(shoulderX, shoulderY);
       
       // Arm rotation includes both base pose and the swing
-      const baseArmRotation = -Math.PI / 3;
+      // Added 80 degrees offset to the left for the arm
+      const ARM_LEFT_OFFSET = -(80 * Math.PI / 180);
+      const baseArmRotation = -Math.PI / 3 + ARM_LEFT_OFFSET;
       ctx.rotate(baseArmRotation + swingAngle);
 
       // Draw Arm
