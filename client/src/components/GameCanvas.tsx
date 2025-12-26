@@ -1065,7 +1065,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Match pickaxe hand position exactly
       const handMiningOffsetX = -handOffsetSide;
-      const handMiningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05) + miningAnimation.offsetY;
+      const handMiningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05);
       
       ctx.translate(handMiningOffsetX, handMiningOffsetY);
       ctx.fillStyle = "#fbbf24";
