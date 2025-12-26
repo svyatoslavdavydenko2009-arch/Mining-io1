@@ -553,18 +553,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         // Add bounce effect only if pickaxe hit a stone (after 0.55 progress)
         if (hitStone.current) {
           const bouncePhase = (progress - 0.55) / 0.45; // 0 to 1
-          // Use quadratic easing for a snappier, less smooth bounce
-          let bounceAmount = 0;
+          // Tilt pickaxe backward with snappy easing
+          let tiltAmount = 0;
           if (bouncePhase < 0.4) {
-            // Fast upward bounce
+            // Fast tilt backward
             const p = bouncePhase / 0.4;
-            bounceAmount = -Math.pow(p, 2) * 16;
+            tiltAmount = Math.pow(p, 2) * 25; // Positive = tilt backward
           } else {
-            // Fast return down
+            // Fast return forward
             const p = (bouncePhase - 0.4) / 0.6;
-            bounceAmount = -16 + Math.pow(p, 2) * 16;
+            tiltAmount = 25 - Math.pow(p, 2) * 25;
           }
-          offY = bounceAmount;
+          rot += tiltAmount;
         }
       }
       
@@ -979,7 +979,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Adjust hand position during mining swing to follow pickaxe rotation
       const miningOffsetX = -handOffsetSide;
-      const miningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05) + miningAnimation.offsetY;
+      const miningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05);
       
       ctx.translate(miningOffsetX, miningOffsetY); 
       ctx.rotate(-(90 * Math.PI / 180));
