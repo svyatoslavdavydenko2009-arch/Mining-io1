@@ -44,6 +44,13 @@
     @apply font-bold tracking-tight text-primary;
     text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
   }
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .animate-spin-slow {
+    animation: spin-slow 8s linear infinite;
+  }
 }
 
 @layer utilities {

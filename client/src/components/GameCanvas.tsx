@@ -954,13 +954,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         </motion.div>
       )}</AnimatePresence>
       <div className="absolute top-4 right-4 flex flex-col gap-2 items-end pointer-events-none">
-        <button 
-          onClick={toggleFullscreen} 
-          data-testid="button-fullscreen-toggle"
-          className="hidden p-2 bg-black/80 hover:bg-black/95 border border-secondary rounded-md text-white transition-colors"
-        >
-          {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
-        </button>
+        {/* Fullscreen toggle is now handled by the parent Game component's settings menu or hidden */}
         <AnimatePresence>{miningNotifications.map((n) => (
           <motion.div key={n.id} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 50, opacity: 0 }} className="bg-black/80 border border-secondary px-3 py-1.5 rounded-md flex items-center gap-2 shadow-lg">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: RESOURCES[n.resource].color }} />
