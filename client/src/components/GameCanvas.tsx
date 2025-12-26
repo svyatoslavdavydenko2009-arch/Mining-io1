@@ -936,11 +936,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.lineTo(0, 0); 
       ctx.stroke();
 
-      // Inner handle color
+      // Inner handle color (darker for shadow/realism)
       ctx.beginPath(); 
       ctx.moveTo(0, headY); 
       ctx.lineTo(0, 0); 
-      ctx.strokeStyle = "#5D4037"; 
+      ctx.strokeStyle = "#3d2b25"; 
       ctx.lineWidth = 4; 
       ctx.stroke();
       ctx.restore();
