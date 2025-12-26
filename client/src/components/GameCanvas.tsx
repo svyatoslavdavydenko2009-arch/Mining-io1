@@ -130,15 +130,18 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
   const hasCollision = (x: number, y: number): boolean => {
-    const radius = 0.3; // Collision radius
+    const radius = 0.2; // Reduced collision radius for easier movement
+    const tx = Math.floor(x);
+    const ty = Math.floor(y);
+    
+    // Check current and neighbors
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
-        const tx = Math.floor(x + dx);
-        const ty = Math.floor(y + dy);
-        if (!isTileMined(tx, ty) && getTileAt(tx, ty)) {
-          // Circle-AABB collision
-          const closestX = Math.max(tx, Math.min(x, tx + 1));
-          const closestY = Math.max(ty, Math.min(y, ty + 1));
+        const ntx = tx + dx;
+        const nty = ty + dy;
+        if (!isTileMined(ntx, nty) && getTileAt(ntx, nty)) {
+          const closestX = Math.max(ntx, Math.min(x, ntx + 1));
+          const closestY = Math.max(nty, Math.min(y, nty + 1));
           const distanceX = x - closestX;
           const distanceY = y - closestY;
           if ((distanceX * distanceX + distanceY * distanceY) < (radius * radius)) return true;
@@ -194,20 +197,26 @@ export function GameCanvas({ user }: GameCanvasProps) {
       if (keys["d"] || keys["arrowright"]) dx += 1;
 
       // Use a consistent speed for both joystick and keyboard
-      const finalDx = (dx !== 0) ? dx : joystickDirRef.current.dx;
-      const finalDy = (dy !== 0) ? dy : joystickDirRef.current.dy;
+      const joyX = joystickDirRef.current.dx || 0;
+      const joyY = joystickDirRef.current.dy || 0;
+      
+      const finalDx = (dx !== 0) ? dx : joyX;
+      const finalDy = (dy !== 0) ? dy : joyY;
 
       // Only proceed if there is actual input
-      if (Math.abs(finalDx) > 0.01 || Math.abs(finalDy) > 0.01) {
-        const mag = Math.sqrt(finalDx * finalDx + finalDy * finalDy);
-        const normDx = (finalDx / mag) * moveSpeed;
-        const normDy = (finalDy / mag) * moveSpeed;
-        
+      if (Math.abs(finalDx) > 0.001 || Math.abs(finalDy) > 0.01) {
         setLocalPos(prev => {
-          let nextX = prev.x + (finalDx * moveSpeed);
-          let nextY = prev.y + (finalDy * moveSpeed);
+          let moveX = finalDx;
+          let moveY = finalDy;
+          if (dx !== 0 && dy !== 0) {
+            const mag = Math.sqrt(dx * dx + dy * dy);
+            moveX = dx / mag;
+            moveY = dy / mag;
+          }
+
+          let nextX = prev.x + (moveX * moveSpeed);
+          let nextY = prev.y + (moveY * moveSpeed);
           
-          // Collision resolution (simple)
           if (hasCollision(nextX, prev.y)) nextX = prev.x;
           if (hasCollision(prev.x, nextY)) nextY = prev.y;
           

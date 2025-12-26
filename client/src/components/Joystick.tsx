@@ -23,8 +23,13 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
   const handleMove = (e: TouchEvent | MouseEvent) => {
     if (!isTouching.current || !touchPos) return;
 
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    // Use a simpler approach for mobile touch vs mouse
+    const clientX = 'touches' in e && (e as TouchEvent).touches && (e as TouchEvent).touches.length > 0 
+      ? (e as TouchEvent).touches[0].clientX 
+      : (e as MouseEvent).clientX;
+    const clientY = 'touches' in e && (e as TouchEvent).touches && (e as TouchEvent).touches.length > 0 
+      ? (e as TouchEvent).touches[0].clientY 
+      : (e as MouseEvent).clientY;
 
     const dx = clientX - touchPos.x;
     const dy = clientY - touchPos.y;
@@ -38,11 +43,10 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
 
     setKnobPos({ x: nx, y: ny });
     
-    // Normalize and send
+    // Normalize and send - ensuring we pass values even for small movements
     const normDx = nx / radius;
     const normDy = ny / radius;
     
-    // Low threshold to filter noise but high enough to be responsive
     onMove(normDx, normDy);
   };
 
@@ -50,7 +54,7 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
     isTouching.current = false;
     setTouchPos(null);
     setKnobPos({ x: 0, y: 0 });
-    // Explicitly send zero when released
+    // Reset movement
     onMove(0, 0);
     onEnd();
   };
