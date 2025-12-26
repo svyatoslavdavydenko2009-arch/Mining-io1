@@ -482,34 +482,21 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         });
         setMiningTarget(null);
 
-        let returnStartTime = performance.now();
-        const animateReturn = (t: number) => {
-          const p = Math.min((t - returnStartTime) / 400, 1);
-          const finalRot = 70; 
-          setMiningAnimation({ 
-            rotation: finalRot * (1 - p),
-            offsetX: 0,
-            offsetY: 0
-          });
-          if (p < 1) requestAnimationFrame(animateReturn);
-          else { 
-            const now = Date.now();
-            setIsMining(false);
-            setMiningAnimation({ rotation: 0, offsetX: 0, offsetY: 0 });
-            lastMineTime.current = now;
-            setLastMineTimeState(now);
-            setCooldownProgress(0);
-            const cs = now;
-            const uc = () => {
-              const el = Date.now() - cs;
-              const cp = Math.min(el/cooldown, 1);
-              setCooldownProgress(cp);
-              if (cp < 1) requestAnimationFrame(uc);
-            };
-            requestAnimationFrame(uc);
-          }
+        // Process mining completion directly
+        const now = Date.now();
+        setIsMining(false);
+        setMiningAnimation({ rotation: 0, offsetX: 0, offsetY: 0 });
+        lastMineTime.current = now;
+        setLastMineTimeState(now);
+        setCooldownProgress(0);
+        const cs = now;
+        const uc = () => {
+          const el = Date.now() - cs;
+          const cp = Math.min(el/cooldown, 1);
+          setCooldownProgress(cp);
+          if (cp < 1) requestAnimationFrame(uc);
         };
-        requestAnimationFrame(animateReturn);
+        requestAnimationFrame(uc);
       }
     };
     requestAnimationFrame(animateMining);
