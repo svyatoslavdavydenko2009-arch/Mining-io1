@@ -343,17 +343,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
     if (isMining || Date.now() - lastMineTime.current < cooldown) return;
     
+    // Use rounded player position for all calculations
+    const playerTileX = Math.round(localPos.x);
+    const playerTileY = Math.round(localPos.y);
+    
     const resource = getTileAt(targetX, targetY);
     const hasResource = resource && !isTileMined(targetX, targetY);
     
-    const dx = targetX - localPos.x;
-    const dy = targetY - localPos.y;
+    // Calculate direction based on tile positions (not float positions)
+    const dx = targetX - playerTileX;
+    const dy = targetY - playerTileY;
     const dist = Math.sqrt(dx * dx + dy * dy);
     
     if (dist > 0) {
       setLookDir({ dx: dx / dist, dy: dy / dist });
     }
 
+    // Check distance using tile coordinates (not float position)
     if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) return;
 
     setIsMining(true);
