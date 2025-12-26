@@ -178,6 +178,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const containerRef = useRef<HTMLDivElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
   const [velocity, setVelocity] = useState({ x: 0, y: 0 });
+  const [isWalking, setIsWalking] = useState(false);
+  const walkCycle = useRef(0);
+  const lastUpdateRef = useRef(performance.now());
   const [lookDir, setLookDir] = useState({ dx: 1, dy: 0 }); 
   const lastLookDirRef = useRef({ dx: 1, dy: 0 }); 
   const smoothBodyRotation = useRef(0);
@@ -374,6 +377,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       }
 
       if (Math.abs(moveX) > 0.001 || Math.abs(moveY) > 0.001) {
+        setIsWalking(true);
         setLocalPos(prev => {
           const nextX = prev.x + (moveX * moveSpeed);
           const nextY = prev.y + (moveY * moveSpeed);
@@ -389,6 +393,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           
           return { x: updatedX, y: updatedY };
         });
+      } else {
+        setIsWalking(false);
       }
       frameId = requestAnimationFrame(updateMovement);
     };
@@ -1019,6 +1025,21 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       ctx.restore();
 
+      // Calculate hand animation
+      const now = performance.now();
+      const dt = now - lastUpdateRef.current;
+      lastUpdateRef.current = now;
+      
+      if (isWalking) {
+        walkCycle.current += dt * 0.01; // Speed of hand movement
+      } else {
+        // Smoothly return to 0 when stopped
+        walkCycle.current *= 0.9;
+        if (Math.abs(walkCycle.current) < 0.01) walkCycle.current = 0;
+      }
+      
+      const handBob = Math.sin(walkCycle.current) * 4;
+
       // Drawing Left Hand (Holding Pickaxe)
       ctx.save();
       ctx.rotate(miningBaseRot);
@@ -1026,19 +1047,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Pivot hand based on animation rotation to keep it attached to body
       const leftHandRot = (miningAnimation.rotation * Math.PI / 180);
       ctx.rotate(leftHandRot);
-      ctx.translate(-handOffsetSide, -handOffsetFront);
+      ctx.translate(-handOffsetSide, -handOffsetFront + handBob);
       
-      // Draw a "limb" connecting hand to body (now hidden but kept in code)
-      /*
-      ctx.beginPath();
-      ctx.moveTo(0, 0); // At hand
-      ctx.lineTo(handOffsetSide, handOffsetFront); // Towards body center
-      ctx.strokeStyle = "#fbbf24";
-      ctx.lineWidth = 8;
-      ctx.lineCap = "round";
-      ctx.stroke();
-      */
-
       // Apply pickaxe rotation relative to hand
       ctx.rotate(-(90 * Math.PI / 180));
 
@@ -1055,19 +1065,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Drawing Right Hand (Static with limb)
       ctx.save();
       ctx.rotate(miningBaseRot);
-      ctx.translate(handOffsetSide, -handOffsetFront);
+      ctx.translate(handOffsetSide, -handOffsetFront - handBob);
       
-      // Draw a "limb" connecting hand to body (now hidden but kept in code)
-      /*
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(-handOffsetSide, handOffsetFront);
-      ctx.strokeStyle = "#fbbf24";
-      ctx.lineWidth = 8;
-      ctx.lineCap = "round";
-      ctx.stroke();
-      */
-
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
