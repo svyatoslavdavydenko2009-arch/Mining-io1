@@ -189,38 +189,41 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
     let frameId: number;
     const moveSpeed = 0.15;
+    
     const updateMovement = () => {
-      let dx = 0; let dy = 0;
+      let dx = 0;
+      let dy = 0;
+
       if (keys["w"] || keys["arrowup"]) dy -= 1;
       if (keys["s"] || keys["arrowdown"]) dy += 1;
       if (keys["a"] || keys["arrowleft"]) dx -= 1;
       if (keys["d"] || keys["arrowright"]) dx += 1;
 
-      // Use a consistent speed for both joystick and keyboard
       const joyX = joystickDirRef.current.dx;
       const joyY = joystickDirRef.current.dy;
-      
-      const finalDx = (Math.abs(dx) > 0) ? dx : joyX;
-      const finalDy = (Math.abs(dy) > 0) ? dy : joyY;
 
-      // Only proceed if there is actual input
+      let finalDx = dx;
+      let finalDy = dy;
+
+      if (Math.abs(joyX) > 0.1 || Math.abs(joyY) > 0.1) {
+        finalDx = joyX;
+        finalDy = joyY;
+      }
+
       if (Math.abs(finalDx) > 0.001 || Math.abs(finalDy) > 0.001) {
         setLocalPos(prev => {
           let moveX = finalDx;
           let moveY = finalDy;
           
-          // Normalize if it's from keyboard diagonal
-          if (dx !== 0 && dy !== 0) {
+          if (Math.abs(dx) > 0 && Math.abs(dy) > 0) {
             const mag = Math.sqrt(dx * dx + dy * dy);
             moveX = dx / mag;
             moveY = dy / mag;
           }
 
-          const speedMultiplier = moveSpeed;
-          let nextX = prev.x + (moveX * speedMultiplier);
-          let nextY = prev.y + (moveY * speedMultiplier);
+          const nextX = prev.x + (moveX * moveSpeed);
+          const nextY = prev.y + (moveY * moveSpeed);
           
-          // Separate axes collision check for sliding
           const canMoveX = !hasCollision(nextX, prev.y);
           const canMoveY = !hasCollision(prev.x, nextY);
           
@@ -231,8 +234,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
           if (canMoveY) finalY = nextY;
           
           if (finalX !== prev.x || finalY !== prev.y) {
-             setLookDir({ dx: finalX - prev.x, dy: finalY - prev.y });
-             return { x: finalX, y: finalY };
+            setLookDir({ dx: finalX - prev.x, dy: finalY - prev.y });
+            return { x: finalX, y: finalY };
           }
           return prev;
         });
