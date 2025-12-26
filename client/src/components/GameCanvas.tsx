@@ -827,10 +827,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.save(); 
       ctx.rotate(bodyRotation);
       
-      // Adjusted translation to align the handle with the left hand (switched back to left)
-      ctx.translate(-handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY); 
-      // Base rotation of -90 degrees (facing forward/left relative to body) + swing
-      ctx.rotate(-(90 * Math.PI / 180) + swingAngle);
+      // Adjusted translation to align the handle with the right hand
+      ctx.translate(handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY); 
+      // Base rotation of +90 degrees (facing forward/right relative to body) + swing
+      ctx.rotate((90 * Math.PI / 180) + swingAngle);
       
       const headY = -24; 
       ctx.beginPath(); 
@@ -855,14 +855,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(bodyRotation);
       
       // The hand should pivot around its shoulder point and follow the pickaxe exactly
-      ctx.translate(-handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY);
+      ctx.translate(handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY);
       
-      // Apply the EXACT SAME rotation as the pickaxe (Base -90 deg + swing)
+      // Apply the EXACT SAME rotation as the pickaxe (Base +90 deg + swing)
       if (isMining) {
-        ctx.rotate(-(90 * Math.PI / 180) + swingAngle);
+        ctx.rotate((90 * Math.PI / 180) + swingAngle);
       } else {
-        // When not mining, stay at -90 deg
-        ctx.rotate(-(90 * Math.PI / 180));
+        // When not mining, stay at +90 deg
+        ctx.rotate((90 * Math.PI / 180));
       }
 
       // Draw hand circle centered at (0,0)
