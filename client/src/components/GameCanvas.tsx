@@ -158,14 +158,16 @@ export function GameCanvas({ user }: GameCanvasProps) {
             }
             if (hasNeighbor) continue;
 
+            // Accurate center calculation to match rendering sx/sy
             const centerX = ntx + 0.5;
             const centerY = nty + 0.5;
             const distDx = x - centerX;
             const distDy = y - centerY;
             const distSq = distDx * distDx + distDy * distDy;
             
-            // Rock size 32px, TILE_SIZE 48px. Radius is 32/48 = 0.666.
-            // distSq should be < (0.666)^2 = 0.444
+            // RockSize is 32px, TILE_SIZE is 48px. 
+            // 32/48 = 0.666 radius in tiles.
+            // distSq should be < (0.666)^2 = 0.444.
             if (distSq < 0.44) return true;
           }
         }
@@ -558,6 +560,36 @@ export function GameCanvas({ user }: GameCanvasProps) {
           onEnd={() => { 
             joystickDirRef.current = { dx: 0, dy: 0 }; 
           }} 
+        />
+      </div>
+      {/* Mini-map */}
+      <div className="absolute top-4 left-4 w-32 h-32 bg-black/60 border-2 border-secondary rounded-lg overflow-hidden pointer-events-none shadow-xl">
+        <canvas 
+          id="minimap-canvas"
+          width={128}
+          height={128}
+          className="w-full h-full opacity-80"
+          ref={(el) => {
+            if (!el) return;
+            const mctx = el.getContext("2d");
+            if (!mctx) return;
+            mctx.clearRect(0, 0, 128, 128);
+            const range = 20; // Tiles to show
+            const mTileSize = 128 / (range * 2);
+            for (let my = -range; my <= range; my++) {
+              for (let mx = -range; mx <= range; mx++) {
+                const wx = Math.round(localPos.x) + mx;
+                const wy = Math.round(localPos.y) + my;
+                mctx.fillStyle = getFloorColor(wx, wy);
+                mctx.fillRect(64 + mx * mTileSize, 64 + my * mTileSize, mTileSize, mTileSize);
+              }
+            }
+            // Draw player
+            mctx.fillStyle = "#fbbf24";
+            mctx.beginPath();
+            mctx.arc(64, 64, 3, 0, Math.PI * 2);
+            mctx.fill();
+          }}
         />
       </div>
     </div>
