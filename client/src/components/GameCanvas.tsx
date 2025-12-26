@@ -69,6 +69,14 @@ function getFloorColor(x: number, y: number): string {
     return "#6e6e6e"; // Light grey
   }
 
+  // Grass/Plains biome (main biome - grassland)
+  const grassNoise = getNoise(x + 1000, y + 1000, 0.06);
+  if (grassNoise > 0.55) {
+    if (grassNoise > 0.8) return "#3d7c4c"; // Dark grass
+    if (grassNoise > 0.7) return "#4a9a5a"; // Medium grass
+    return "#5db870"; // Light grass
+  }
+
   if (noise > 0.75) return "#3d2b1f"; // Lighter brown patch
   if (noise > 0.5) return "#322319";  // Medium brown patch
   if (noise > 0.25) return "#2b1e15"; // Default dark brown
