@@ -189,19 +189,14 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const targetX = localPos.x + relX;
     const targetY = localPos.y + relY;
     
-    // Check if target is a mineable resource
     const resource = getTileAt(targetX, targetY);
     if (!resource || isTileMined(targetX, targetY)) return;
 
-    // Turn character to face the clicked resource
     const dx = targetX - localPos.x;
     const dy = targetY - localPos.y;
-    
-    // Character can only look in 4 directions (normalized)
     const normalizedDx = dx !== 0 ? Math.sign(dx) : 0;
     const normalizedDy = dy !== 0 ? Math.sign(dy) : 0;
     
-    // Prioritize horizontal looking if both are present for pickaxe side switching
     if (normalizedDx !== 0) {
       setLookDir({ dx: normalizedDx, dy: 0 });
     } else if (normalizedDy !== 0) {
@@ -278,13 +273,18 @@ export function GameCanvas({ user }: GameCanvasProps) {
       displayPlayerPos.current.y += (localPos.y - displayPlayerPos.current.y) * 0.1;
       smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * 0.15;
       smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * 0.15;
-      smoothPickaxeSide.current += ((lookDir.dx < 0 ? 1 : 0) - smoothPickaxeSide.current) * 0.15;
+      
+      // Slower hand switching (0.05 instead of 0.15) for more realism
+      smoothPickaxeSide.current += ((lookDir.dx < 0 ? 1 : 0) - smoothPickaxeSide.current) * 0.05;
+      
       dashScale.current.x += (1 - dashScale.current.x) * 0.15;
       dashScale.current.y += (1 - dashScale.current.y) * 0.15;
 
       const displayPos = smoothedPos.current; const playerPos = displayPlayerPos.current;
       const cx = rect.width / 2; const cy = rect.height / 2;
-      ctx.fillStyle = "#1a1a1a"; ctx.fillRect(0, 0, rect.width, rect.height);
+      
+      // Update floor color to dark earth
+      ctx.fillStyle = "#1e1a14"; ctx.fillRect(0, 0, rect.width, rect.height);
 
       const drawRadius = 10;
       for (let dy = -drawRadius; dy <= drawRadius; dy++) {
@@ -292,7 +292,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
           const wx = Math.round(localPos.x) + dx; const wy = Math.round(localPos.y) + dy;
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
-          ctx.fillStyle = (wx + wy) % 2 === 0 ? "#262626" : "#2a2a2a"; ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+          
+          // Pattern for floor texture
+          ctx.fillStyle = (wx + wy) % 2 === 0 ? "#1a1611" : "#1e1a14"; ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+          
           if (!isTileMined(wx, wy)) {
             const resType = getTileAt(wx, wy);
             if (resType) {
