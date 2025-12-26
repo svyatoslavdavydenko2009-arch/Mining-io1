@@ -368,7 +368,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     }
 
     // Check distance using tile coordinates (not float position)
-    if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) return;
+    // Allow mining on diagonal (distance up to sqrt(2) ≈ 1.42)
+    if (Math.sqrt(dx * dx + dy * dy) > 1.5) return;
 
     setIsMining(true);
     setMiningTarget(hasResource ? { x: targetX, y: targetY } : null);
@@ -661,9 +662,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     }
                     ctx.closePath();
                     ctx.fill();
-                    ctx.strokeStyle = "#111";
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
                   }
                 }
               }
