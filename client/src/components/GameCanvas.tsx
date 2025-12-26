@@ -251,7 +251,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
     const animateMining = (time: number) => {
       const elapsed = time - animStartTime;
       const progress = Math.min(elapsed / 1000, 1);
-      setMiningRotation(progress < 0.75 ? (progress / 0.75) * -55 : -55 + (((progress - 0.75) / 0.25) * 120));
+      // Changed miningRotation to go from 55 down to -65 (left to right swing)
+      setMiningRotation(progress < 0.75 ? 55 - (progress / 0.75) * 120 : -65 + (((progress - 0.75) / 0.25) * 65));
       if (progress < 1) requestAnimationFrame(animateMining);
       else {
         const key = `${targetX},${targetY}`;
@@ -270,7 +271,8 @@ export function GameCanvas({ user }: GameCanvasProps) {
         let returnStartTime = performance.now();
         const animateReturn = (t: number) => {
           const p = Math.min((t - returnStartTime) / 400, 1);
-          setMiningRotation(65 * (1 - p));
+          // Return from final position back to start
+          setMiningRotation(-65 * (1 - p));
           if (p < 1) requestAnimationFrame(animateReturn);
           else { setIsMining(false); setMiningRotation(0); lastMineTime.current = Date.now(); setCooldownProgress(0); const cs = Date.now(); const uc = () => { const el = Date.now() - cs; const cp = Math.min(el/cooldown, 1); setCooldownProgress(cp); if (cp < 1) requestAnimationFrame(uc); }; requestAnimationFrame(uc); }
         };
