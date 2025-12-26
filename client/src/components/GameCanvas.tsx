@@ -414,11 +414,30 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   };
 
   const handleMineButtonClick = () => {
-    // Use current look direction or default to down
-    const dx = lookDir.dx;
-    const dy = lookDir.dy !== 0 ? lookDir.dy : 1;
-    const targetX = Math.round(localPos.x + dx);
-    const targetY = Math.round(localPos.y + dy);
+    // Get current look direction
+    let dirX = lookDir.dx;
+    let dirY = lookDir.dy;
+    
+    // Default to down if no direction set
+    if (dirX === 0 && dirY === 0) {
+      dirX = 0;
+      dirY = 1;
+    }
+    
+    // Normalize direction vector
+    const mag = Math.sqrt(dirX * dirX + dirY * dirY);
+    if (mag > 0) {
+      dirX /= mag;
+      dirY /= mag;
+    }
+    
+    // Get current player tile position (rounded)
+    const playerTileX = Math.round(localPos.x);
+    const playerTileY = Math.round(localPos.y);
+    
+    // Target tile one step in the direction (using sign, not float)
+    const targetX = playerTileX + Math.sign(dirX);
+    const targetY = playerTileY + Math.sign(dirY);
     performMining(targetX, targetY);
   };
 
