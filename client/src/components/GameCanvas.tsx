@@ -68,13 +68,11 @@ function getFloorColor(x: number, y: number): string {
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
-  const noise = getNoise(x, y, 0.1);
-  // Stone appears rarely in brown biomes - only single tiles spread far apart
-  const greyNoise = getNoise(x + 5000, y + 5000, 0.08);
-  if (greyNoise <= 0.83 && noise > 0.3) {
-    const tileNoise = getNoise(x + 1000, y + 1000, 0.08); // Lower frequency = rarer, more spread out
-    if (tileNoise > 0.85) return "stone"; // Higher threshold = fewer stones, only lonely ones
-  }
+  // Stone appears roughly every 20-30 tiles uniformly distributed
+  // Using pseudoRandom for deterministic but uniform distribution
+  // ~1/625 tiles will be stone (roughly 1 per 25x25 area)
+  const stoneSeed = pseudoRandom(x + 2000, y + 2000);
+  if (stoneSeed > 0.998) return "stone";
   return null;
 }
 
