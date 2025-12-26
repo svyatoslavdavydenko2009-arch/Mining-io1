@@ -191,6 +191,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const displayPlayerPos = useRef({ x: user.x, y: user.y });
   const smoothedPos = useRef({ x: user.x, y: user.y }); 
   const hitProcessed = useRef(false);
+  const hitStone = useRef(false);
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
   const lastMineTime = useRef(Date.now());
@@ -473,6 +474,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     }
 
     const processMiningHit = () => {
+      // Set flag if there are stones to hit
+      if (targets.length > 0) {
+        hitStone.current = true;
+      }
+      
       targets.forEach(t => {
         const key = `${t.x},${t.y}`;
         
@@ -544,10 +550,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const easedP = 1 - Math.pow(1 - p, 4); // Quartic easing for maximum smoothness
         rot = 60 * (1 - easedP);
         
-        // Add bounce effect when pickaxe hits (after 0.55 progress)
-        const bouncePhase = (progress - 0.55) / 0.45; // 0 to 1
-        const bounceAmount = Math.sin(bouncePhase * Math.PI) * -6; // Negative = upward bounce
-        offY = bounceAmount;
+        // Add bounce effect only if pickaxe hit a stone (after 0.55 progress)
+        if (hitStone.current) {
+          const bouncePhase = (progress - 0.55) / 0.45; // 0 to 1
+          const bounceAmount = Math.sin(bouncePhase * Math.PI) * -6; // Negative = upward bounce
+          offY = bounceAmount;
+        }
       }
       
       setMiningAnimation({ rotation: rot, offsetX: 0, offsetY: offY });
@@ -568,6 +576,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         lastMineTime.current = now;
         setLastMineTimeState(now);
         setCooldownProgress(0);
+        hitStone.current = false; // Reset bounce flag
         const cs = now;
         const uc = () => {
           const el = Date.now() - cs;
