@@ -8,7 +8,8 @@ import { Pickaxe, Hammer, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } fr
 
 const TILE_SIZE = 48; 
 const VIEW_RADIUS = 8; 
-const WORLD_SEED = 12345; 
+const WORLD_SEED = 12345;
+const PLAYER_COLLISION_RADIUS_SQ = 0.444; // Full character coverage: 32px character / 48px tile = 0.666 radius, squared = 0.444 
 
 const RESOURCE_HEALTH: Record<ResourceType, number> = {
   stone: 2,
@@ -167,10 +168,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
             const distDy = y - centerY;
             const distSq = distDx * distDx + distDy * distDy;
             
-            // RockSize is 32px, TILE_SIZE is 48px. 
-            // 32/48 = 0.666 radius in tiles (full rock texture coverage).
+            // RockSize is 32px, TILE_SIZE is 48px, Player is 32px (pSize = TILE_SIZE - 16).
+            // Both use 0.666 radius in tiles for full collision coverage.
             // distSq should be < (0.666)^2 = 0.444.
-            if (distSq < 0.444) return true;
+            if (distSq < PLAYER_COLLISION_RADIUS_SQ) return true;
           }
         }
       }
