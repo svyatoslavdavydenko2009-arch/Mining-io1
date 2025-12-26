@@ -648,7 +648,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           </motion.div>
         ))}</AnimatePresence>
       </div>
-      <div className="absolute bottom-12 left-12 z-50 pointer-events-auto">
+      <div className="absolute bottom-12 left-12 z-50 pointer-events-auto flex flex-col gap-4 items-center">
         <Joystick 
           onMove={(dx, dy) => { 
             joystickDirRef.current = { dx, dy }; 
@@ -657,6 +657,19 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             joystickDirRef.current = { dx: 0, dy: 0 }; 
           }} 
         />
+        <button
+          onClick={handleMineButtonClick}
+          disabled={cooldownProgress < 1 || isMining}
+          data-testid="button-mine"
+          className="relative w-16 h-16 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 disabled:from-gray-600 disabled:to-gray-700 disabled:opacity-50 border-2 border-yellow-800 disabled:border-gray-700 rounded-lg flex items-center justify-center transition-all active:scale-95 shadow-lg disabled:shadow-none font-pixel text-sm font-bold text-white"
+        >
+          <Pickaxe size={28} className="drop-shadow-lg" />
+          {cooldownProgress < 1 && (
+            <div className="absolute inset-1 rounded-md border-2 border-yellow-500 opacity-60" style={{
+              clipPath: `inset(0 ${(1 - cooldownProgress) * 100}% 0 0)`
+            }} />
+          )}
+        </button>
       </div>
       {/* Mini-map */}
       <div className="absolute top-4 left-4 w-32 h-32 bg-black/60 border-2 border-secondary rounded-lg overflow-hidden pointer-events-none shadow-xl">
