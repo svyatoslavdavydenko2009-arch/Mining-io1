@@ -79,7 +79,7 @@ interface Particle {
 }
 
 const PICKAXE_COLORS: Record<number, string> = {
-  1: "#8B4513", 
+  1: "#5D4037", 
   2: "#808080", 
   3: "#D2691E", 
   4: "#C0C0C0", 
