@@ -10,24 +10,30 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
   const [isActive, setIsActive] = useState(false);
   const baseRef = useRef<HTMLDivElement>(null);
   const activeTouchId = useRef<number | null>(null);
+  const startCenterX = useRef(0);
+  const startCenterY = useRef(0);
   const radius = 40;
 
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    if (!baseRef.current) return;
+    
     if ('touches' in e) {
       activeTouchId.current = e.touches[0].identifier;
     } else {
-      activeTouchId.current = -1; // Mouse has identifier -1
+      activeTouchId.current = -1;
     }
+    
+    // Save the starting center position
+    const rect = baseRef.current.getBoundingClientRect();
+    startCenterX.current = rect.left + rect.width / 2;
+    startCenterY.current = rect.top + rect.height / 2;
+    
     setIsActive(true);
     handleUpdate(e);
   };
 
   const handleUpdate = (e: any) => {
-    if (!baseRef.current || activeTouchId.current === null) return;
-    
-    const rect = baseRef.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
+    if (activeTouchId.current === null) return;
     
     let clientX: number, clientY: number;
     
@@ -43,8 +49,8 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
       clientY = e.clientY;
     }
     
-    const dx = clientX - centerX;
-    const dy = clientY - centerY;
+    const dx = clientX - startCenterX.current;
+    const dy = clientY - startCenterY.current;
     const distance = Math.sqrt(dx * dx + dy * dy);
     
     const limitedDist = Math.min(distance, radius);
