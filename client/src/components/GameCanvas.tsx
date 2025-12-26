@@ -356,19 +356,31 @@ export function GameCanvas({ user }: GameCanvasProps) {
       const py = cy + (playerPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const pSize = TILE_SIZE - 16;
       ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
+
+      // Determine rotation based on look direction
+      let bodyRotation = 0;
+      if (lookDir.dx === 1) bodyRotation = Math.PI / 2;      // Right
+      else if (lookDir.dx === -1) bodyRotation = -Math.PI / 2; // Left
+      else if (lookDir.dy === 1) bodyRotation = Math.PI;       // Down
+      else if (lookDir.dy === -1) bodyRotation = 0;           // Up (default)
+      
+      // Eyes are always on the "front" relative to the direction
+      ctx.save();
+      ctx.rotate(bodyRotation);
+      ctx.fillStyle = "black";
+      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+
       ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8); ctx.fill();
       
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       
       ctx.save(); 
-      const side = smoothPickaxeSide.current; 
-      ctx.translate((pSize / 2) * (1 - side * 2), 0); 
-      ctx.scale(1 - side * 2, 1);
-      
-      if (isNearCenter) {
-          const intensity = Math.max(0, (0.3 - distanceFromCenter) / 0.3) * 8;
-          ctx.filter = `blur(${intensity}px)`;
-      }
+      // Pickaxe rotation should follow look direction
+      ctx.rotate(bodyRotation);
+      // Pickaxe is always on the "right" relative to the front-facing direction
+      ctx.translate(pSize / 2, 0); 
       
       ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
       const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
@@ -376,9 +388,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
       ctx.restore();
       
-      ctx.fillStyle = "black"; const eX = smoothLookDir.current.dx * 4; const eY = smoothLookDir.current.dy * 4;
-      ctx.beginPath(); ctx.arc(-pSize / 2 + 10 + eX, -pSize / 2 + 13 + eY, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(-pSize / 2 + 22 + eX, -pSize / 2 + 13 + eY, 3, 0, Math.PI * 2); ctx.fill();
+      // Eyes are always on the "front" relative to the direction
+      ctx.fillStyle = "black";
+      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 
       const grad = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
