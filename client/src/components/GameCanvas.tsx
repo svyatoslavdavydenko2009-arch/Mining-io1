@@ -57,12 +57,6 @@ function getFloorColor(x: number, y: number): string {
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
-  const val = pseudoRandom(x + WORLD_SEED, y + WORLD_SEED);
-  if (val > 0.98) return "diamond";
-  if (val > 0.95) return "gold_ore";
-  if (val > 0.90) return "iron_ore";
-  if (val > 0.82) return "copper_ore";
-  if (val > 0.65) return "stone";
   return null;
 }
 
