@@ -369,25 +369,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     }
 
     if (targets.length === 0) {
-      // If no resource, still swing in direction
-      const dx = targetX - playerTileX;
-      const dy = targetY - playerTileY;
-      if (dx !== 0 || dy !== 0) {
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        setLookDir({ dx: dx / dist, dy: dy / dist });
-      }
-      // Just one swing even if empty
+      // If no resource, don't change lookDir, just swing
       setIsMining(true);
       setMiningTarget(null);
     } else {
-      // Swing towards the first target found or the clicked one
-      const mainTarget = targets.find(t => t.x === targetX && t.y === targetY) || targets[0];
-      const dx = mainTarget.x - playerTileX;
-      const dy = mainTarget.y - playerTileY;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      setLookDir({ dx: dx / dist, dy: dy / dist });
-
+      // Don't change lookDir when mining, stay in movement direction
+      // If we want to swing at something specific, we could, but let's prioritize movement direction as requested
       setIsMining(true);
+      // We can still set the target for visual particles, but we don't need to rotate to it
+      const mainTarget = targets.find(t => t.x === targetX && t.y === targetY) || targets[0];
       setMiningTarget({ x: mainTarget.x, y: mainTarget.y });
     }
 
@@ -491,6 +481,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const relY = Math.round((clickY - centerY) / TILE_SIZE);
     const targetX = Math.round(localPos.x + relX);
     const targetY = Math.round(localPos.y + relY);
+    
+    // For manual clicks, we still want to look at what we click
+    const dx = targetX - localPos.x;
+    const dy = targetY - localPos.y;
+    if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+      setLookDir({ dx, dy });
+    }
     
     performMining(targetX, targetY);
   };
