@@ -168,9 +168,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
             const distSq = distDx * distDx + distDy * distDy;
             
             // RockSize is 32px, TILE_SIZE is 48px.
-            // Character collision radius ~0.35 tiles (sharper collision detection).
-            // distSq should be < (0.35)^2 = 0.1225.
-            if (distSq < 0.1225) return true;
+            // Character collision radius ~0.25 tiles (much sharper collision detection).
+            // distSq should be < (0.25)^2 = 0.0625.
+            if (distSq < 0.0625) return true;
           }
         }
       }
