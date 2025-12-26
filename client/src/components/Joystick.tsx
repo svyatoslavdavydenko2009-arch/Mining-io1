@@ -77,10 +77,10 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
     >
       <div className="absolute inset-0 rounded-full border-2 border-white/5 pointer-events-none" />
       <div 
-        className="w-12 h-12 bg-[#fbbf24] rounded-sm border-4 border-[#b45309] shadow-[inset_-4px_-4px_0_rgba(0,0,0,0.2)] flex items-center justify-center"
+        className="w-12 h-12 bg-[#fbbf24] rounded-full border-4 border-[#b45309] shadow-[inset_-4px_-4px_0_rgba(0,0,0,0.2)] flex items-center justify-center"
         style={{ transform: `translate(${knobPos.x}px, ${knobPos.y}px)` }}
       >
-        <div className="w-6 h-6 border-2 border-[#b45309]/30 rounded-sm" />
+        <div className="w-6 h-6 border-2 border-[#b45309]/30 rounded-full" />
       </div>
     </div>
   );

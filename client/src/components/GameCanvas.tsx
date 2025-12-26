@@ -164,7 +164,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
     window.addEventListener("keyup", handleKeyUp);
 
     let frameId: number;
-    const moveSpeed = 0.08;
+    const moveSpeed = 0.04;
     
     const updateMovement = () => {
       let dx = 0;
