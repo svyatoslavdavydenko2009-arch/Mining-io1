@@ -187,7 +187,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const displayPlayerPos = useRef({ x: user.x, y: user.y });
   const smoothedPos = useRef({ x: user.x, y: user.y }); 
   const hitProcessed = useRef(false);
-  const miningRotationSnapshot = useRef(0); // Snapshot of rotation when mining starts
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
   const lastMineTime = useRef(Date.now());
@@ -319,11 +318,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   }, [user.x, user.y]);
 
   useEffect(() => {
-    // Save position and rotation snapshot when mining starts
+    // Sync displayPlayerPos when mining starts to prevent jerking
     if (isMining) {
       displayPlayerPos.current.x = smoothedPos.current.x;
       displayPlayerPos.current.y = smoothedPos.current.y;
-      miningRotationSnapshot.current = smoothBodyRotation.current;
     }
   }, [isMining]);
 
@@ -868,8 +866,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const swingOffsetX = miningAnimation.offsetX;
       const swingOffsetY = miningAnimation.offsetY;
       
-      // Use saved rotation snapshot when mining to prevent character from turning
-      let miningBaseRot = isMining ? miningRotationSnapshot.current : bodyRotation;
+      // Always use body rotation to allow character to turn during mining
+      let miningBaseRot = bodyRotation;
       
       // Draw Body and Hands
       ctx.save();
