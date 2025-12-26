@@ -950,11 +950,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Inner handle color with gradient for depth/shadow (enhanced matching head style)
       const handleGrad = ctx.createLinearGradient(-3, 0, 3, 0);
-      handleGrad.addColorStop(0, "rgba(0,0,0,0.4)"); 
-      handleGrad.addColorStop(0.3, "#3d2b25"); 
-      handleGrad.addColorStop(0.5, "#4a352e"); // Slightly lighter center for roundness
-      handleGrad.addColorStop(0.7, "#3d2b25"); 
-      handleGrad.addColorStop(1, "rgba(0,0,0,0.4)"); 
+      handleGrad.addColorStop(0, "rgba(0,0,0,0.3)"); // Darker edge
+      handleGrad.addColorStop(0.5, "#3d2b25"); // Base shadow color
+      handleGrad.addColorStop(1, "rgba(0,0,0,0.3)"); // Darker edge
       
       ctx.beginPath(); 
       ctx.moveTo(0, headY); 
@@ -967,22 +965,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.beginPath();
       ctx.moveTo(-1, headY);
       ctx.lineTo(-1, 0);
-      ctx.strokeStyle = "rgba(255,255,255,0.12)"; // Increased opacity
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
       ctx.lineWidth = 1;
       ctx.stroke();
-
-      // Add wood grain texture effect
-      ctx.strokeStyle = "rgba(0,0,0,0.15)";
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 3; i++) {
-        const grainOff = (i - 1) * 1.2;
-        ctx.beginPath();
-        ctx.moveTo(grainOff, headY);
-        ctx.lineTo(grainOff, 0);
-        ctx.setLineDash([2, 4]); // Dotted line for wood grain
-        ctx.stroke();
-      }
-      ctx.setLineDash([]); // Reset dash
       
       // Add top-to-bottom shading on handle for more detail
       const handleTopGrad = ctx.createLinearGradient(0, headY, 0, 0);
@@ -1015,29 +1000,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Inner head color with gradient for depth (matching handle style)
       const headSideGrad = ctx.createLinearGradient(-14, 0, 14, 0);
-      headSideGrad.addColorStop(0, "rgba(0,0,0,0.4)"); 
-      headSideGrad.addColorStop(0.3, pickaxeColor);
-      headSideGrad.addColorStop(0.5, "#d1d5db"); // Lighter center for polished look
-      headSideGrad.addColorStop(0.7, pickaxeColor);
-      headSideGrad.addColorStop(1, "rgba(0,0,0,0.4)"); 
+      headSideGrad.addColorStop(0, "rgba(0,0,0,0.2)"); // Subtle dark edge
+      headSideGrad.addColorStop(0.5, pickaxeColor);
+      headSideGrad.addColorStop(1, "rgba(0,0,0,0.2)"); // Subtle dark edge
       
       ctx.fillStyle = headSideGrad; 
       ctx.fill();
       
-      // Add metallic "shine" spots for extra detail
-      ctx.fillStyle = "rgba(255,255,255,0.25)";
-      ctx.beginPath();
-      ctx.arc(4, headY - 2, 1.8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(-6, headY - 1, 1.2, 0, Math.PI * 2);
-      ctx.fill();
-
       // Add a very subtle highlight line for realism
       ctx.beginPath();
       ctx.moveTo(-12, headY + 3.5);
       ctx.quadraticCurveTo(0, headY - 6, 12, headY + 3.5);
-      ctx.strokeStyle = "rgba(255,255,255,0.15)";
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
       ctx.lineWidth = 1;
       ctx.stroke();
       
