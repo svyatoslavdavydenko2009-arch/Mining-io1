@@ -830,16 +830,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.stroke();
       ctx.restore();
 
-      // Right hand (now with animation too)
-      ctx.save();
-      ctx.translate(handOffsetSide, -handOffsetFront);
-      // Synchronize right hand with mining swing
-      ctx.rotate(-(Math.PI / 8) + (miningRotation * 0.5 * Math.PI / 180));
+      // Right hand (static)
       ctx.beginPath();
-      ctx.arc(0, 0, handSize, 0, Math.PI * 2);
+      ctx.arc(handOffsetSide, -handOffsetFront, handSize, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      ctx.restore();
 
       ctx.restore();
       ctx.restore(); // Restore main player transform
