@@ -939,7 +939,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       if (isWalking) {
         walkCycle.current += dt * 0.01;
       } else {
-        walkCycle.current = 0;
+        // Smooth decay when stopping
+        const decay = Math.pow(0.92, frameRateFactor);
+        walkCycle.current *= decay;
+        if (Math.abs(walkCycle.current) < 0.05) walkCycle.current = 0;
       }
       
       const handBob = Math.sin(walkCycle.current) * 4;
@@ -951,7 +954,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       const pickaxeHandRot = (miningAnimation.rotation * Math.PI / 180);
       ctx.rotate(pickaxeHandRot);
-      ctx.translate(-handOffsetSide, -handOffsetFront + handBob); 
+      
+      // Adjust hand position during mining swing to follow pickaxe rotation
+      const miningOffsetX = -handOffsetSide;
+      const miningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05);
+      
+      ctx.translate(miningOffsetX, miningOffsetY); 
       ctx.rotate(-(90 * Math.PI / 180));
       
       const headY = -24; 
@@ -1032,7 +1040,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(miningBaseRot);
       const leftHandRot = (miningAnimation.rotation * Math.PI / 180);
       ctx.rotate(leftHandRot);
-      ctx.translate(-handOffsetSide, -handOffsetFront + handBob);
+      
+      // Match pickaxe hand position exactly
+      const handMiningOffsetX = -handOffsetSide;
+      const handMiningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05);
+      
+      ctx.translate(handMiningOffsetX, handMiningOffsetY);
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
