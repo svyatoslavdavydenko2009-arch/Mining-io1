@@ -436,26 +436,26 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       let offY = 0;
 
       if (progress < 0.3) {
-        // Wind up backwards and inwards (curving towards body)
+        // Wind up backwards (to the left/outwards relative to the body)
         const p = progress / 0.3;
-        rot = p * -60;
-        offX = p * 6; // Move right (towards body center)
+        rot = p * 60; // Wind up to 60 degrees
+        offX = p * -6; // Move left (outwards)
         offY = p * -4; // Move slightly back
       } else if (progress < 0.8) {
-        // Powerful elliptical swing forward (curving around the body)
+        // Powerful elliptical swing from left to right (curving towards body)
         const p = (progress - 0.3) / 0.5;
         const easedP = p * p * (3 - 2 * p);
-        rot = -60 + (easedP * 150);
+        rot = 60 - (easedP * 150); // Swing from +60 to -90
         
         // Ellipse path - curving inwards and then back out
         const angle = easedP * Math.PI;
-        offX = 6 - Math.sin(angle) * 14; // Start right, swing left
+        offX = -6 + Math.sin(angle) * 14; // Start left, swing right
         offY = -4 + (1 - Math.cos(angle)) * 12; // Swing forward
       } else {
         // Settle at the end
         const p = (progress - 0.8) / 0.2;
-        rot = 90 - (p * 20);
-        offX = -8 * (1 - p);
+        rot = -90 + (p * 20);
+        offX = 8 * (1 - p);
         offY = 20 * (1 - p);
       }
       
