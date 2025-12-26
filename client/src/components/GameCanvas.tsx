@@ -387,13 +387,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
         }
       }
 
+      // Determine scale based on movement direction (mirroring the whole character)
+      const moveScaleX = smoothLookDir.current.dx < 0 ? -1 : 1;
+      
       const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const py = cy + (playerPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const pSize = TILE_SIZE - 16;
-      ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
+      ctx.save(); 
+      ctx.translate(px + pSize / 2, py + pSize / 2); 
+      ctx.scale(dashScale.current.x * moveScaleX, dashScale.current.y);
 
       // Determine rotation based on look direction
-      let targetRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
+      // When mirrored (moveScaleX = -1), we need to adjust the rotation logic
+      let targetRotation = Math.atan2(smoothLookDir.current.dy, Math.abs(smoothLookDir.current.dx)) + Math.PI / 2;
       
       // Smoothly interpolate rotation
       let diff = targetRotation - smoothBodyRotation.current;
@@ -407,20 +413,22 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8); ctx.fill();
       ctx.restore();
 
-      // Determine which side to draw the pickaxe (relative to movement direction)
-      // When moving right, pickaxe is on the right. When moving left, pickaxe is on the left.
-      const pickaxeSide = smoothLookDir.current.dx < 0 ? -1 : 1;
+      // Draw Eyes (relative to rotation)
+      ctx.save();
+      ctx.rotate(bodyRotation);
+      ctx.fillStyle = "black";
+      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
       
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       
       ctx.save(); 
-      // Pickaxe rotation follows look direction
+      // Pickaxe follows rotation and is positioned on the "side"
       ctx.rotate(bodyRotation);
-      // Position pickaxe on the side of the body
-      ctx.translate(pSize / 2 * pickaxeSide, 0); 
+      ctx.translate(pSize / 2, 0); 
       
       ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
-      if (pickaxeSide === -1) ctx.scale(-1, 1); // Flip pickaxe if on left side
       
       const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
       ctx.fillStyle = pickaxeColor; ctx.fill();
