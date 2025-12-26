@@ -686,8 +686,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               const res = RESOURCES[resType]; 
               const shake = shakingTiles[`${wx},${wy}`] || { x: 0, y: 0 };
               
-              // Deterministic visual offset for variety
-              const offsetX = (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12 + shake.x;
+              // Deterministic visual offset and size for variety
+              const seedX = wx + 1000;
+              const seedY = wy + 1000;
+              const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
+              const rockScale = 0.7 + sizeSeed * 1.5; // Range: 0.7 to 2.2
+              
+              const offsetX = (pseudoRandom(seedX, seedY) - 0.5) * 12 + shake.x;
               const offsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12 + shake.y;
               const dsx = sx + offsetX;
               const dsy = sy + offsetY;
@@ -696,6 +701,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               ctx.strokeStyle = "rgba(0,0,0,0.4)";
               ctx.lineWidth = 2;
               
+              ctx.save();
+              ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
+              ctx.scale(rockScale, rockScale);
+              ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
+
               if (resType === "stone") {
                 ctx.fillStyle = "#444";
                 // Draw pentagon for stone with random rotation
@@ -727,6 +737,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.fillRect(dsx + 24, dsy + 16, 6, 6); 
                 ctx.fillRect(dsx + 16, dsy + 28, 8, 8);
               }
+              ctx.restore();
               
               const h = tileHealth[`${wx},${wy}`] || RESOURCE_HEALTH[resType]; const mh = RESOURCE_HEALTH[resType];
               if (h < mh) {
@@ -753,6 +764,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   
                   if (!hasNeighbor) {
                     const shake = shakingTiles[`${wx},${wy}`] || { x: 0, y: 0 };
+                    const sizeSeed = pseudoRandom(wx + 6000, wy + 6000);
+                    const rockScale = 0.7 + sizeSeed * 1.5; // Range: 0.7 to 2.2
+                    
                     // Deterministic visual offset for rocks
                     const offsetX = (pseudoRandom(wx + 888, wy + 888) - 0.5) * 16 + shake.x;
                     const offsetY = (pseudoRandom(wx + 999, wy + 999) - 0.5) * 16 + shake.y;
@@ -762,6 +776,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     ctx.fillStyle = "#333";
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
+                    
+                    ctx.save();
+                    ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
+                    ctx.scale(rockScale, rockScale);
+                    ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
+                    
                     ctx.beginPath();
                     const rockSize = 32;
                     // Visual offset to center the hexagon on the tile center (dsx + TILE_SIZE/2, dsy + TILE_SIZE/2)
@@ -777,6 +797,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     ctx.closePath();
                     ctx.fill();
                     ctx.stroke();
+                    ctx.restore();
                   }
                 }
               }
