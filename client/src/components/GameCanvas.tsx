@@ -815,15 +815,29 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.save();
       ctx.rotate(bodyRotation);
       
-      // Pivot around the original hand position
-      ctx.translate(-handOffsetSide, -handOffsetFront);
+      // Calculate swing offset for circular motion (even without forearm)
+      // When swinging, we want the pivot point to move slightly to simulate the shoulder/arm extension
+      let swingXOffset = 0;
+      let swingYOffset = 0;
       
-      // Group hand and pickaxe together for movement
+      if (isMining || miningRotation !== 0) {
+        // Convert miningRotation to progress-like value for circular offset
+        // miningRotation goes roughly from -60 (windup) to 90 (swing)
+        const rad = (miningRotation * Math.PI) / 180;
+        // Circular offset: x follows cosine, y follows sine to create arc
+        swingXOffset = Math.cos(rad) * 12; 
+        swingYOffset = Math.sin(rad) * 8;
+      }
+      
+      // Original hand position + dynamic swing offset
+      ctx.translate(-handOffsetSide + swingXOffset, -handOffsetFront + swingYOffset);
+      
+      // Group hand and pickaxe together for rotation
       const ARM_LEFT_OFFSET = -(80 * Math.PI / 180);
       const baseSwingRotation = -(Math.PI / 4) + ARM_LEFT_OFFSET;
-      ctx.rotate(baseSwingRotation + swingAngle);
+      ctx.rotate(baseSwingRotation + (miningRotation * Math.PI / 180));
 
-      // Draw hand circle centered at (0,0) - Now ANIMATED (back with the swing)
+      // Draw hand circle
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
@@ -832,12 +846,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.fill();
       ctx.stroke();
 
-      // Draw Pickaxe attached to the hand - ANIMATED
+      // Draw Pickaxe attached to the hand
       ctx.save();
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
-      
       const headY = -24; 
-      // Draw handle starting from the hand (0,0)
+      
+      // Draw handle
       ctx.beginPath(); 
       ctx.moveTo(0, headY); 
       ctx.lineTo(0, 0); 
