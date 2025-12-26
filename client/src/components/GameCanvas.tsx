@@ -984,35 +984,22 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.closePath();
       ctx.stroke();
 
-      // Create a gradient for the head texture (inner shadow/depth) - Side-to-side gradient for "corners"
-      const headGrad = ctx.createLinearGradient(-14, headY, 14, headY);
-      headGrad.addColorStop(0, "rgba(0,0,0,0.4)"); // Dark corner left
-      headGrad.addColorStop(0.3, pickaxeColor);
-      headGrad.addColorStop(0.7, pickaxeColor);
-      headGrad.addColorStop(1, "rgba(0,0,0,0.4)"); // Dark corner right
+      // Inner head color with gradient for depth (matching handle style)
+      const headSideGrad = ctx.createLinearGradient(-14, 0, 14, 0);
+      headSideGrad.addColorStop(0, "rgba(0,0,0,0.2)"); // Subtle dark edge
+      headSideGrad.addColorStop(0.5, pickaxeColor);
+      headSideGrad.addColorStop(1, "rgba(0,0,0,0.2)"); // Subtle dark edge
       
-      ctx.fillStyle = headGrad; 
+      ctx.fillStyle = headSideGrad; 
       ctx.fill();
       
-      // Add top-to-bottom shading for the curved part
-      const topGrad = ctx.createLinearGradient(0, headY - 8, 0, headY + 6);
-      topGrad.addColorStop(0, "rgba(0,0,0,0.3)");
-      topGrad.addColorStop(0.4, "transparent");
-      topGrad.addColorStop(0.6, "transparent");
-      topGrad.addColorStop(1, "rgba(0,0,0,0.2)");
-      
-      ctx.fillStyle = topGrad;
-      ctx.fill();
-      
-      // Add an inner "light" layer (highlight on top edge)
+      // Add a very subtle highlight line for realism
       ctx.beginPath();
       ctx.moveTo(-12, headY + 3.5);
       ctx.quadraticCurveTo(0, headY - 6, 12, headY + 3.5);
-      ctx.lineTo(10, headY + 4.5);
-      ctx.quadraticCurveTo(0, headY - 2, -10, headY + 4.5);
-      ctx.closePath();
-      ctx.fillStyle = "rgba(255,255,255,0.1)";
-      ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
       
       ctx.restore();
       
