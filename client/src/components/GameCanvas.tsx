@@ -811,60 +811,69 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       ctx.restore(); // Restore body rotation
 
-      // Draw Pickaxe
-      const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
-      ctx.save(); 
+      // Drawing Left Hand (Holding Pickaxe)
+      ctx.save();
       ctx.rotate(bodyRotation);
       
-      // Adjusted translation to align the handle with the left hand
-      ctx.translate(-handOffsetSide, -handOffsetFront); 
-      // Base rotation of -45 degrees + swing
-      ctx.rotate(-(Math.PI / 4) + swingAngle);
+      // Pivot point for the arm (shoulder)
+      const shoulderX = -handOffsetSide * 0.5;
+      const shoulderY = -handOffsetFront * 0.2;
+      ctx.translate(shoulderX, shoulderY);
+      
+      // Arm rotation includes both base pose and the swing
+      const baseArmRotation = -Math.PI / 3;
+      ctx.rotate(baseArmRotation + swingAngle);
+
+      // Draw Arm
+      ctx.fillStyle = "#fbbf24";
+      ctx.strokeStyle = "rgba(0,0,0,0.3)";
+      ctx.lineWidth = 1.5;
+      
+      const armLength = 24;
+      const armWidth = 10;
+      
+      // Draw arm rectangle
+      ctx.beginPath();
+      ctx.roundRect(0, -armWidth/2, armLength, armWidth, 5);
+      ctx.fill();
+      ctx.stroke();
+
+      // Draw hand at the end of the arm
+      ctx.translate(armLength, 0);
+      ctx.beginPath();
+      ctx.arc(0, 0, handSize + 1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Draw Pickaxe attached to the hand
+      ctx.save();
+      const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
+      // Pickaxe handle is perpendicular to the arm
+      ctx.rotate(Math.PI / 2);
       
       const headY = -24; 
+      // Draw handle
+      ctx.beginPath(); 
+      ctx.moveTo(0, headY); 
+      ctx.lineTo(0, 10); // Handle extends slightly past hand
+      ctx.strokeStyle = "#5D4037"; 
+      ctx.lineWidth = 4; 
+      ctx.stroke();
+
+      // Draw head
       ctx.beginPath(); 
       ctx.moveTo(-14, headY + 4); 
       ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); 
       ctx.lineTo(10, headY + 6); 
       ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); 
       ctx.closePath();
-      ctx.fillStyle = pickaxeColor; ctx.fill();
-      
-      // The handle starts from the hand (0,0 now due to translate)
-      ctx.beginPath(); 
-      ctx.moveTo(0, headY); 
-      ctx.lineTo(0, 0); 
-      ctx.strokeStyle = "#5D4037"; 
-      ctx.lineWidth = 4; 
-      ctx.stroke();
-      ctx.restore();
-
-      // Drawing Left Hand (Holding Pickaxe)
-      ctx.save();
-      ctx.rotate(bodyRotation);
-      
-      // The hand should pivot around its shoulder point and follow the pickaxe exactly
-      ctx.translate(-handOffsetSide, -handOffsetFront);
-      
-      // Apply the EXACT SAME rotation as the pickaxe (Base -45 deg + swing)
-      if (isMining) {
-        ctx.rotate(-(Math.PI / 4) + swingAngle);
-      } else {
-        // When not mining, stay at -45 deg
-        ctx.rotate(-(Math.PI / 4));
-      }
-
-      // Draw hand circle centered at (0,0)
-      ctx.fillStyle = "#fbbf24";
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(0, 0, handSize, 0, Math.PI * 2);
+      ctx.fillStyle = pickaxeColor; 
       ctx.fill();
-      ctx.stroke();
       ctx.restore();
 
-      // Drawing Right Hand (Static)
+      ctx.restore();
+
+      // Drawing Right Hand (Static/Balancing)
       ctx.save();
       ctx.rotate(bodyRotation);
       ctx.translate(handOffsetSide, -handOffsetFront);
