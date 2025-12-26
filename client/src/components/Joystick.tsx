@@ -47,6 +47,8 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
     const normDx = nx / radius;
     const normDy = ny / radius;
     
+    // Log for debugging visibility if needed
+    // console.log("Joy move:", normDx, normDy);
     onMove(normDx, normDy);
   };
 

@@ -197,32 +197,42 @@ export function GameCanvas({ user }: GameCanvasProps) {
       if (keys["d"] || keys["arrowright"]) dx += 1;
 
       // Use a consistent speed for both joystick and keyboard
-      const joyX = joystickDirRef.current.dx || 0;
-      const joyY = joystickDirRef.current.dy || 0;
+      const joyX = joystickDirRef.current.dx;
+      const joyY = joystickDirRef.current.dy;
       
       const finalDx = (dx !== 0) ? dx : joyX;
       const finalDy = (dy !== 0) ? dy : joyY;
 
       // Only proceed if there is actual input
-      if (Math.abs(finalDx) > 0.001 || Math.abs(finalDy) > 0.01) {
+      if (Math.abs(finalDx) > 0.001 || Math.abs(finalDy) > 0.001) {
         setLocalPos(prev => {
           let moveX = finalDx;
           let moveY = finalDy;
+          
+          // Normalize if it's from keyboard diagonal
           if (dx !== 0 && dy !== 0) {
             const mag = Math.sqrt(dx * dx + dy * dy);
             moveX = dx / mag;
             moveY = dy / mag;
           }
 
-          let nextX = prev.x + (moveX * moveSpeed);
-          let nextY = prev.y + (moveY * moveSpeed);
+          const speedMultiplier = moveSpeed;
+          let nextX = prev.x + (moveX * speedMultiplier);
+          let nextY = prev.y + (moveY * speedMultiplier);
           
-          if (hasCollision(nextX, prev.y)) nextX = prev.x;
-          if (hasCollision(prev.x, nextY)) nextY = prev.y;
+          // Separate axes collision check for sliding
+          const canMoveX = !hasCollision(nextX, prev.y);
+          const canMoveY = !hasCollision(prev.x, nextY);
           
-          if (nextX !== prev.x || nextY !== prev.y) {
+          let finalX = prev.x;
+          let finalY = prev.y;
+
+          if (canMoveX) finalX = nextX;
+          if (canMoveY) finalY = nextY;
+          
+          if (finalX !== prev.x || finalY !== prev.y) {
              setLookDir({ dx: finalDx, dy: finalDy });
-             return { x: nextX, y: nextY };
+             return { x: finalX, y: finalY };
           }
           return prev;
         });
