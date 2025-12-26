@@ -763,6 +763,27 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Draw Body
       ctx.save();
       ctx.rotate(bodyRotation);
+      
+      // Render Character Hands (as circles)
+      const handOffset = 22; // Offset from character center
+      const handSize = 8;
+      
+      ctx.fillStyle = "#fff"; // Light color for hands like in the photo
+      ctx.strokeStyle = "rgba(0,0,0,0.2)";
+      ctx.lineWidth = 1;
+
+      // Left hand
+      ctx.beginPath();
+      ctx.arc(-handOffset, 0, handSize, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Right hand
+      ctx.beginPath();
+      ctx.arc(handOffset, 0, handSize, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
       ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2); ctx.fill();
       
       // Draw Eyes (relative to body rotation)
