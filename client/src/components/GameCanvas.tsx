@@ -939,9 +939,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       if (isWalking) {
         walkCycle.current += dt * 0.01;
       } else {
-        const decay = Math.pow(0.85, frameRateFactor);
-        walkCycle.current *= decay;
-        if (Math.abs(walkCycle.current) < 0.001) walkCycle.current = 0;
+        walkCycle.current = 0;
       }
       
       const handBob = Math.sin(walkCycle.current) * 4;
