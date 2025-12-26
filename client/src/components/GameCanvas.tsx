@@ -213,6 +213,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
   const joystickDirRef = useRef({ dx: 0, dy: 0 });
   const smoothHandBob = useRef(0); // Smooth hand bob value
+  const smoothTileHealth = useRef<Record<string, number>>({}); // Smooth health values for tiles
   
   // Update button state every 50ms so cooldown is responsive
   useEffect(() => {
@@ -806,14 +807,25 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               }
               ctx.restore();
               
-              const h = tileHealth[`${wx},${wy}`] !== undefined ? tileHealth[`${wx},${wy}`] : (
+              const tileKey = `${wx},${wy}`;
+              const h = tileHealth[tileKey] !== undefined ? tileHealth[tileKey] : (
                 rockScale <= 1.0 ? 2 :
                 rockScale <= 1.5 ? 3 : 4
               );
               const mh = rockScale <= 1.0 ? 2 : rockScale <= 1.5 ? 3 : 4;
               
-              if (h < mh) {
-                const hp = h / mh; 
+              // Smooth the health value for this tile
+              if (!(tileKey in smoothTileHealth.current)) {
+                smoothTileHealth.current[tileKey] = h;
+              }
+              smoothTileHealth.current[tileKey] += (h - smoothTileHealth.current[tileKey]) * 0.15;
+              const smoothH = smoothTileHealth.current[tileKey];
+              
+              if (smoothH < mh - 0.01) {
+                const hp = smoothH / mh;
+                // Smooth appearance - only show bar when health is below max with smooth fade in
+                const healthBarAlpha = Math.max(0, Math.min(1, (mh - smoothH) * 0.5));
+                
                 // Adjust health bar size based on rock scale
                 const barWidth = (TILE_SIZE - 8) * rockScale;
                 const barX = dsx + TILE_SIZE / 2 - barWidth / 2;
@@ -821,12 +833,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 const stoneRadius = (TILE_SIZE - 8) / 2;
                 const barY = dsy + TILE_SIZE / 2 + stoneRadius * rockScale + 4;
                 
-                ctx.fillStyle = "rgba(0,0,0,0.5)"; 
+                ctx.fillStyle = `rgba(0,0,0,${0.5 * healthBarAlpha})`; 
                 ctx.beginPath(); 
                 ctx.roundRect(barX, barY, barWidth, 5, 2); 
                 ctx.fill();
                 
-                ctx.fillStyle = hp > 0.5 ? "#22c55e" : hp > 0.25 ? "#eab308" : "#ef4444"; 
+                const colorR = hp > 0.5 ? 34 : hp > 0.25 ? 234 : 239;
+                const colorG = hp > 0.5 ? 197 : hp > 0.25 ? 179 : 68;
+                const colorB = hp > 0.5 ? 94 : hp > 0.25 ? 8 : 68;
+                ctx.fillStyle = `rgba(${colorR},${colorG},${colorB},${healthBarAlpha})`; 
                 ctx.beginPath(); 
                 ctx.roundRect(barX, barY, barWidth * hp, 5, 2); 
                 ctx.fill();
