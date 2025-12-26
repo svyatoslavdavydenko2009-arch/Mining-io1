@@ -790,14 +790,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const pSize = TILE_SIZE - 16;
       ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
 
-      // Determine rotation based on look direction
+      // Determine target rotation based on look direction
       let targetRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
       
-      // Smoothly interpolate rotation for both body and pickaxe base
+      // Much smoother and slower interpolation for body rotation
+      // Lowered factor from 0.15 to 0.04 for that "heavy" cinematic turn feel
       let diff = targetRotation - smoothBodyRotation.current;
       while (diff < -Math.PI) diff += Math.PI * 2;
       while (diff > Math.PI) diff -= Math.PI * 2;
-      smoothBodyRotation.current += diff * 0.15;
+      smoothBodyRotation.current += diff * 0.04;
       const bodyRotation = smoothBodyRotation.current;
       
       // Mining swing animation: we calculate it once to use for both pickaxe and hand
