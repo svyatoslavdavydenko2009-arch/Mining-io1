@@ -929,102 +929,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       ctx.restore(); // Restore body rotation
 
-      // Draw Pickaxe
-      const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
-      ctx.save(); 
-      ctx.rotate(miningBaseRot);
-      
-      // Rotate pickaxe with the hand
-      const pickaxeHandRot = (miningAnimation.rotation * Math.PI / 180);
-      ctx.rotate(pickaxeHandRot);
-      ctx.translate(-handOffsetSide, -handOffsetFront); 
-      
-      // Base rotation of -90 degrees (facing forward/left relative to body)
-      ctx.rotate(-(90 * Math.PI / 180));
-      
-      const headY = -24; 
-      
-      // Draw handle first (behind the head)
-      ctx.save();
-      // Draw handle outline (black stroke on all sides of the line)
-      ctx.strokeStyle = "rgba(0,0,0,0.6)";
-      ctx.lineWidth = 7; 
-      ctx.beginPath(); 
-      ctx.moveTo(0, headY); 
-      ctx.lineTo(0, 0); 
-      ctx.stroke();
-
-      // Inner handle color with gradient for depth/shadow (enhanced matching head style)
-      const handleGrad = ctx.createLinearGradient(-3, 0, 3, 0);
-      handleGrad.addColorStop(0, "rgba(0,0,0,0.3)"); // Darker edge
-      handleGrad.addColorStop(0.5, "#3d2b25"); // Base shadow color
-      handleGrad.addColorStop(1, "rgba(0,0,0,0.3)"); // Darker edge
-      
-      ctx.beginPath(); 
-      ctx.moveTo(0, headY); 
-      ctx.lineTo(0, 0); 
-      ctx.strokeStyle = handleGrad; 
-      ctx.lineWidth = 4; 
-      ctx.stroke();
-      
-      // Add a subtle highlight line on the handle (matching head highlight)
-      ctx.beginPath();
-      ctx.moveTo(-1, headY);
-      ctx.lineTo(-1, 0);
-      ctx.strokeStyle = "rgba(255,255,255,0.08)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      
-      // Add top-to-bottom shading on handle for more detail
-      const handleTopGrad = ctx.createLinearGradient(0, headY, 0, 0);
-      handleTopGrad.addColorStop(0, "rgba(0,0,0,0.2)");
-      handleTopGrad.addColorStop(0.2, "transparent");
-      handleTopGrad.addColorStop(0.8, "transparent");
-      handleTopGrad.addColorStop(1, "rgba(0,0,0,0.1)");
-      
-      ctx.beginPath();
-      ctx.moveTo(0, headY);
-      ctx.lineTo(0, 0);
-      ctx.strokeStyle = handleTopGrad;
-      ctx.lineWidth = 4;
-      ctx.stroke();
-      
-      ctx.restore();
-
-      // Draw head on top of the handle
-      ctx.save();
-      // Draw outline for head
-      ctx.strokeStyle = "rgba(0,0,0,0.6)";
-      ctx.lineWidth = 3;
-      ctx.beginPath(); 
-      ctx.moveTo(-14, headY + 4); 
-      ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); 
-      ctx.lineTo(10, headY + 6); 
-      ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); 
-      ctx.closePath();
-      ctx.stroke();
-
-      // Inner head color with gradient for depth (matching handle style)
-      const headSideGrad = ctx.createLinearGradient(-14, 0, 14, 0);
-      headSideGrad.addColorStop(0, "rgba(0,0,0,0.2)"); // Subtle dark edge
-      headSideGrad.addColorStop(0.5, pickaxeColor);
-      headSideGrad.addColorStop(1, "rgba(0,0,0,0.2)"); // Subtle dark edge
-      
-      ctx.fillStyle = headSideGrad; 
-      ctx.fill();
-      
-      // Add a very subtle highlight line for realism
-      ctx.beginPath();
-      ctx.moveTo(-12, headY + 3.5);
-      ctx.quadraticCurveTo(0, headY - 6, 12, headY + 3.5);
-      ctx.strokeStyle = "rgba(255,255,255,0.05)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      
-      ctx.restore();
-      
-      ctx.restore();
-
       // Calculate hand animation
       const now = performance.now();
       const dt = now - lastUpdateRef.current;
@@ -1039,6 +943,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       }
       
       const handBob = Math.sin(walkCycle.current) * 4;
+
+      // Draw Pickaxe
+      const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
+      ctx.save(); 
+      ctx.rotate(miningBaseRot);
+      
+      // Rotate pickaxe with the hand
+      const pickaxeHandRot = (miningAnimation.rotation * Math.PI / 180);
+      ctx.rotate(pickaxeHandRot);
+      // Synchronize pickaxe position with hand bobbing
+      ctx.translate(-handOffsetSide, -handOffsetFront + handBob); 
+      
+      // Base rotation of -90 degrees (facing forward/left relative to body)
+      ctx.rotate(-(90 * Math.PI / 180));
 
       // Drawing Left Hand (Holding Pickaxe)
       ctx.save();
