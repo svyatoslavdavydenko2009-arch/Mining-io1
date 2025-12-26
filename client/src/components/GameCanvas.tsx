@@ -815,32 +815,42 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.save();
       ctx.rotate(bodyRotation);
       
-      // Calculate swing offset for circular motion (even without forearm)
-      // When swinging, we want the pivot point to move slightly to simulate the shoulder/arm extension
+      // Calculate swing offset for circular motion
       let swingXOffset = 0;
       let swingYOffset = 0;
       
       if (isMining || miningRotation !== 0) {
-        // Convert miningRotation to progress-like value for circular offset
-        // miningRotation goes roughly from -60 (windup) to 90 (swing)
         const rad = (miningRotation * Math.PI) / 180;
-        // Circular offset: x follows cosine, y follows sine to create arc
         swingXOffset = Math.cos(rad) * 12; 
         swingYOffset = Math.sin(rad) * 8;
       }
       
-      // Original hand position + dynamic swing offset
-      ctx.translate(-handOffsetSide + swingXOffset, -handOffsetFront + swingYOffset);
+      // Pivot around the original hand position + offset
+      const baseX = -handOffsetSide;
+      const baseY = -handOffsetFront;
+      ctx.translate(baseX + swingXOffset, baseY + swingYOffset);
       
-      // Group hand and pickaxe together for rotation
+      // Group arm, hand and pickaxe together for rotation
       const ARM_LEFT_OFFSET = -(80 * Math.PI / 180);
       const baseSwingRotation = -(Math.PI / 4) + ARM_LEFT_OFFSET;
       ctx.rotate(baseSwingRotation + (miningRotation * Math.PI / 180));
 
-      // Draw hand circle
+      // Draw forearm (centered on the hand position)
+      // We draw it backwards from the hand to the body
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
+      
+      // The forearm extends from (0,0) - which is the hand - back towards the body
+      // We use negative X to draw it "behind" the hand
+      const forearmLength = 12;
+      const forearmWidth = 8;
+      ctx.beginPath();
+      ctx.roundRect(-forearmLength, -forearmWidth / 2, forearmLength, forearmWidth, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      // Draw hand circle
       ctx.beginPath();
       ctx.arc(0, 0, handSize, 0, Math.PI * 2);
       ctx.fill();
