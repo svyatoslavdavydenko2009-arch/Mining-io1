@@ -24,11 +24,19 @@ export default function Game() {
     return (user.inventory[res] || 0) >= amount;
   }) : false;
 
+  if (isGameFullscreen) {
+    return (
+      <div className="w-screen h-screen">
+        <GameCanvas user={user} isFullscreen={isGameFullscreen} onFullscreenChange={setIsGameFullscreen} />
+      </div>
+    );
+  }
+
   return (
-    <div className={`min-h-screen bg-background text-foreground flex flex-col md:flex-row overflow-hidden ${isGameFullscreen ? 'hidden' : ''}`}>
+    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row overflow-hidden">
       
       {/* SIDEBAR - Stats & Inventory */}
-      <aside className={`w-full md:w-80 bg-black/40 border-r-4 border-secondary p-4 flex flex-col gap-6 z-10 ${isGameFullscreen ? 'hidden' : ''}`}>
+      <aside className="w-full md:w-80 bg-black/40 border-r-4 border-secondary p-4 flex flex-col gap-6 z-10">
         <div className="flex items-center gap-3 border-b-2 border-secondary pb-4">
           <div className="w-12 h-12 bg-primary rounded-none flex items-center justify-center text-black font-pixel text-xl">
             {user.username.charAt(0).toUpperCase()}
@@ -90,7 +98,7 @@ export default function Game() {
           SECTOR {Math.floor(user.x / 10)},{Math.floor(user.y / 10)}
         </div>
 
-        <div className={`w-full max-w-4xl relative ${isGameFullscreen ? 'hidden' : ''}`}>
+        <div className="w-full max-w-4xl relative">
           <GameCanvas user={user} isFullscreen={isGameFullscreen} onFullscreenChange={setIsGameFullscreen} />
           
           {/* Crafting Modal Overlay */}
