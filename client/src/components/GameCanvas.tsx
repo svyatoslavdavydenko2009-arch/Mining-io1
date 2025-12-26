@@ -68,23 +68,11 @@ function getFloorColor(x: number, y: number): string {
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
-  const seed = pseudoRandom(x + 2000, y + 2000);
-  
-  // Stone appears frequently - roughly 1 per 4 tiles
-  if (seed > 0.75) return "stone";
-  
-  // Copper ore - roughly 1 per 8 tiles
-  if (seed > 0.625) return "copper_ore";
-  
-  // Iron ore - roughly 1 per 10 tiles  
-  if (seed > 0.50) return "iron_ore";
-  
-  // Gold ore - roughly 1 per 15 tiles
-  if (seed > 0.35) return "gold_ore";
-  
-  // Diamond - rare, roughly 1 per 30 tiles
-  if (seed > 0.15) return "diamond";
-  
+  // Stone appears roughly every 20-30 tiles uniformly distributed
+  // Using pseudoRandom for deterministic but uniform distribution
+  // ~1/625 tiles will be stone (roughly 1 per 25x25 area)
+  const stoneSeed = pseudoRandom(x + 2000, y + 2000);
+  if (stoneSeed > 0.998) return "stone";
   return null;
 }
 
