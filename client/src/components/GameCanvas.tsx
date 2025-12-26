@@ -102,10 +102,15 @@ const MINING_COOLDOWNS: Record<number, number> = {
   6: 750,
 };
 
-export function GameCanvas({ user }: GameCanvasProps) {
+interface GameCanvasProps {
+  user: User;
+  isFullscreen?: boolean;
+  onFullscreenChange?: (fullscreen: boolean) => void;
+}
+
+export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
   const [velocity, setVelocity] = useState({ x: 0, y: 0 });
   const [lookDir, setLookDir] = useState({ dx: 0, dy: 0 }); 
@@ -133,28 +138,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
 
   const joystickDirRef = useRef({ dx: 0, dy: 0 });
 
-  const toggleFullscreen = useCallback(async () => {
-    if (!containerRef.current) return;
-    try {
-      if (isFullscreen) {
-        await document.exitFullscreen();
-        setIsFullscreen(false);
-      } else {
-        await containerRef.current.requestFullscreen();
-        setIsFullscreen(true);
-      }
-    } catch (err) {
-      console.error("Fullscreen error:", err);
-    }
-  }, [isFullscreen]);
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
+  const toggleFullscreen = useCallback(() => {
+    onFullscreenChange?.(!isFullscreen);
+  }, [isFullscreen, onFullscreenChange]);
 
   const isTileMined = (x: number, y: number) => minedTiles.has(`${x},${y}`);
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
@@ -571,7 +557,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   }, [localPos, user.pickaxeLevel, tileHealth, minedTiles, particles, miningRotation, lookDir]);
 
   return (
-    <div ref={containerRef} className={`relative ${isFullscreen ? 'w-screen h-screen' : 'w-full h-[60vh] sm:h-[70vh]'} bg-black border-4 border-secondary rounded-lg overflow-hidden shadow-2xl transition-all`}>
+    <div ref={containerRef} className={`relative bg-black overflow-hidden shadow-2xl transition-all ${isFullscreen ? 'fixed inset-0 w-screen h-screen border-0 rounded-none z-50' : 'w-full h-[60vh] sm:h-[70vh] border-4 border-secondary rounded-lg'}`}>
       <canvas ref={canvasRef} onClick={handleCanvasClick} className="w-full h-full cursor-crosshair active:cursor-grabbing" />
       <AnimatePresence>{cooldownProgress < 1 && (
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }} className="absolute top-[calc(50%+28px)] left-1/2 -translate-x-1/2 w-12 h-1.5 bg-black/50 border border-secondary rounded-full overflow-hidden shadow-[0_0_10px_rgba(0,0,0,0.5)]">
