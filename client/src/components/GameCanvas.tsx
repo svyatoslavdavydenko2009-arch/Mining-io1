@@ -68,11 +68,10 @@ function getFloorColor(x: number, y: number): string {
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
-  // Stone appears roughly every 20-30 tiles uniformly distributed
+  // Stone appears roughly every 15-20 tiles uniformly distributed
   // Using pseudoRandom for deterministic but uniform distribution
-  // ~1/625 tiles will be stone (roughly 1 per 25x25 area)
   const stoneSeed = pseudoRandom(x + 2000, y + 2000);
-  if (stoneSeed > 0.998) return "stone";
+  if (stoneSeed > 0.99) return "stone";
   return null;
 }
 
