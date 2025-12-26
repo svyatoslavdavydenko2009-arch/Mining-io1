@@ -138,7 +138,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const [isMining, setIsMining] = useState(false);
   const [miningRotation, setMiningRotation] = useState(0);
   const [miningNotifications, setMiningNotifications] = useState<{id: number, resource: ResourceType, x: number, y: number}[]>([]);
-  const [cooldownProgress, setCooldownProgress] = useState(1); 
+  const [cooldownProgress, setCooldownProgress] = useState(1);
+  const [lastMineTimeState, setLastMineTimeState] = useState(0); 
 
   const joystickDirRef = useRef({ dx: 0, dy: 0 });
 
@@ -375,7 +376,22 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const p = Math.min((t - returnStartTime) / 400, 1);
           setMiningRotation(65 * (1 - p));
           if (p < 1) requestAnimationFrame(animateReturn);
-          else { setIsMining(false); setMiningRotation(0); lastMineTime.current = Date.now(); setCooldownProgress(0); const cs = Date.now(); const uc = () => { const el = Date.now() - cs; const cp = Math.min(el/cooldown, 1); setCooldownProgress(cp); if (cp < 1) requestAnimationFrame(uc); }; requestAnimationFrame(uc); }
+          else { 
+            const now = Date.now();
+            setIsMining(false);
+            setMiningRotation(0);
+            lastMineTime.current = now;
+            setLastMineTimeState(now);
+            setCooldownProgress(0);
+            const cs = now;
+            const uc = () => {
+              const el = Date.now() - cs;
+              const cp = Math.min(el/cooldown, 1);
+              setCooldownProgress(cp);
+              if (cp < 1) requestAnimationFrame(uc);
+            };
+            requestAnimationFrame(uc);
+          }
         };
         requestAnimationFrame(animateReturn);
       }
@@ -674,19 +690,26 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       </div>
       {/* Mine button on right */}
       <div className="absolute bottom-12 right-12 z-50 pointer-events-auto">
-        <button
-          onClick={handleMineButtonClick}
-          disabled={cooldownProgress < 1 || isMining}
-          data-testid="button-mine"
-          className="relative w-16 h-16 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 disabled:from-gray-600 disabled:to-gray-700 disabled:opacity-50 border-2 border-yellow-800 disabled:border-gray-700 rounded-lg flex items-center justify-center transition-all active:scale-95 shadow-lg disabled:shadow-none font-pixel text-sm font-bold text-white"
-        >
-          <Pickaxe size={28} className="drop-shadow-lg" />
-          {cooldownProgress < 1 && (
-            <div className="absolute inset-1 rounded-md border-2 border-yellow-500 opacity-60" style={{
-              clipPath: `inset(0 ${(1 - cooldownProgress) * 100}% 0 0)`
-            }} />
-          )}
-        </button>
+        {(() => {
+          const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
+          const timeSinceLastMine = Date.now() - lastMineTime.current;
+          const isOnCooldown = timeSinceLastMine < cooldown;
+          return (
+            <button
+              onClick={handleMineButtonClick}
+              disabled={isMining || isOnCooldown}
+              data-testid="button-mine"
+              className="relative w-16 h-16 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 disabled:from-gray-600 disabled:to-gray-700 disabled:opacity-50 border-2 border-yellow-800 disabled:border-gray-700 rounded-lg flex items-center justify-center transition-all active:scale-95 shadow-lg disabled:shadow-none font-pixel text-sm font-bold text-white"
+            >
+              <Pickaxe size={28} className="drop-shadow-lg" />
+              {cooldownProgress < 1 && (
+                <div className="absolute inset-1 rounded-md border-2 border-yellow-500 opacity-60" style={{
+                  clipPath: `inset(0 ${(1 - cooldownProgress) * 100}% 0 0)`
+                }} />
+              )}
+            </button>
+          );
+        })()}
       </div>
       {/* Mini-map */}
       <div className="absolute top-4 left-4 w-32 h-32 bg-black/60 border-2 border-secondary rounded-lg overflow-hidden pointer-events-none shadow-xl">
