@@ -404,7 +404,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
       
       // Draw Body
       ctx.save();
-      ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8); ctx.fill();
+      ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 
       // Draw Eyes (following rotation)
