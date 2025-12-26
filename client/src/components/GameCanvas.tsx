@@ -186,6 +186,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const dashScale = useRef({ x: 1, y: 1 });
   const displayPlayerPos = useRef({ x: user.x, y: user.y });
   const smoothedPos = useRef({ x: user.x, y: user.y }); 
+  const hitProcessed = useRef(false);
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
   const lastMineTime = useRef(Date.now());
@@ -433,7 +434,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       setMiningTarget({ x: mainTarget.x, y: mainTarget.y });
     }
 
-    const hitProcessed = useRef(false);
     const processMiningHit = () => {
       targets.forEach(t => {
         const key = `${t.x},${t.y}`;
@@ -444,7 +444,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const resDef = RESOURCES[t.resource];
           if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
             createParticles(t.x, t.y, resDef.color);
-            mine.mutate(t.resource, { onSuccess: (data) => {
+            mine.mutate(t.resource, { onSuccess: () => {
               const id = Date.now() + Math.random();
               setMiningNotifications(prev => [...prev, { id, resource: t.resource, x: t.x, y: t.y }]);
               setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
