@@ -65,8 +65,15 @@ function getFloorColor(x: number, y: number): string {
   // Blend colors based on noise values for smoother transitions
   let r = 30, g = 21, b = 15; // Default deep brown
 
+  // Less smooth blending - use step-like transitions
+  const stepBlend = (val: number, threshold: number) => {
+    if (val < threshold) return 0;
+    if (val > threshold + 0.15) return 1;
+    return (val - threshold) / 0.15;
+  };
+
   if (forestNoise > 0.75) {
-    const t = Math.min((forestNoise - 0.75) / 0.1, 1);
+    const t = stepBlend(forestNoise, 0.75);
     // Blend with forest colors
     const targetR = forestNoise > 0.88 ? 26 : (forestNoise > 0.82 ? 45 : 58);
     const targetG = forestNoise > 0.88 ? 77 : (forestNoise > 0.82 ? 90 : 107);
@@ -77,7 +84,7 @@ function getFloorColor(x: number, y: number): string {
   }
   
   if (greyNoise > 0.80) {
-    const t = Math.min((greyNoise - 0.80) / 0.1, 1);
+    const t = stepBlend(greyNoise, 0.80);
     const targetR = greyNoise > 0.96 ? 74 : (greyNoise > 0.90 ? 92 : 110);
     const targetG = targetR;
     const targetB = targetR;
@@ -87,7 +94,7 @@ function getFloorColor(x: number, y: number): string {
   }
 
   if (grassNoise > 0.50) {
-    const t = Math.min((grassNoise - 0.50) / 0.1, 1);
+    const t = stepBlend(grassNoise, 0.50);
     const targetR = grassNoise > 0.8 ? 54 : (grassNoise > 0.7 ? 68 : 86);
     const targetG = grassNoise > 0.8 ? 115 : (grassNoise > 0.7 ? 145 : 172);
     const targetB = grassNoise > 0.8 ? 70 : (grassNoise > 0.7 ? 84 : 102);
@@ -98,7 +105,7 @@ function getFloorColor(x: number, y: number): string {
 
   // Base ground noise blending
   if (noise > 0.2) {
-    const t = Math.min((noise - 0.2) / 0.5, 1);
+    const t = stepBlend(noise, 0.2);
     const targetR = noise > 0.75 ? 61 : (noise > 0.5 ? 50 : 43);
     const targetG = noise > 0.75 ? 43 : (noise > 0.5 ? 35 : 30);
     const targetB = noise > 0.75 ? 31 : (noise > 0.5 ? 25 : 21);
@@ -108,6 +115,17 @@ function getFloorColor(x: number, y: number): string {
   }
 
   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+}
+
+function isBiomeBorder(x: number, y: number): boolean {
+  const myColor = getFloorColor(x, y);
+  const neighbors = [
+    getFloorColor(x + 1, y),
+    getFloorColor(x - 1, y),
+    getFloorColor(x, y + 1),
+    getFloorColor(x, y - 1)
+  ];
+  return neighbors.some(n => n !== myColor);
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
@@ -571,7 +589,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
           
-          ctx.fillStyle = getFloorColor(wx, wy); ctx.fillRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
+          ctx.fillStyle = getFloorColor(wx, wy); 
+          if (isBiomeBorder(wx, wy)) {
+            ctx.beginPath();
+            ctx.roundRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1, 8);
+            ctx.fill();
+          } else {
+            ctx.fillRect(sx - 0.5, sy - 0.5, TILE_SIZE + 1, TILE_SIZE + 1);
+          }
         }
       }
 
