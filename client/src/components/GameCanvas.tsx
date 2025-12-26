@@ -100,6 +100,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
   const [lookDir, setLookDir] = useState({ dx: 0, dy: 0 }); 
+  const smoothBodyRotation = useRef(0);
   const smoothLookDir = useRef({ dx: 0, dy: 0 }); 
   const smoothPickaxeSide = useRef(0); 
   const lastPickaxeSide = useRef(0);
@@ -360,11 +361,18 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
 
       // Determine rotation based on look direction
-      let bodyRotation = 0;
-      if (lookDir.dx === 1) bodyRotation = Math.PI / 2;      // Right
-      else if (lookDir.dx === -1) bodyRotation = -Math.PI / 2; // Left
-      else if (lookDir.dy === 1) bodyRotation = Math.PI;       // Down
-      else if (lookDir.dy === -1) bodyRotation = 0;           // Up (default)
+      let targetRotation = 0;
+      if (lookDir.dx === 1) targetRotation = Math.PI / 2;      // Right
+      else if (lookDir.dx === -1) targetRotation = -Math.PI / 2; // Left
+      else if (lookDir.dy === 1) targetRotation = Math.PI;       // Down
+      else if (lookDir.dy === -1) targetRotation = 0;           // Up (default)
+      
+      // Smoothly interpolate rotation
+      let diff = targetRotation - smoothBodyRotation.current;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      smoothBodyRotation.current += diff * 0.15;
+      const bodyRotation = smoothBodyRotation.current;
       
       // Draw Body
       ctx.save();
