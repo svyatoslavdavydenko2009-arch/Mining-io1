@@ -824,8 +824,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(bodyRotation);
       
       // Rotate pickaxe with the hand
-      const handRot = (miningAnimation.rotation * Math.PI / 180);
-      ctx.rotate(handRot);
+      const pickaxeHandRot = (miningAnimation.rotation * Math.PI / 180);
+      ctx.rotate(pickaxeHandRot);
       ctx.translate(-handOffsetSide, -handOffsetFront); 
       
       // Base rotation of -90 degrees (facing forward/left relative to body)
@@ -854,8 +854,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(bodyRotation);
       
       // Pivot hand based on animation rotation to keep it attached to body
-      const handRot = (miningAnimation.rotation * Math.PI / 180);
-      ctx.rotate(handRot);
+      const leftHandRot = (miningAnimation.rotation * Math.PI / 180);
+      ctx.rotate(leftHandRot);
       ctx.translate(-handOffsetSide, -handOffsetFront);
       
       // Draw a "limb" connecting hand to body (now stays fixed relative to rotated hand)
