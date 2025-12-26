@@ -23,7 +23,6 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
   const handleMove = (e: TouchEvent | MouseEvent) => {
     if (!isTouching.current || !touchPos) return;
 
-    // Use a simpler approach for mobile touch vs mouse
     const clientX = 'touches' in e && (e as TouchEvent).touches && (e as TouchEvent).touches.length > 0 
       ? (e as TouchEvent).touches[0].clientX 
       : (e as MouseEvent).clientX;
@@ -43,12 +42,11 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
 
     setKnobPos({ x: nx, y: ny });
     
-    // Normalize and send - ensuring we pass values even for small movements
+    // Normalize and send - Ensuring we use a proper scale
     const normDx = nx / radius;
     const normDy = ny / radius;
     
-    // Log for debugging visibility if needed
-    // console.log("Joy move:", normDx, normDy);
+    // Immediate callback for reactivity
     onMove(normDx, normDy);
   };
 

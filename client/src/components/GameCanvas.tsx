@@ -499,10 +499,14 @@ export function GameCanvas({ user }: GameCanvasProps) {
           </motion.div>
         ))}</AnimatePresence>
       </div>
-      <div className="pointer-events-none">
+      <div className="absolute bottom-12 left-12 z-50 pointer-events-auto">
         <Joystick 
-          onMove={(dx, dy) => { joystickDirRef.current = { dx, dy }; }} 
-          onEnd={() => { joystickDirRef.current = { dx: 0, dy: 0 }; }} 
+          onMove={(dx, dy) => { 
+            joystickDirRef.current = { dx, dy }; 
+          }} 
+          onEnd={() => { 
+            joystickDirRef.current = { dx: 0, dy: 0 }; 
+          }} 
         />
       </div>
     </div>
