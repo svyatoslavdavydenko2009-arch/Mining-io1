@@ -159,8 +159,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
             if (hasNeighbor) continue;
 
             // Accurate center calculation to match rendering sx/sy
-            const centerX = ntx + 0.5;
-            const centerY = nty + 0.5;
+            // Rendering uses sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2
+            // Which means the tile's visual center is wx, wy
+            const centerX = ntx;
+            const centerY = nty;
             const distDx = x - centerX;
             const distDy = y - centerY;
             const distSq = distDx * distDx + distDy * distDy;
@@ -563,7 +565,7 @@ export function GameCanvas({ user }: GameCanvasProps) {
         />
       </div>
       {/* Mini-map */}
-      <div className="absolute top-4 left-4 w-32 h-32 bg-black/60 border-2 border-secondary rounded-lg overflow-hidden pointer-events-none shadow-xl">
+      <div className="absolute bottom-4 left-4 w-32 h-32 bg-black/60 border-2 border-secondary rounded-lg overflow-hidden pointer-events-none shadow-xl">
         <canvas 
           id="minimap-canvas"
           width={128}
