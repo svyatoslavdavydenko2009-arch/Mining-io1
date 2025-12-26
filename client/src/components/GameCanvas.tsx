@@ -564,10 +564,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
   const handleCanvasClick = (e: React.MouseEvent) => {
     // If the click was on any interactive element (like the mine button or joystick),
-    // don't process it as a world click
-    if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('.Joystick')) {
-      return;
-    }
+    // don't process it as a world click. We check against the absolute coordinates
+    // and the specific target to ensure we don't trigger world-mining.
+    if (e.defaultPrevented) return;
     
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -987,8 +986,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const isOnCooldown = timeSinceLastMine < cooldown;
           return (
             <button
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 handleMineButtonClick();
               }}
               disabled={isMining || isOnCooldown}
