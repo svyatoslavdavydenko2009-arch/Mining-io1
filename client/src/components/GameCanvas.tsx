@@ -68,6 +68,13 @@ function getFloorColor(x: number, y: number): string {
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
+  const noise = getNoise(x, y, 0.1);
+  // Stone appears in brown biomes with some frequency
+  const greyNoise = getNoise(x + 5000, y + 5000, 0.08);
+  if (greyNoise <= 0.83 && noise > 0.3) {
+    const tileNoise = getNoise(x + 1000, y + 1000, 0.15);
+    if (tileNoise > 0.6) return "stone";
+  }
   return null;
 }
 
@@ -648,7 +655,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           </motion.div>
         ))}</AnimatePresence>
       </div>
-      <div className="absolute bottom-12 left-12 z-50 pointer-events-auto flex flex-col gap-4 items-center">
+      {/* Joystick on left */}
+      <div className="absolute bottom-12 left-12 z-50 pointer-events-auto">
         <Joystick 
           onMove={(dx, dy) => { 
             joystickDirRef.current = { dx, dy }; 
@@ -657,6 +665,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             joystickDirRef.current = { dx: 0, dy: 0 }; 
           }} 
         />
+      </div>
+      {/* Mine button on right */}
+      <div className="absolute bottom-12 right-12 z-50 pointer-events-auto">
         <button
           onClick={handleMineButtonClick}
           disabled={cooldownProgress < 1 || isMining}
