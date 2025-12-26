@@ -281,8 +281,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   };
 
   useEffect(() => {
-    // Force the character to look left initially or after reset
-    setLookDir({ dx: -1, dy: 0 });
+    // Force the character to look right initially or after reset
+    setLookDir({ dx: 1, dy: 0 });
   }, []);
 
   const handleMobileMove = (dx: number, dy: number) => {
