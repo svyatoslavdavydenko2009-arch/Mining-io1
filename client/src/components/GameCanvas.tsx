@@ -285,11 +285,6 @@ export function GameCanvas({ user }: GameCanvasProps) {
       smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * 0.15;
       
       const targetSide = lookDir.dx < 0 ? 1 : 0;
-      const sideChanged = lastPickaxeSide.current !== targetSide;
-      if (sideChanged) {
-          lastPickaxeSide.current = targetSide;
-      }
-      
       smoothPickaxeSide.current += (targetSide - smoothPickaxeSide.current) * 0.05;
       const switchingSpeed = Math.abs(targetSide - smoothPickaxeSide.current);
       const isSwitching = switchingSpeed > 0.01;
@@ -332,11 +327,9 @@ export function GameCanvas({ user }: GameCanvasProps) {
       ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
       ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.roundRect(-pSize / 2, -pSize / 2, pSize, pSize, 8); ctx.fill();
       
-      // Draw Pickaxe with Motion Blur
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       
       if (isSwitching) {
-          // Motion blur effect: draw multiple faint pickaxes during transition
           for (let i = 0; i < 3; i++) {
               ctx.save();
               const offset = (i - 1) * switchingSpeed * 10;
@@ -397,10 +390,10 @@ export function GameCanvas({ user }: GameCanvasProps) {
       </div>
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-4 sm:hidden">
         <div className="grid grid-cols-3 gap-2">
-          <div /> <button onClick={() => handleMobileMove(0, -1)} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronUp className="text-white" /></button> <div />
-          <button onClick={() => handleMobileMove(-1, 0)} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronLeft className="text-white" /></button>
-          <button onClick={() => handleMobileMove(0, 1)} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronDown className="text-white" /></button>
-          <button onClick={() => handleMobileMove(1, 0)} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronRight className="text-white" /></button>
+          <div /> <button onPointerDown={(e) => { e.preventDefault(); handleMobileMove(0, -1); }} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronUp className="text-white" /></button> <div />
+          <button onPointerDown={(e) => { e.preventDefault(); handleMobileMove(-1, 0); }} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronLeft className="text-white" /></button>
+          <button onPointerDown={(e) => { e.preventDefault(); handleMobileMove(0, 1); }} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronDown className="text-white" /></button>
+          <button onPointerDown={(e) => { e.preventDefault(); handleMobileMove(1, 0); }} className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center border border-white/20 active:bg-white/30 transition-colors"><ChevronRight className="text-white" /></button>
         </div>
       </div>
     </div>
