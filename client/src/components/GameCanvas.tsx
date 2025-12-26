@@ -626,10 +626,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           // BUT only if this biome is brighter than its neighbors or it's a border tile
           tiles.forEach(t => {
             if (isBiomeBorder(t.wx, t.wy)) {
-              const sizeBonus = TILE_SIZE * 0.15; // Much smaller overlap for bolder edges
+              const sizeBonus = TILE_SIZE * 0.05; // Extremely small overlap to eliminate the "blob" grid
               ctx.beginPath();
-              // Reduced corner radius for more defined, "bold" shapes
-              ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 12);
+              // Minimal rounding to maintain the "tile" structure but soften the hard corners
+              ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 4);
               ctx.fill();
             }
           });
