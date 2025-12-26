@@ -788,8 +788,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       ctx.save(); 
       ctx.rotate(bodyRotation);
-      ctx.translate(-pSize / 2 + 8, 0); // Move pickaxe forward to be "held" by hands
+      
+      // Adjusted translation to align the handle with the left hand
+      // -handOffsetSide is -22, so we align the pickaxe base there
+      ctx.translate(-handOffsetSide, -handOffsetFront); 
       ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
+      
       const headY = -24; 
       ctx.beginPath(); 
       ctx.moveTo(-14, headY + 4); 
@@ -798,7 +802,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); 
       ctx.closePath();
       ctx.fillStyle = pickaxeColor; ctx.fill();
-      ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
+      
+      // The handle starts from the hand (0,0 now due to translate)
+      ctx.beginPath(); 
+      ctx.moveTo(0, headY); 
+      ctx.lineTo(0, 0); 
+      ctx.strokeStyle = "#5D4037"; 
+      ctx.lineWidth = 4; 
+      ctx.stroke();
       ctx.restore();
 
       // Draw Hands ON TOP of everything (Body and Pickaxe)
