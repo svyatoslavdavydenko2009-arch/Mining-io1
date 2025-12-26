@@ -563,6 +563,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   };
 
   const handleCanvasClick = (e: React.MouseEvent) => {
+    // If the click was on any interactive element (like the mine button or joystick),
+    // don't process it as a world click
+    if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('.Joystick')) {
+      return;
+    }
+    
     if (!canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
