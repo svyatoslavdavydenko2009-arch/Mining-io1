@@ -934,14 +934,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const dt = now - lastUpdateRef.current;
       lastUpdateRef.current = now;
       
+      const frameRateFactor = dt / 16.66; // Normalize animation to ~60fps
+      
       if (isWalking) {
-        walkCycle.current += dt * 0.01; // Speed of hand movement
+        walkCycle.current += dt * 0.01;
       } else {
-        // Smoothly return to 0 when stopped
-        // Using a time-based decay for consistent smoothness regardless of framerate
-        const decay = Math.pow(0.9, dt / 16); 
+        const decay = Math.pow(0.85, frameRateFactor);
         walkCycle.current *= decay;
-        if (Math.abs(walkCycle.current) < 0.01) walkCycle.current = 0;
+        if (Math.abs(walkCycle.current) < 0.001) walkCycle.current = 0;
       }
       
       const handBob = Math.sin(walkCycle.current) * 4;
@@ -951,20 +951,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.save(); 
       ctx.rotate(miningBaseRot);
       
-      // Rotate pickaxe with the hand
       const pickaxeHandRot = (miningAnimation.rotation * Math.PI / 180);
       ctx.rotate(pickaxeHandRot);
-      // Synchronize pickaxe position with hand bobbing
       ctx.translate(-handOffsetSide, -handOffsetFront + handBob); 
-      
-      // Base rotation of -90 degrees (facing forward/left relative to body)
       ctx.rotate(-(90 * Math.PI / 180));
       
       const headY = -24; 
       
-      // Draw handle first (behind the head)
+      // Draw handle
       ctx.save();
-      // Draw handle outline
       ctx.strokeStyle = "rgba(0,0,0,0.6)";
       ctx.lineWidth = 7; 
       ctx.beginPath(); 
@@ -972,7 +967,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.lineTo(0, 0); 
       ctx.stroke();
 
-      // Inner handle color with gradient
       const handleGrad = ctx.createLinearGradient(-3, 0, 3, 0);
       handleGrad.addColorStop(0, "rgba(0,0,0,0.3)");
       handleGrad.addColorStop(0.5, "#3d2b25");
@@ -985,7 +979,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.lineWidth = 4; 
       ctx.stroke();
       
-      // Handle highlight
       ctx.beginPath();
       ctx.moveTo(-1, headY);
       ctx.lineTo(-1, 0);
@@ -993,7 +986,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.lineWidth = 1;
       ctx.stroke();
       
-      // Handle shading
       const handleTopGrad = ctx.createLinearGradient(0, headY, 0, 0);
       handleTopGrad.addColorStop(0, "rgba(0,0,0,0.2)");
       handleTopGrad.addColorStop(0.2, "transparent");
@@ -1008,7 +1000,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.stroke();
       ctx.restore();
 
-      // Draw head on top
+      // Draw head
       ctx.save();
       ctx.strokeStyle = "rgba(0,0,0,0.6)";
       ctx.lineWidth = 3;
