@@ -466,10 +466,13 @@ export function GameCanvas({ user }: GameCanvasProps) {
                     ctx.fillStyle = "#333";
                     ctx.beginPath();
                     const rockSize = 32;
+                    // Visual offset to center the hexagon on the tile center (sx + TILE_SIZE/2, sy + TILE_SIZE/2)
+                    const renderCenterX = sx + TILE_SIZE / 2;
+                    const renderCenterY = sy + TILE_SIZE / 2;
                     for (let i = 0; i < 6; i++) {
                       const angle = (Math.PI / 3) * i;
-                      const hx = sx + TILE_SIZE/2 + Math.cos(angle) * rockSize;
-                      const hy = sy + TILE_SIZE/2 + Math.sin(angle) * rockSize;
+                      const hx = renderCenterX + Math.cos(angle) * rockSize;
+                      const hy = renderCenterY + Math.sin(angle) * rockSize;
                       if (i === 0) ctx.moveTo(hx, hy);
                       else ctx.lineTo(hx, hy);
                     }
