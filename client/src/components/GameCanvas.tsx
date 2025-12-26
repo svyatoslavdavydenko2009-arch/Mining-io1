@@ -804,8 +804,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.save(); 
       ctx.rotate(bodyRotation);
       
-      // Adjusted translation to align the handle with the right hand
-      ctx.translate(handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY); 
+      // Adjusted translation to align the handle with the left hand
+      ctx.translate(-handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY); 
       // Base rotation of -90 degrees (facing forward/left relative to body) + swing
       ctx.rotate(-(90 * Math.PI / 180) + swingAngle);
       
@@ -827,12 +827,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.stroke();
       ctx.restore();
 
-      // Drawing Right Hand (Holding Pickaxe)
+      // Drawing Left Hand (Holding Pickaxe)
       ctx.save();
       ctx.rotate(bodyRotation);
       
       // The hand should pivot around its shoulder point and follow the pickaxe exactly
-      ctx.translate(handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY);
+      ctx.translate(-handOffsetSide + swingOffsetX, -handOffsetFront + swingOffsetY);
       
       // Apply the EXACT SAME rotation as the pickaxe (Base -90 deg + swing)
       if (isMining) {
@@ -852,10 +852,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.stroke();
       ctx.restore();
 
-      // Drawing Left Hand (Static)
+      // Drawing Right Hand (Static)
       ctx.save();
       ctx.rotate(bodyRotation);
-      ctx.translate(-handOffsetSide, -handOffsetFront);
+      ctx.translate(handOffsetSide, -handOffsetFront);
       ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
