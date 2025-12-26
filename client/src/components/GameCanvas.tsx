@@ -440,17 +440,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       let offX = 0;
       let offY = 0;
 
-      if (progress < 0.3) {
-        // Wind up backwards (to the left/back for left hand)
-        const p = progress / 0.3;
+      if (progress < 0.5) {
+        // Slowed down wind up (50% of time instead of 30%)
+        const p = progress / 0.5;
         rot = p * -45; 
       } else if (progress < 0.8) {
-        // Swing forward (to the right for left hand)
-        const p = (progress - 0.3) / 0.5;
+        // Faster swing forward (30% of time instead of 50%)
+        const p = (progress - 0.5) / 0.3;
         const easedP = p * p * (3 - 2 * p);
         rot = -45 + (easedP * 90);
       } else {
-        // Return to neutral
+        // Return to neutral (remains 20% of time)
         const p = (progress - 0.8) / 0.2;
         rot = 45 * (1 - p);
       }
