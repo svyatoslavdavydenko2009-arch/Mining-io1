@@ -760,54 +760,67 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       smoothBodyRotation.current += diff * 0.15;
       const bodyRotation = smoothBodyRotation.current;
       
-      // Draw Body
+      // Draw Body and Hands
       ctx.save();
       ctx.rotate(bodyRotation);
       
-      // Render Character Hands (as circles)
-      const handOffset = 22; // Offset from character center
+      const pHalf = pSize / 2;
+      const handOffsetSide = 22; 
+      const handOffsetFront = 10; // Move hands slightly forward
       const handSize = 6;
-      
-      ctx.fillStyle = "#fbbf24"; // Same color as character body
+
+      ctx.fillStyle = "#fbbf24";
       ctx.strokeStyle = "rgba(0,0,0,0.3)";
       ctx.lineWidth = 1.5;
 
-      // Left hand
+      // Draw Rear Hand first (if needed, but here both are side-ish)
+      // Actually, let's draw the body first, then pickaxe, then hands to layering it correctly
+      ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2); ctx.fill();
+
+      // Eyes
+      ctx.fillStyle = "black";
+      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
+      
+      ctx.restore(); // Restore body rotation
+
+      // Draw Pickaxe
+      const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
+      ctx.save(); 
+      ctx.rotate(bodyRotation);
+      ctx.translate(-pSize / 2, 0); 
+      ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
+      const headY = -24; 
+      ctx.beginPath(); 
+      ctx.moveTo(-14, headY + 4); 
+      ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); 
+      ctx.lineTo(10, headY + 6); 
+      ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); 
+      ctx.closePath();
+      ctx.fillStyle = pickaxeColor; ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
+      ctx.restore();
+
+      // Draw Hands ON TOP of everything (Body and Pickaxe)
+      ctx.save();
+      ctx.rotate(bodyRotation);
+      ctx.fillStyle = "#fbbf24";
+      ctx.strokeStyle = "rgba(0,0,0,0.3)";
+      ctx.lineWidth = 1.5;
+
+      // Left hand (holding pickaxe)
       ctx.beginPath();
-      ctx.arc(-handOffset, 0, handSize, 0, Math.PI * 2);
+      ctx.arc(-handOffsetSide, -handOffsetFront, handSize, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
       // Right hand
       ctx.beginPath();
-      ctx.arc(handOffset, 0, handSize, 0, Math.PI * 2);
+      ctx.arc(handOffsetSide, -handOffsetFront, handSize, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
-      ctx.fillStyle = "#fbbf24"; ctx.beginPath(); ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2); ctx.fill();
-      
-      // Draw Eyes (relative to body rotation)
-      ctx.fillStyle = "black";
-      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
-
-      const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
-      
-      ctx.save(); 
-      // Pickaxe rotation follows the same smooth body rotation
-      ctx.rotate(bodyRotation);
-      
-      // Pickaxe is always on the "left" relative to the front-facing direction (mirrored)
-      ctx.translate(-pSize / 2, 0); 
-      
-      // Swing rotation
-      ctx.rotate(-(Math.PI / 4) + (miningRotation * Math.PI / 180));
-      const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
-      ctx.fillStyle = pickaxeColor; ctx.fill();
-      ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
-      ctx.restore();
-
       ctx.restore(); // Restore main player transform
 
       const grad = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
