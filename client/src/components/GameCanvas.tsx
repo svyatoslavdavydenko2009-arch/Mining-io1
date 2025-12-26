@@ -368,8 +368,19 @@ export function GameCanvas({ user }: GameCanvasProps) {
       }
       
       ctx.rotate((Math.PI / 4) + (miningRotation * Math.PI / 180));
+      
+      // Add depth effect based on rotation angle
+      const totalRotation = (Math.PI / 4) + (miningRotation * Math.PI / 180);
+      const depthScale = Math.abs(Math.cos(totalRotation));
+      const depthScaleY = 0.4 + depthScale * 0.6;
+      
+      ctx.save();
+      ctx.scale(1, depthScaleY);
       const headY = -24; ctx.beginPath(); ctx.moveTo(-14, headY + 4); ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); ctx.lineTo(10, headY + 6); ctx.quadraticCurveTo(0, headY - 2, -10, headY + 6); ctx.closePath();
       ctx.fillStyle = pickaxeColor; ctx.fill();
+      ctx.restore();
+      
+      // Draw handle with depth effect
       ctx.beginPath(); ctx.moveTo(0, headY); ctx.lineTo(0, 0); ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 4; ctx.stroke();
       ctx.restore();
       
