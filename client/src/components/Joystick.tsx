@@ -44,7 +44,9 @@ export function Joystick({ onMove, onEnd }: JoystickProps) {
     if (!isActive) return;
 
     const onMoveAny = (e: MouseEvent | TouchEvent) => {
-      e.preventDefault();
+      // Don't prevent default if we're clicking outside the joystick base
+      // to allow interactions with other elements (like the mine button)
+      // e.preventDefault(); 
       handleUpdate(e);
     };
     

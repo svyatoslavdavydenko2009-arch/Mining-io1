@@ -974,17 +974,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         />
       </div>
       {/* Mine button on right */}
-      <div className="absolute bottom-12 right-12 z-50 pointer-events-auto">
+      <div className="absolute bottom-12 right-12 z-50 pointer-events-none">
         {(() => {
           const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
           const timeSinceLastMine = Date.now() - lastMineTimeState;
           const isOnCooldown = timeSinceLastMine < cooldown;
           return (
             <button
-              onClick={handleMineButtonClick}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMineButtonClick();
+              }}
               disabled={isMining || isOnCooldown}
               data-testid="button-mine"
-              className="relative w-16 h-16 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 disabled:from-gray-600 disabled:to-gray-700 disabled:opacity-50 border-2 border-yellow-800 disabled:border-gray-700 rounded-lg flex items-center justify-center transition-all active:scale-95 shadow-lg disabled:shadow-none font-pixel text-sm font-bold text-white"
+              className="relative w-16 h-16 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 disabled:from-gray-600 disabled:to-gray-700 disabled:opacity-50 border-2 border-yellow-800 disabled:border-gray-700 rounded-lg flex items-center justify-center transition-all active:scale-95 shadow-lg disabled:shadow-none font-pixel text-sm font-bold text-white pointer-events-auto"
             >
               <Pickaxe size={28} className="drop-shadow-lg" />
               {isOnCooldown && (
