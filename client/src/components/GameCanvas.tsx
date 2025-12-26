@@ -439,24 +439,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         // Wind up backwards and outwards
         const p = progress / 0.3;
         rot = p * -60;
-        offX = p * -10;
-        offY = p * -5;
+        offX = p * -4;
+        offY = p * -2;
       } else if (progress < 0.8) {
         // Powerful elliptical swing forward
         const p = (progress - 0.3) / 0.5;
         const easedP = p * p * (3 - 2 * p);
         rot = -60 + (easedP * 150);
         
-        // Ellipse path
+        // Ellipse path - smaller offsets to keep hand attached
         const angle = easedP * Math.PI;
-        offX = -10 + Math.sin(angle) * 20;
-        offY = -5 + (1 - Math.cos(angle)) * 10;
+        offX = -4 + Math.sin(angle) * 8;
+        offY = -2 + (1 - Math.cos(angle)) * 4;
       } else {
         // Settle at the end
         const p = (progress - 0.8) / 0.2;
         rot = 90 - (p * 20);
-        offX = 10 * (1 - p);
-        offY = 15 * (1 - p);
+        offX = 4 * (1 - p);
+        offY = 6 * (1 - p);
       }
       
       setMiningAnimation({ rotation: rot, offsetX: offX, offsetY: offY });
