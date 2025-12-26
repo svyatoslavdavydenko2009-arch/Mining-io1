@@ -553,7 +553,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         // Add bounce effect only if pickaxe hit a stone (after 0.55 progress)
         if (hitStone.current) {
           const bouncePhase = (progress - 0.55) / 0.45; // 0 to 1
-          const bounceAmount = Math.sin(bouncePhase * Math.PI) * -6; // Negative = upward bounce
+          const bounceAmount = Math.sin(bouncePhase * Math.PI) * -16; // Negative = upward bounce
           offY = bounceAmount;
         }
       }
