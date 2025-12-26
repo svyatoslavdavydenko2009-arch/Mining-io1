@@ -322,9 +322,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   };
 
   const performMining = (targetX: number, targetY: number) => {
+    const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
+    if (isMining || Date.now() - lastMineTime.current < cooldown) return;
+    
     const resource = getTileAt(targetX, targetY);
-    if (!resource || isTileMined(targetX, targetY)) return;
-
+    const hasResource = resource && !isTileMined(targetX, targetY);
+    
     const dx = targetX - localPos.x;
     const dy = targetY - localPos.y;
     const normalizedDx = dx !== 0 ? Math.sign(dx) : 0;
@@ -336,17 +339,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       setLookDir({ dx: 0, dy: normalizedDy });
     }
 
-    if (Math.max(Math.abs(targetX - localPos.x), Math.abs(targetY - localPos.y)) > 1) return;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) return;
 
-    const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
-    if (isMining || Date.now() - lastMineTime.current < cooldown) return;
-    const resDef = RESOURCES[resource];
-    if (user.pickaxeLevel < resDef.minPickaxeLevel) {
-      toast({ title: "Pickaxe too weak!", variant: "destructive" });
-      return;
-    }
     setIsMining(true);
-    setMiningTarget({ x: targetX, y: targetY });
+    setMiningTarget(hasResource ? { x: targetX, y: targetY } : null);
     let animStartTime = performance.now();
     const animateMining = (time: number) => {
       const elapsed = time - animStartTime;
@@ -354,19 +350,26 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       setMiningRotation(progress < 0.75 ? (progress / 0.75) * -55 : -55 + (((progress - 0.75) / 0.25) * 120));
       if (progress < 1) requestAnimationFrame(animateMining);
       else {
-        const key = `${targetX},${targetY}`;
-        const newHealth = (getTileHealth(targetX, targetY) || RESOURCE_HEALTH[resource]) - 1;
-        setTileHealth(prev => ({ ...prev, [key]: newHealth }));
-        if (newHealth <= 0) {
-          createParticles(targetX, targetY, resDef.color);
-          mine.mutate(resource, { onSuccess: () => {
-            const id = Date.now();
-            setMiningNotifications(prev => [...prev, { id, resource, x: targetX, y: targetY }]);
-            setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
-            setMiningTarget(null);
-          }});
-          setMinedTiles(prev => new Set(prev).add(key));
-        } else setMiningTarget(null);
+        if (hasResource && resource) {
+          const key = `${targetX},${targetY}`;
+          const newHealth = (getTileHealth(targetX, targetY) || RESOURCE_HEALTH[resource]) - 1;
+          setTileHealth(prev => ({ ...prev, [key]: newHealth }));
+          if (newHealth <= 0) {
+            const resDef = RESOURCES[resource];
+            if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
+              createParticles(targetX, targetY, resDef.color);
+              mine.mutate(resource, { onSuccess: () => {
+                const id = Date.now();
+                setMiningNotifications(prev => [...prev, { id, resource, x: targetX, y: targetY }]);
+                setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
+                setMiningTarget(null);
+              }});
+              setMinedTiles(prev => new Set(prev).add(key));
+            } else {
+              toast({ title: "Pickaxe too weak!", variant: "destructive" });
+            }
+          } else setMiningTarget(null);
+        }
         let returnStartTime = performance.now();
         const animateReturn = (t: number) => {
           const p = Math.min((t - returnStartTime) / 400, 1);
@@ -382,10 +385,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
   const handleMineButtonClick = () => {
     // Use current look direction or default to down
-    const dx = lookDir.dx !== 0 || lookDir.dy !== 0 ? lookDir.dx : 0;
-    const dy = lookDir.dx !== 0 || lookDir.dy !== 0 ? lookDir.dy : 1;
-    const targetX = localPos.x + dx;
-    const targetY = localPos.y + dy;
+    const dx = lookDir.dx;
+    const dy = lookDir.dy !== 0 ? lookDir.dy : 1;
+    const targetX = Math.round(localPos.x + dx);
+    const targetY = Math.round(localPos.y + dy);
     performMining(targetX, targetY);
   };
 
