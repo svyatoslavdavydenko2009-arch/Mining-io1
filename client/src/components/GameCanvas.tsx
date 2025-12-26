@@ -406,7 +406,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
     if (isMining || Date.now() - lastMineTime.current < cooldown) return;
     
-    // Set mining direction for animation to match current look direction
+    // Set initial mining direction but it will now update dynamically
     setMiningDirection({ x: lookDir.dx, y: lookDir.dy });
     
     // Use rounded player position for all calculations
@@ -806,15 +806,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const swingOffsetY = miningAnimation.offsetY;
       
       // Determine base rotation for mining if currently mining
-      let miningBaseRot = 0;
+      // We now smoothly blend the mining direction with the current body rotation
+      // so it doesn't "freeze" the character's orientation.
+      let miningBaseRot = bodyRotation;
       if (isMining && miningDirection) {
-        miningBaseRot = Math.atan2(miningDirection.y, miningDirection.x) + Math.PI / 2;
+        miningBaseRot = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
       }
       
       // Draw Body and Hands
       ctx.save();
-      // Use body rotation unless mining, in which case we face the mining direction
-      ctx.rotate(isMining && miningDirection ? miningBaseRot : bodyRotation);
+      // Use the calculated rotation (which now tracks lookDir even while mining)
+      ctx.rotate(miningBaseRot);
       
       const pHalf = pSize / 2;
       const handOffsetSide = 22; // Back to wider position
@@ -846,7 +848,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Draw Pickaxe
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       ctx.save(); 
-      ctx.rotate(isMining && miningDirection ? miningBaseRot : bodyRotation);
+      ctx.rotate(miningBaseRot);
       
       // Rotate pickaxe with the hand
       const pickaxeHandRot = (miningAnimation.rotation * Math.PI / 180);
@@ -876,7 +878,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Drawing Left Hand (Holding Pickaxe)
       ctx.save();
-      ctx.rotate(isMining && miningDirection ? miningBaseRot : bodyRotation);
+      ctx.rotate(miningBaseRot);
       
       // Pivot hand based on animation rotation to keep it attached to body
       const leftHandRot = (miningAnimation.rotation * Math.PI / 180);
@@ -909,7 +911,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Drawing Right Hand (Static with limb)
       ctx.save();
-      ctx.rotate(isMining && miningDirection ? miningBaseRot : bodyRotation);
+      ctx.rotate(miningBaseRot);
       ctx.translate(handOffsetSide, -handOffsetFront);
       
       // Draw a "limb" connecting hand to body (now hidden but kept in code)
