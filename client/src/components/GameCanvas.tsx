@@ -644,7 +644,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Determine rotation based on look direction
       let targetRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
       
-      // Smoothly interpolate rotation
+      // Smoothly interpolate rotation for both body and pickaxe base
       let diff = targetRotation - smoothBodyRotation.current;
       while (diff < -Math.PI) diff += Math.PI * 2;
       while (diff > Math.PI) diff -= Math.PI * 2;
@@ -665,9 +665,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
       
       ctx.save(); 
-      // Pickaxe rotation follows look direction BUT swing is added
-      const baseAngle = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
-      ctx.rotate(baseAngle);
+      // Pickaxe rotation follows the same smooth body rotation
+      ctx.rotate(bodyRotation);
       
       // Pickaxe is always on the "left" relative to the front-facing direction (mirrored)
       ctx.translate(-pSize / 2, 0); 
