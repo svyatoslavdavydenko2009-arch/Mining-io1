@@ -608,22 +608,28 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       };
 
       // Draw each biome region as a unified shape, sorted by brightness
+      // First, draw a base layer of the darkest possible color to ensure no gaps at all
+      ctx.fillStyle = "#1a120b";
+      ctx.fillRect(0, 0, rect.width, rect.height);
+
       Object.entries(biomeTiles)
         .sort(([colorA], [colorB]) => getBrightness(colorA) - getBrightness(colorB))
         .forEach(([color, tiles]) => {
           ctx.fillStyle = color;
           
-          // First pass: draw the base rectangles for all tiles in the biome to prevent gaps
+          // Draw all tiles in this biome as a single solid mass first
           tiles.forEach(t => {
             ctx.fillRect(t.sx - 0.5, t.sy - 0.5, TILE_SIZE + 1.1, TILE_SIZE + 1.1);
           });
           
-          // Second pass: draw rounded corners only on the edges of the biome region
+          // Then draw the "organic" rounded overlaps only on the borders
+          // BUT only if this biome is brighter than its neighbors or it's a border tile
           tiles.forEach(t => {
             if (isBiomeBorder(t.wx, t.wy)) {
-              const sizeBonus = TILE_SIZE * 0.4;
+              const sizeBonus = TILE_SIZE * 0.6; // Slightly larger overlap for smoother "blobs"
               ctx.beginPath();
-              ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 24);
+              // Use a very high corner radius to make it look like a liquid drop
+              ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, TILE_SIZE);
               ctx.fill();
             }
           });
