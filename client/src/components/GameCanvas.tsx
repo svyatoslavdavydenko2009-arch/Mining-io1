@@ -253,34 +253,40 @@ function getTileAt(x: number, y: number): ResourceType | null {
     return null;
   }
   
-  // Plains biome - natural forest with proper spacing
+  // Plains biome - tree groups spawn every 20-30 tiles
+  // Divide world into grid zones for tree group placement
+  const groupZoneSize = 25; // Each group zone is 25x25 tiles
+  const groupZoneX = Math.floor(x / groupZoneSize);
+  const groupZoneY = Math.floor(y / groupZoneSize);
   
-  // Fine-scale noise for evenly distributed trees across plains
-  const treePattern = getNoise(x + 7000, y + 7000, 0.10);
+  // Determine if this zone has a tree group
+  const groupChance = pseudoRandom(groupZoneX + 8000, groupZoneY + 8000);
+  if (groupChance > 0.65) return null; // ~35% of zones have tree groups
   
-  // Trees spawn in suitable areas (increased spawn rate for denser forest)
-  if (treePattern > 0.45) {
-    // Check if there's already a tree nearby to maintain natural spacing (2-3 tile minimum distance)
-    let hasNearbyTree = false;
-    for (let ny = -2; ny <= 2; ny++) {
-      for (let nx = -2; nx <= 2; nx++) {
-        if (nx === 0 && ny === 0) continue;
-        // Check nearby location's noise value
-        const nearbyPattern = getNoise(x + nx + 7000, y + ny + 7000, 0.10);
-        const nearbyTreeSeed = pseudoRandom(x + nx + 6000, y + ny + 6000);
-        if (nearbyPattern > 0.45 && nearbyTreeSeed > 0.55) {
-          hasNearbyTree = true;
-          break;
-        }
-      }
-      if (hasNearbyTree) break;
-    }
-    
-    // Only spawn tree if no nearby tree exists (natural spacing)
-    // Lowered thresholds to increase tree spawn rate for denser forests (~50%)
-    if (!hasNearbyTree) {
-      const treeSeed = pseudoRandom(x + 6000, y + 6000);
-      if (treeSeed > 0.45) return "wood";
+  // Calculate group center within the zone (with some randomness)
+  const centerOffsetX = pseudoRandom(groupZoneX + 9000, groupZoneY + 9000);
+  const centerOffsetY = pseudoRandom(groupZoneX + 9001, groupZoneY + 9001);
+  const groupCenterX = groupZoneX * groupZoneSize + groupZoneSize / 2 + (centerOffsetX - 0.5) * 6;
+  const groupCenterY = groupZoneY * groupZoneSize + groupZoneSize / 2 + (centerOffsetY - 0.5) * 6;
+  
+  // Calculate distance from current tile to group center
+  const distX = x - groupCenterX;
+  const distY = y - groupCenterY;
+  const distFromCenter = Math.sqrt(distX * distX + distY * distY);
+  
+  // Trees spawn within 3-6 tiles of group center
+  if (distFromCenter <= 6) {
+    // Higher spawn chance closer to center
+    const treeSeed = pseudoRandom(x + 6000, y + 6000);
+    if (distFromCenter <= 2) {
+      // Core: 70% spawn chance
+      if (treeSeed > 0.30) return "wood";
+    } else if (distFromCenter <= 4) {
+      // Middle: 50% spawn chance
+      if (treeSeed > 0.50) return "wood";
+    } else {
+      // Edge: 30% spawn chance
+      if (treeSeed > 0.70) return "wood";
     }
   }
   
