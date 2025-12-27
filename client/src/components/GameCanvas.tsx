@@ -149,7 +149,8 @@ function getTileAt(x: number, y: number): ResourceType | null {
     // Only spawn stone in rocky regions that are part of a larger cluster (min 5 neighboring rocky tiles)
     if (rockyNeighborCount >= 5) {
       const stoneSeed = pseudoRandom(x + 2000, y + 2000);
-      if (stoneSeed > 0.96) return "stone";
+      // Increased from 0.96 (4% chance) to 0.80 (20% chance) - stones should be more visible in rocky biomes
+      if (stoneSeed > 0.80) return "stone";
     }
     
     // IMPORTANT: Return null for all rocky terrain, no trees spawn on rocks
@@ -180,10 +181,10 @@ function getTileAt(x: number, y: number): ResourceType | null {
     }
     
     // Only spawn tree if no nearby tree exists (natural spacing)
-    // Lowered threshold from 0.75 to 0.68 to increase tree spawn rate by ~10%
+    // Lowered threshold from 0.68 to 0.55 to increase tree spawn rate significantly (~35%)
     if (!hasNearbyTree) {
       const treeSeed = pseudoRandom(x + 6000, y + 6000);
-      if (treeSeed > 0.68) return "wood";
+      if (treeSeed > 0.55) return "wood";
     }
   }
   
