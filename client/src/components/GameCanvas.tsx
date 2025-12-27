@@ -527,7 +527,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         // Calculate dynamic health based on scale seed used in render
         const sizeSeed = pseudoRandom(t.x + 3000, t.y + 3000);
         const rockScale = 0.7 + sizeSeed * 1.5;
-        const maxHealth = rockScale <= 1.0 ? 2 : rockScale <= 1.5 ? 3 : 4;
+        
+        let maxHealth;
+        if (t.resource === "wood") {
+          // Wood has 3x health of stone
+          maxHealth = rockScale <= 1.0 ? 6 : rockScale <= 1.5 ? 9 : 12;
+        } else {
+          maxHealth = rockScale <= 1.0 ? 2 : rockScale <= 1.5 ? 3 : 4;
+        }
 
         const currentHealth = tileHealth[key] !== undefined ? tileHealth[key] : maxHealth;
         const newHealth = currentHealth - 1;
