@@ -49,84 +49,42 @@ function getNoise(x: number, y: number, scale: number) {
   return nx0 * (1 - sy) + nx1 * sy;
 }
 
-// Organic floor noise for biomes with realistic blending
+// Plains biome only - simple grass coloring
 function getFloorColor(x: number, y: number): string {
-  // Use multi-scale noise for more organic "cloud-like" patches
+  // Use multi-scale noise for grass color variation
   const noise = getNoise(x, y, 0.05) * 0.7 + getNoise(x, y, 0.15) * 0.3;
-  
-  // Forest biome (dark green patches) - reduced scale from 0.08 to 0.05 for larger biomes
-  const forestNoise = getNoise(x + 3000, y + 3000, 0.05);
-  
-  // rarity check for grey biome (smaller patches)
-  const greyNoise = getNoise(x + 5000, y + 5000, 0.08);
-
-  // Grass/Plains biome (main biome - grassland)
   const grassNoise = getNoise(x + 1000, y + 1000, 0.06);
 
-  // Blend colors based on noise values for smoother transitions
-  let r = 30, g = 21, b = 15; // Default deep brown
+  // Base grass colors for plains biome
+  let r = 86, g = 172, b = 102; // Default grass green
 
-  // Less smooth blending - use step-like transitions
-  const stepBlend = (val: number, threshold: number) => {
-    if (val < threshold) return 0;
-    if (val > threshold + 0.15) return 1;
-    return (val - threshold) / 0.15;
-  };
-
-  if (forestNoise > 0.75) {
-    const t = stepBlend(forestNoise, 0.75);
-    // Blend with forest colors
-    const targetR = forestNoise > 0.88 ? 26 : (forestNoise > 0.82 ? 45 : 58);
-    const targetG = forestNoise > 0.88 ? 77 : (forestNoise > 0.82 ? 90 : 107);
-    const targetB = forestNoise > 0.88 ? 46 : (forestNoise > 0.82 ? 61 : 74);
-    r = r * (1 - t) + targetR * t;
-    g = g * (1 - t) + targetG * t;
-    b = b * (1 - t) + targetB * t;
-  }
-  
-  if (greyNoise > 0.80) {
-    const t = stepBlend(greyNoise, 0.80);
-    const targetR = greyNoise > 0.96 ? 74 : (greyNoise > 0.90 ? 92 : 110);
-    const targetG = targetR;
-    const targetB = targetR;
-    r = r * (1 - t) + targetR * t;
-    g = g * (1 - t) + targetG * t;
-    b = b * (1 - t) + targetB * t;
+  // Vary shades of green for visual interest
+  if (grassNoise > 0.60) {
+    const intensity = (grassNoise - 0.60) / 0.40;
+    r = Math.round(86 + (54 - 86) * intensity);
+    g = Math.round(172 + (145 - 172) * intensity);
+    b = Math.round(102 + (84 - 102) * intensity);
+  } else if (grassNoise > 0.50) {
+    const intensity = (grassNoise - 0.50) / 0.10;
+    r = Math.round(86 + (68 - 86) * intensity);
+    g = Math.round(172 + (145 - 172) * intensity);
+    b = Math.round(102 + (84 - 102) * intensity);
   }
 
-  if (grassNoise > 0.50) {
-    const t = stepBlend(grassNoise, 0.50);
-    const targetR = grassNoise > 0.8 ? 54 : (grassNoise > 0.7 ? 68 : 86);
-    const targetG = grassNoise > 0.8 ? 115 : (grassNoise > 0.7 ? 145 : 172);
-    const targetB = grassNoise > 0.8 ? 70 : (grassNoise > 0.7 ? 84 : 102);
-    r = r * (1 - t) + targetR * t;
-    g = g * (1 - t) + targetG * t;
-    b = b * (1 - t) + targetB * t;
-  }
-
-  // Base ground noise blending
-  if (noise > 0.2) {
-    const t = stepBlend(noise, 0.2);
-    const targetR = noise > 0.75 ? 61 : (noise > 0.5 ? 50 : 43);
-    const targetG = noise > 0.75 ? 43 : (noise > 0.5 ? 35 : 30);
-    const targetB = noise > 0.75 ? 31 : (noise > 0.5 ? 25 : 21);
-    r = r * (1 - t) + targetR * t;
-    g = g * (1 - t) + targetG * t;
-    b = b * (1 - t) + targetB * t;
+  // Subtle noise variation
+  if (noise > 0.3) {
+    const t = (noise - 0.3) / 0.7;
+    r = Math.round(r * (1 - t * 0.1) + 90 * t * 0.1);
+    g = Math.round(g * (1 - t * 0.1) + 150 * t * 0.1);
+    b = Math.round(b * (1 - t * 0.1) + 95 * t * 0.1);
   }
 
   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 }
 
 function isBiomeBorder(x: number, y: number): boolean {
-  const myColor = getFloorColor(x, y);
-  const neighbors = [
-    getFloorColor(x + 1, y),
-    getFloorColor(x - 1, y),
-    getFloorColor(x, y + 1),
-    getFloorColor(x, y - 1)
-  ];
-  return neighbors.some(n => n !== myColor);
+  // All tiles are in the same biome (plains), so no borders
+  return false;
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
@@ -135,28 +93,7 @@ function getTileAt(x: number, y: number): ResourceType | null {
   const stoneSeed = pseudoRandom(x + 2000, y + 2000);
   if (stoneSeed > 0.99) return "stone";
   
-  // Wood appears in forest biome as clusters/groups
-  // Using same scale (0.05) as forest biome generation for consistency
-  const forestNoise = getNoise(x + 3000, y + 3000, 0.05);
-  // Only on darkest green forest blocks (forestNoise > 0.88)
-  if (forestNoise > 0.88) {
-    // Use multi-scale noise to determine cluster zones
-    // Coarse scale (0.02) creates large cluster areas (~50 tile clusters)
-    const clusterZone = getNoise(x + 7000, y + 7000, 0.02);
-    
-    // Medium scale (0.06) creates local variation within clusters
-    const clusterDensity = getNoise(x + 7500, y + 7500, 0.06);
-    
-    // Spawn trees in cluster zones with varying density
-    if (clusterZone > 0.70) {
-      const woodSeed = pseudoRandom(x + 6000, y + 6000);
-      // 2.5x more trees: lowered threshold from 0.60-0.85 to 0.40-0.65 range
-      const threshold = 0.40 + (clusterDensity * 0.25); // 0.40-0.65 range = 2.5x more frequent
-      
-      if (woodSeed > threshold) return "wood";
-    }
-  }
-  
+  // No other resources in plains biome
   return null;
 }
 
@@ -258,7 +195,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
   const hasCollision = (x: number, y: number): boolean => {
-    // Hexagon rock collision in grey biome + Stone resource collision
+    // Stone resource collision only (plains biome)
     // We check a 3x3 grid around the precise position
     const tx = Math.round(x);
     const ty = Math.round(y);
@@ -267,34 +204,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       for (let dx = -1; dx <= 1; dx++) {
         const ntx = tx + dx;
         const nty = ty + dy;
-        
-        // Check hexagon rocks in grey biome
-        const greyNoise = getNoise(ntx + 5000, nty + 5000, 0.08);
-        if (greyNoise > 0.83) {
-          const rockSeed = pseudoRandom(ntx + 777, nty + 777);
-          if (rockSeed > 0.95) {
-            let hasNeighbor = false;
-            for (let ny = -1; ny <= 1; ny++) {
-              for (let nx = -1; nx <= 1; nx++) {
-                if (nx === 0 && ny === 0) continue;
-                if (pseudoRandom(ntx + nx + 777, nty + ny + 777) > 0.95) {
-                  hasNeighbor = true;
-                  break;
-                }
-              }
-              if (hasNeighbor) break;
-            }
-            if (hasNeighbor) continue;
-
-            const centerX = ntx;
-            const centerY = nty;
-            const distDx = x - centerX;
-            const distDy = y - centerY;
-            const distSq = distDx * distDx + distDy * distDy;
-            
-            if (distSq < COLLISION_DISTANCE_SQ) return true;
-          }
-        }
         
         // Check stone resource tiles
         const resource = getTileAt(ntx, nty);
@@ -309,22 +218,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
           const rockScale = 0.7 + sizeSeed * 1.5;
           const scaledCollisionDist = COLLISION_DISTANCE_SQ * rockScale;
-          
-          if (distSq < scaledCollisionDist) return true;
-        }
-        
-        // Check wood resource tiles
-        if (resource === "wood" && !isTileMined(ntx, nty)) {
-          const centerX = ntx;
-          const centerY = nty;
-          const distDx = x - centerX;
-          const distDy = y - centerY;
-          const distSq = distDx * distDx + distDy * distDy;
-          
-          // Scale collision distance based on wood size
-          const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
-          const woodScale = 0.7 + sizeSeed * 1.5;
-          const scaledCollisionDist = COLLISION_DISTANCE_SQ * woodScale;
           
           if (distSq < scaledCollisionDist) return true;
         }
