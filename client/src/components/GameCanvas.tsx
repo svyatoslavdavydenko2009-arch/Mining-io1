@@ -120,24 +120,20 @@ function getTileAt(x: number, y: number): ResourceType | null {
     return null;
   }
   
-  // Plains biome - trees in clusters and occasional stone
+  // Plains biome - trees in clusters only
   
-  // Stone appears roughly every 15-20 tiles uniformly distributed
-  const stoneSeed = pseudoRandom(x + 2000, y + 2000);
-  if (stoneSeed > 0.99) return "stone";
+  // Trees spawn in clusters in plains biome (reduced spawning)
+  // Coarse scale (0.04) creates larger cluster zones (~100 tile clusters)
+  const treeClusterZone = getNoise(x + 7000, y + 7000, 0.04);
   
-  // Trees spawn in clusters in plains biome (not too frequently)
-  // Coarse scale (0.03) creates large cluster zones (~80 tile clusters)
-  const treeClusterZone = getNoise(x + 7000, y + 7000, 0.03);
-  
-  // Only spawn trees in cluster zones where noise > 0.65 (about 35% of plains)
-  if (treeClusterZone > 0.65) {
+  // Only spawn trees in cluster zones where noise > 0.75 (about 25% of plains, reduced from 35%)
+  if (treeClusterZone > 0.75) {
     // Medium scale (0.08) creates local variation within clusters
     const treeClusterDensity = getNoise(x + 7500, y + 7500, 0.08);
     
-    // Spawn trees with varying density - not too frequent
+    // Spawn trees with higher threshold - much less frequent
     const treeSeed = pseudoRandom(x + 6000, y + 6000);
-    const threshold = 0.70 + (treeClusterDensity * 0.20); // 0.70-0.90 range
+    const threshold = 0.82 + (treeClusterDensity * 0.15); // 0.82-0.97 range (increased from 0.70-0.90)
     
     if (treeSeed > threshold) return "wood";
   }
