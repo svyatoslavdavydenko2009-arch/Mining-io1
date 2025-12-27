@@ -214,9 +214,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const joystickDirRef = useRef({ dx: 0, dy: 0 });
   const smoothHandBob = useRef(0); // Smooth hand bob value
   const smoothTileHealth = useRef<Record<string, number>>({}); // Smooth health values for tiles
-  const [destroyingTiles, setDestroyingTiles] = useState<Record<string, number>>({}); // Tiles being destroyed with progress 0-1
   const shakingTilesStartTime = useRef<Record<string, number>>({}); // Track shake start times
-  const destroyingTilesStartTime = useRef<Record<string, number>>({}); // Track destruction start times
+  const [tilesDisappearing, setTilesDisappearing] = useState<Record<string, number>>({}); // Tiles disappearing with time elapsed
   
   // Update button state every 50ms so cooldown is responsive
   useEffect(() => {
@@ -224,37 +223,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       setButtonUpdateTrigger(t => t + 1);
     }, 50);
     return () => clearInterval(interval);
-  }, []);
-
-  // Animate destruction of tiles
-  useEffect(() => {
-    let frameId: number;
-    const animate = (now: number) => {
-      let hasActive = false;
-      setDestroyingTiles(prev => {
-        const next = { ...prev };
-        Object.entries(next).forEach(([key]) => {
-          const startTime = destroyingTilesStartTime.current[key];
-          if (startTime !== undefined) {
-            const elapsed = now - startTime;
-            const progress = Math.min(elapsed / 600, 1);
-            if (progress < 1) {
-              hasActive = true;
-              next[key] = progress;
-            } else {
-              delete next[key];
-              delete destroyingTilesStartTime.current[key];
-            }
-          }
-        });
-        return next;
-      });
-      if (hasActive) {
-        frameId = requestAnimationFrame(animate);
-      }
-    };
-    frameId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameId);
   }, []);
 
   const toggleFullscreen = useCallback(() => {
@@ -542,27 +510,26 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         if (newHealth <= 0) {
           const resDef = RESOURCES[t.resource];
           if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
-            // Start destruction animation instead of particles
-            destroyingTilesStartTime.current[key] = performance.now();
-            setDestroyingTiles(prev => ({ ...prev, [key]: 0 }));
+            // Start simple fade animation
+            setTilesDisappearing(prev => ({ ...prev, [key]: 0 }));
             mine.mutate(t.resource, { onSuccess: () => {
               const id = Date.now() + Math.random();
               setMiningNotifications(prev => [...prev, { id, resource: t.resource, x: t.x, y: t.y }]);
               setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
             }});
-            // Mark as mined after animation completes
+            // Mark as mined and remove animation after 300ms
             setTimeout(() => {
               setMinedTiles(prev => {
                 const next = new Set(prev);
                 next.add(key);
                 return next;
               });
-              setDestroyingTiles(prev => {
+              setTilesDisappearing(prev => {
                 const next = { ...prev };
                 delete next[key];
                 return next;
               });
-            }, 600);
+            }, 300);
           } else {
             toast({ title: `Pickaxe too weak for ${resDef.name}!`, variant: "destructive" });
           }
@@ -972,8 +939,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         }
       }
 
-      // Animate destroying tiles AFTER all tiles are drawn so fade-out is visible
-      Object.entries(destroyingTiles).forEach(([key, progress]) => {
+      // Render disappearing tiles with simple fade
+      Object.entries(tilesDisappearing).forEach(([key, elapsed]) => {
         const [wxStr, wyStr] = key.split(',');
         const wx = parseInt(wxStr);
         const wy = parseInt(wyStr);
@@ -983,8 +950,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         // Skip if off screen
         if (sx + TILE_SIZE < 0 || sx > rect.width || sy + TILE_SIZE < 0 || sy > rect.height) return;
         
-        // Linear fade progress for destruction
-        const stoneAlpha = Math.max(0, 1 - progress);
+        // Simple fade: 300ms total
+        const alpha = Math.max(0, 1 - (elapsed / 300));
+        if (alpha <= 0) return;
         
         const resType = getTileAt(wx, wy);
         const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
@@ -996,13 +964,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const dsy = sy + offsetY;
         
         ctx.save();
-        ctx.globalAlpha = stoneAlpha;
+        ctx.globalAlpha = alpha;
         ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
-        // Rotate and scale during destruction
-        ctx.rotate(progress * Math.PI * 2); // Full spin
-        ctx.scale(1 - progress, 1 - progress); // Scale down
-        
-        ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
         ctx.scale(rockScale, rockScale);
         ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
         
@@ -1034,6 +997,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         }
         
         ctx.restore();
+      });
+      
+      // Update disappearing tiles animation
+      setTilesDisappearing(prev => {
+        const next = { ...prev };
+        Object.entries(next).forEach(([key]) => {
+          next[key] = (next[key] || 0) + (dt || 16);
+        });
+        return next;
       });
 
       const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
