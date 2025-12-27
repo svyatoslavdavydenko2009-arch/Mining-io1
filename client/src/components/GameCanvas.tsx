@@ -982,13 +982,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const dsy = sy + offsetY;
         
         ctx.save();
-        ctx.globalAlpha = alpha;
         ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
         ctx.scale(finalScale, finalScale);
         ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
         
-        ctx.fillStyle = "#444";
-        ctx.strokeStyle = "rgba(0,0,0,0.4)";
+        ctx.fillStyle = `rgba(68,68,68,${alpha})`;
+        ctx.strokeStyle = `rgba(0,0,0,${0.4 * alpha})`;
         ctx.lineWidth = 2;
         
         if (resType === "stone") {
