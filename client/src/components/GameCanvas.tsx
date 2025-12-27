@@ -51,10 +51,10 @@ function getNoise(x: number, y: number, scale: number) {
 
 // Generate biome floor colors - plains and rocky biomes
 function getFloorColor(x: number, y: number): string {
-  // Rocky biome generation
-  const rockyNoise = getNoise(x + 5000, y + 5000, 0.08);
+  // Rocky biome generation - MUST match getTileAt scale and threshold
+  const rockyNoise = getNoise(x + 5000, y + 5000, 0.05);
   
-  if (rockyNoise > 0.80) {
+  if (rockyNoise > 0.72) {
     // Rocky biome - grey/brown stone colors
     let r = 110, g = 110, b = 110; // Default grey stone
     
@@ -114,10 +114,10 @@ function isBiomeBorder(x: number, y: number): boolean {
 function getTileAt(x: number, y: number): ResourceType | null {
   // Rocky biome - coarse scale creates large, natural mountain/rocky regions
   // Scale 0.05 creates large clusters (~200+ tile regions) instead of scattered patches
+  // MUST match getFloorColor threshold
   const rockyNoise = getNoise(x + 5000, y + 5000, 0.05);
   if (rockyNoise > 0.72) {
-    // Check if rocky region is large enough (at least 3+ tiles in cluster)
-    // This prevents tiny isolated gray patches
+    // We're in a rocky biome area - check if it's part of a large cluster
     let rockyNeighborCount = 0;
     for (let ny = -1; ny <= 1; ny++) {
       for (let nx = -1; nx <= 1; nx++) {
@@ -130,8 +130,10 @@ function getTileAt(x: number, y: number): ResourceType | null {
     if (rockyNeighborCount >= 5) {
       const stoneSeed = pseudoRandom(x + 2000, y + 2000);
       if (stoneSeed > 0.96) return "stone";
-      return null;
     }
+    
+    // IMPORTANT: Return null for all rocky terrain, no trees spawn on rocks
+    return null;
   }
   
   // Plains biome - natural forest with proper spacing
