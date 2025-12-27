@@ -214,6 +214,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const joystickDirRef = useRef({ dx: 0, dy: 0 });
   const smoothHandBob = useRef(0); // Smooth hand bob value
   const smoothTileHealth = useRef<Record<string, number>>({}); // Smooth health values for tiles
+  const [destroyingTiles, setDestroyingTiles] = useState<Record<string, number>>({}); // Tiles being destroyed with progress 0-1
   
   // Update button state every 50ms so cooldown is responsive
   useEffect(() => {
@@ -222,6 +223,36 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     }, 50);
     return () => clearInterval(interval);
   }, []);
+
+  // Animate destruction of tiles
+  useEffect(() => {
+    if (Object.keys(destroyingTiles).length === 0) return;
+    
+    let frameId: number;
+    const startTime = performance.now();
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      setDestroyingTiles(prev => {
+        const next = { ...prev };
+        let hasActive = false;
+        Object.entries(next).forEach(([key, progress]) => {
+          const newProgress = Math.min(progress + elapsed / 600, 1);
+          if (newProgress < 1) {
+            hasActive = true;
+            next[key] = newProgress;
+          } else {
+            delete next[key];
+          }
+        });
+        return next;
+      });
+      if (Object.keys(destroyingTiles).length > 0) {
+        frameId = requestAnimationFrame(animate);
+      }
+    };
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
+  }, [destroyingTiles]);
 
   const toggleFullscreen = useCallback(() => {
     onFullscreenChange?.(!isFullscreen);
@@ -484,15 +515,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       targets.forEach(t => {
         const key = `${t.x},${t.y}`;
         
-        // Add shake effect
-        setShakingTiles(prev => ({ ...prev, [key]: { x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8 } }));
+        // Add stronger shake effect
+        setShakingTiles(prev => ({ ...prev, [key]: { x: (Math.random() - 0.5) * 20, y: (Math.random() - 0.5) * 20 } }));
         setTimeout(() => {
           setShakingTiles(prev => {
             const next = { ...prev };
             delete next[key];
             return next;
           });
-        }, 100);
+        }, 150);
 
         // Calculate dynamic health based on scale seed used in render
         const sizeSeed = pseudoRandom(t.x + 3000, t.y + 3000);
@@ -506,17 +537,26 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         if (newHealth <= 0) {
           const resDef = RESOURCES[t.resource];
           if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
-            createParticles(t.x, t.y, resDef.color);
+            // Start destruction animation instead of particles
+            setDestroyingTiles(prev => ({ ...prev, [key]: 0 }));
             mine.mutate(t.resource, { onSuccess: () => {
               const id = Date.now() + Math.random();
               setMiningNotifications(prev => [...prev, { id, resource: t.resource, x: t.x, y: t.y }]);
               setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
             }});
-            setMinedTiles(prev => {
-              const next = new Set(prev);
-              next.add(key);
-              return next;
-            });
+            // Mark as mined after animation completes
+            setTimeout(() => {
+              setMinedTiles(prev => {
+                const next = new Set(prev);
+                next.add(key);
+                return next;
+              });
+              setDestroyingTiles(prev => {
+                const next = { ...prev };
+                delete next[key];
+                return next;
+              });
+            }, 600);
           } else {
             toast({ title: `Pickaxe too weak for ${resDef.name}!`, variant: "destructive" });
           }
@@ -711,6 +751,72 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         return (r * 299 + g * 587 + b * 114) / 1000;
       };
 
+      // Animate destroying tiles - fade out, scale down, rotate
+      Object.entries(destroyingTiles).forEach(([key, progress]) => {
+        const [wxStr, wyStr] = key.split(',');
+        const wx = parseInt(wxStr);
+        const wy = parseInt(wyStr);
+        const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
+        const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+        
+        // Skip if off screen
+        if (sx + TILE_SIZE < 0 || sx > rect.width || sy + TILE_SIZE < 0 || sy > rect.height) return;
+        
+        // Easing: ease-in for scale and opacity
+        const easeProgress = progress * progress; // quadratic ease-in
+        
+        const resType = getTileAt(wx, wy);
+        const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
+        const rockScale = 0.7 + sizeSeed * 1.5;
+        const shake = shakingTiles[key] || { x: 0, y: 0 };
+        
+        const offsetX = (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12 + shake.x;
+        const offsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12 + shake.y;
+        const dsx = sx + offsetX;
+        const dsy = sy + offsetY;
+        
+        ctx.save();
+        ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
+        // Rotate and scale during destruction
+        ctx.rotate(easeProgress * Math.PI * 2); // Full spin
+        ctx.scale(1 - easeProgress, 1 - easeProgress); // Scale down
+        ctx.globalAlpha = 1 - easeProgress; // Fade out
+        
+        ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
+        ctx.scale(rockScale, rockScale);
+        ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
+        
+        ctx.fillStyle = "#444";
+        ctx.strokeStyle = "rgba(0,0,0,0.4)";
+        ctx.lineWidth = 2;
+        
+        if (resType === "stone") {
+          ctx.beginPath();
+          const centerX = dsx + TILE_SIZE / 2;
+          const centerY = dsy + TILE_SIZE / 2;
+          const radius = (TILE_SIZE - 8) / 2;
+          const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
+          for (let i = 0; i < 5; i++) {
+            const angle = (i * 2 * Math.PI / 5) - Math.PI / 2 + randomRotation;
+            const x = centerX + radius * Math.cos(angle);
+            const y = centerY + radius * Math.sin(angle);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.roundRect(dsx + 4, dsy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4);
+          ctx.fill();
+          ctx.stroke();
+        }
+        
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      });
+      
       // Draw each biome region as a unified shape, sorted by brightness
       // First, draw a base layer of the darkest possible color to ensure no gaps at all
       ctx.fillStyle = "#1a120b";
