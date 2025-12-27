@@ -258,8 +258,8 @@ function getTileAt(x: number, y: number): ResourceType | null {
   // Fine-scale noise for evenly distributed trees across plains
   const treePattern = getNoise(x + 7000, y + 7000, 0.10);
   
-  // Trees spawn in suitable areas (about 45% of plains)
-  if (treePattern > 0.55) {
+  // Trees spawn in suitable areas (increased spawn rate for denser forest)
+  if (treePattern > 0.45) {
     // Check if there's already a tree nearby to maintain natural spacing (2-3 tile minimum distance)
     let hasNearbyTree = false;
     for (let ny = -2; ny <= 2; ny++) {
@@ -268,7 +268,7 @@ function getTileAt(x: number, y: number): ResourceType | null {
         // Check nearby location's noise value
         const nearbyPattern = getNoise(x + nx + 7000, y + ny + 7000, 0.10);
         const nearbyTreeSeed = pseudoRandom(x + nx + 6000, y + ny + 6000);
-        if (nearbyPattern > 0.55 && nearbyTreeSeed > 0.68) {
+        if (nearbyPattern > 0.45 && nearbyTreeSeed > 0.55) {
           hasNearbyTree = true;
           break;
         }
@@ -277,10 +277,10 @@ function getTileAt(x: number, y: number): ResourceType | null {
     }
     
     // Only spawn tree if no nearby tree exists (natural spacing)
-    // Lowered threshold from 0.68 to 0.55 to increase tree spawn rate significantly (~35%)
+    // Lowered thresholds to increase tree spawn rate for denser forests (~50%)
     if (!hasNearbyTree) {
       const treeSeed = pseudoRandom(x + 6000, y + 6000);
-      if (treeSeed > 0.55) return "wood";
+      if (treeSeed > 0.45) return "wood";
     }
   }
   
@@ -968,23 +968,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.fill();
                 ctx.stroke();
               } else if (resType === "wood") {
-                // Draw wood as simple square with texture pattern - darker green
+                // Draw wood as simple square - darker green
                 ctx.fillStyle = "#1b4d2b";
                 ctx.strokeStyle = "rgba(0,0,0,0.4)";
                 ctx.lineWidth = 2;
                 ctx.beginPath(); ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 8); ctx.fill();
-                ctx.stroke();
-                
-                // Add vertical wood grain pattern
-                ctx.strokeStyle = "rgba(0,0,0,0.3)";
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(dsx + 16, dsy + 8);
-                ctx.lineTo(dsx + 16, dsy + 40);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(dsx + 32, dsy + 8);
-                ctx.lineTo(dsx + 32, dsy + 40);
                 ctx.stroke();
               } else {
                 ctx.fillStyle = "#444";
