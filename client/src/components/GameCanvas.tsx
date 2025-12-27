@@ -269,7 +269,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           // Check wood resource tiles (trees in plains)
           if (resource === "wood") {
             const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
-            const treeScale = 0.7 + sizeSeed * 1.5;
+            const treeScale = 1.1 + sizeSeed * 1.5;
             const scaledCollisionDist = COLLISION_DISTANCE_SQ * treeScale;
             
             if (distSq < scaledCollisionDist) return true;
@@ -774,7 +774,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               const seedX = wx + 1000;
               const seedY = wy + 1000;
               const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
-              const rockScale = 0.7 + sizeSeed * 1.5; // Range: 0.7 to 2.2
+              // Trees have larger minimum size (1.1) than other resources (0.7)
+              const baseScale = resType === "wood" ? 1.1 : 0.7;
+              const rockScale = baseScale + sizeSeed * 1.5; // Range: 1.1-2.6 for trees, 0.7-2.2 for others
               
               const offsetX = (pseudoRandom(seedX, seedY) - 0.5) * 12 + shake.x;
               const offsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12 + shake.y;
