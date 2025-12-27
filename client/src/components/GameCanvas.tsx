@@ -1185,15 +1185,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.closePath();
       ctx.stroke();
       
-      // Layer 4: Top highlight - brighter and more prominent
-      ctx.beginPath();
-      ctx.moveTo(-11, headY + 2);
-      ctx.quadraticCurveTo(0, headY - 5, 11, headY + 2);
-      ctx.strokeStyle = "rgba(255,255,255,0.25)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      
-      // Layer 5: Bottom shadow for depth
+      // Layer 4: Bottom shadow for depth
       ctx.beginPath();
       ctx.moveTo(-10, headY + 5);
       ctx.quadraticCurveTo(0, headY + 1, 10, headY + 5);
