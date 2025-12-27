@@ -66,6 +66,29 @@ function isRockyBiome(x: number, y: number): boolean {
   return false;
 }
 
+// Check if a tile has a large boulder (hexagon rock)
+function isBoulderTile(x: number, y: number): boolean {
+  if (!isRockyBiome(x, y)) return false;
+  
+  const rockSeed = pseudoRandom(x + 777, y + 777);
+  if (rockSeed > 0.95) {
+    // Check if it has no neighbor boulders
+    let hasNeighborBoulder = false;
+    for (let ny = -1; ny <= 1; ny++) {
+      for (let nx = -1; nx <= 1; nx++) {
+        if (nx === 0 && ny === 0) continue;
+        if (pseudoRandom(x + nx + 777, y + ny + 777) > 0.95) {
+          hasNeighborBoulder = true;
+          break;
+        }
+      }
+      if (hasNeighborBoulder) break;
+    }
+    return !hasNeighborBoulder;
+  }
+  return false;
+}
+
 // Generate biome floor colors - plains and rocky biomes
 function getFloorColor(x: number, y: number): string {
   // Rocky biome generation - MUST match getTileAt scale and threshold
@@ -346,13 +369,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
   const hasCollision = (x: number, y: number): boolean => {
-    // Stone and wood resource collision (plains and rocky biomes)
-    // We check a 3x3 grid around the precise position
+    // Stone, wood, and boulder collision detection
+    // We check a 4x4 grid around the precise position for better coverage of large boulders
     const tx = Math.round(x);
     const ty = Math.round(y);
 
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -2; dy <= 2; dy++) {
+      for (let dx = -2; dx <= 2; dx++) {
         const ntx = tx + dx;
         const nty = ty + dy;
         
@@ -378,6 +401,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
             const treeScale = 1.1 + sizeSeed * 1.5;
             const scaledCollisionDist = COLLISION_DISTANCE_SQ * treeScale;
+            
+            if (distSq < scaledCollisionDist) return true;
+          }
+          
+          // Check for large boulders (hexagon rocks) - they have larger collision
+          if (isBoulderTile(ntx, nty)) {
+            const boulderScale = 1.0; // Boulders are bigger, use larger collision
+            const scaledCollisionDist = COLLISION_DISTANCE_SQ * boulderScale * 1.8;
             
             if (distSq < scaledCollisionDist) return true;
           }
@@ -998,19 +1029,35 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               if (isRockyBiome(wx, wy)) {
                 const rockSeed = pseudoRandom(wx + 777, wy + 777);
                 if (rockSeed > 0.95) {
-                  let hasNeighbor = false;
+                  // Check for neighbor boulders in 3x3 area
+                  let hasNeighborBoulder = false;
                   for (let ny = -1; ny <= 1; ny++) {
                     for (let nx = -1; nx <= 1; nx++) {
                       if (nx === 0 && ny === 0) continue;
                       if (pseudoRandom(wx + nx + 777, wy + ny + 777) > 0.95) {
-                        hasNeighbor = true;
+                        hasNeighborBoulder = true;
                         break;
                       }
                     }
-                    if (hasNeighbor) break;
+                    if (hasNeighborBoulder) break;
                   }
                   
-                  if (!hasNeighbor) {
+                  // Also check for nearby regular stones in a 5x5 area
+                  let hasNearbyStone = false;
+                  if (!hasNeighborBoulder) {
+                    for (let ny = -2; ny <= 2; ny++) {
+                      for (let nx = -2; nx <= 2; nx++) {
+                        if (nx === 0 && ny === 0) continue;
+                        if (getTileAt(wx + nx, wy + ny) === "stone") {
+                          hasNearbyStone = true;
+                          break;
+                        }
+                      }
+                      if (hasNearbyStone) break;
+                    }
+                  }
+                  
+                  if (!hasNeighborBoulder && !hasNearbyStone) {
                     const shake = shakingTiles[`${wx},${wy}`] || { x: 0, y: 0 };
                     const sizeSeed = pseudoRandom(wx + 6000, wy + 6000);
                     const rockScale = 0.7 + sizeSeed * 1.5; // Range: 0.7 to 2.2
