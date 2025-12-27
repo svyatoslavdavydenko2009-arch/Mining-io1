@@ -126,14 +126,14 @@ function getTileAt(x: number, y: number): ResourceType | null {
   // Coarse scale (0.04) creates larger cluster zones (~100 tile clusters)
   const treeClusterZone = getNoise(x + 7000, y + 7000, 0.04);
   
-  // Only spawn trees in cluster zones where noise > 0.75 (about 25% of plains, reduced from 35%)
-  if (treeClusterZone > 0.75) {
+  // Only spawn trees in cluster zones where noise > 0.70 (about 30% of plains, reduced from 35%)
+  if (treeClusterZone > 0.70) {
     // Medium scale (0.08) creates local variation within clusters
     const treeClusterDensity = getNoise(x + 7500, y + 7500, 0.08);
     
-    // Spawn trees with higher threshold - much less frequent
+    // Spawn trees with higher threshold - less frequent than original
     const treeSeed = pseudoRandom(x + 6000, y + 6000);
-    const threshold = 0.82 + (treeClusterDensity * 0.15); // 0.82-0.97 range (increased from 0.70-0.90)
+    const threshold = 0.75 + (treeClusterDensity * 0.18); // 0.75-0.93 range (reduced from 0.70-0.90)
     
     if (treeSeed > threshold) return "wood";
   }
