@@ -843,11 +843,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               } else if (resType === "wood") {
                 // Draw wood as simple square with texture pattern - darker green
                 ctx.fillStyle = "#1b4d2b";
-                ctx.beginPath(); ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 2); ctx.fill();
+                ctx.strokeStyle = "rgba(0,0,0,0.4)";
+                ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 8); ctx.fill();
                 ctx.stroke();
                 
                 // Add vertical wood grain pattern
-                ctx.strokeStyle = "rgba(0,0,0,0.4)";
+                ctx.strokeStyle = "rgba(0,0,0,0.3)";
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(dsx + 16, dsy + 8);
@@ -871,11 +873,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               }
               ctx.restore();
               
-              const h = tileHealth[tileKey] !== undefined ? tileHealth[tileKey] : (
-                rockScale <= 1.0 ? 2 :
-                rockScale <= 1.5 ? 3 : 4
-              );
-              const mh = rockScale <= 1.0 ? 2 : rockScale <= 1.5 ? 3 : 4;
+              let h, mh;
+              if (resType === "wood") {
+                // Wood has 3x health of stones
+                mh = rockScale <= 1.0 ? 6 : rockScale <= 1.5 ? 9 : 12;
+                h = tileHealth[tileKey] !== undefined ? tileHealth[tileKey] : mh;
+              } else {
+                mh = rockScale <= 1.0 ? 2 : rockScale <= 1.5 ? 3 : 4;
+                h = tileHealth[tileKey] !== undefined ? tileHealth[tileKey] : mh;
+              }
               
               // Smooth the health value for this tile
               if (!(tileKey in smoothTileHealth.current)) {
@@ -1050,13 +1056,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           ctx.stroke();
         } else if (resType === "wood") {
           ctx.fillStyle = `rgba(27,77,43,${alpha})`;
+          ctx.strokeStyle = `rgba(0,0,0,${0.4 * alpha})`;
+          ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 2);
+          ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 8);
           ctx.fill();
           ctx.stroke();
           
           // Add vertical wood grain pattern with alpha - darker green
-          ctx.strokeStyle = `rgba(0,0,0,${0.4 * alpha})`;
+          ctx.strokeStyle = `rgba(0,0,0,${0.3 * alpha})`;
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(dsx + 16, dsy + 8);
