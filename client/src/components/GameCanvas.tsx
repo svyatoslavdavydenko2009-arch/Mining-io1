@@ -84,7 +84,23 @@ function isBoulderTile(x: number, y: number): boolean {
       }
       if (hasNeighborBoulder) break;
     }
-    return !hasNeighborBoulder;
+    
+    // Also check for nearby regular stones in a 5x5 area
+    let hasNearbyStone = false;
+    if (!hasNeighborBoulder) {
+      for (let ny = -2; ny <= 2; ny++) {
+        for (let nx = -2; nx <= 2; nx++) {
+          if (nx === 0 && ny === 0) continue;
+          if (getTileAt(x + nx, y + ny) === "stone") {
+            hasNearbyStone = true;
+            break;
+          }
+        }
+        if (hasNearbyStone) break;
+      }
+    }
+    
+    return !hasNeighborBoulder && !hasNearbyStone;
   }
   return false;
 }
@@ -405,10 +421,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             if (distSq < scaledCollisionDist) return true;
           }
           
-          // Check for large boulders (hexagon rocks) - they have larger collision
+          // Check for large boulders (hexagon rocks) - collision depends on size
           if (isBoulderTile(ntx, nty)) {
-            const boulderScale = 1.0; // Boulders are bigger, use larger collision
-            const scaledCollisionDist = COLLISION_DISTANCE_SQ * boulderScale * 1.8;
+            // Calculate size same as rendering to match collision with visual
+            const sizeSeed = pseudoRandom(ntx + 6000, nty + 6000);
+            const boulderScale = 0.7 + sizeSeed * 1.5; // Range: 0.7 to 2.2
+            const scaledCollisionDist = COLLISION_DISTANCE_SQ * boulderScale * 1.6;
             
             if (distSq < scaledCollisionDist) return true;
           }
@@ -1082,8 +1100,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     // Visual offset to center the hexagon on the tile center (dsx + TILE_SIZE/2, dsy + TILE_SIZE/2)
                     const renderCenterX = dsx + TILE_SIZE / 2;
                     const renderCenterY = dsy + TILE_SIZE / 2;
+                    // Deterministic random rotation for each boulder
+                    const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
                     for (let i = 0; i < 6; i++) {
-                      const angle = (Math.PI / 3) * i;
+                      const angle = (Math.PI / 3) * i + randomRotation;
                       const hx = renderCenterX + Math.cos(angle) * rockSize;
                       const hy = renderCenterY + Math.sin(angle) * rockSize;
                       if (i === 0) ctx.moveTo(hx, hy);
