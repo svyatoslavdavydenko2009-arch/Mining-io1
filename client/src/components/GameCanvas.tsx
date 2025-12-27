@@ -112,12 +112,26 @@ function isBiomeBorder(x: number, y: number): boolean {
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
-  // Rocky biome - only stone spawns
-  const rockyNoise = getNoise(x + 5000, y + 5000, 0.08);
-  if (rockyNoise > 0.80) {
-    const stoneSeed = pseudoRandom(x + 2000, y + 2000);
-    if (stoneSeed > 0.98) return "stone";
-    return null;
+  // Rocky biome - coarse scale creates large, natural mountain/rocky regions
+  // Scale 0.05 creates large clusters (~200+ tile regions) instead of scattered patches
+  const rockyNoise = getNoise(x + 5000, y + 5000, 0.05);
+  if (rockyNoise > 0.72) {
+    // Check if rocky region is large enough (at least 3+ tiles in cluster)
+    // This prevents tiny isolated gray patches
+    let rockyNeighborCount = 0;
+    for (let ny = -1; ny <= 1; ny++) {
+      for (let nx = -1; nx <= 1; nx++) {
+        const neighborNoise = getNoise(x + nx + 5000, y + ny + 5000, 0.05);
+        if (neighborNoise > 0.72) rockyNeighborCount++;
+      }
+    }
+    
+    // Only spawn stone in rocky regions that are part of a larger cluster (min 5 neighboring rocky tiles)
+    if (rockyNeighborCount >= 5) {
+      const stoneSeed = pseudoRandom(x + 2000, y + 2000);
+      if (stoneSeed > 0.96) return "stone";
+      return null;
+    }
   }
   
   // Plains biome - natural forest with proper spacing
@@ -135,7 +149,7 @@ function getTileAt(x: number, y: number): ResourceType | null {
         // Check nearby location's noise value
         const nearbyPattern = getNoise(x + nx + 7000, y + ny + 7000, 0.10);
         const nearbyTreeSeed = pseudoRandom(x + nx + 6000, y + ny + 6000);
-        if (nearbyPattern > 0.55 && nearbyTreeSeed > 0.75) {
+        if (nearbyPattern > 0.55 && nearbyTreeSeed > 0.68) {
           hasNearbyTree = true;
           break;
         }
@@ -144,9 +158,10 @@ function getTileAt(x: number, y: number): ResourceType | null {
     }
     
     // Only spawn tree if no nearby tree exists (natural spacing)
+    // Lowered threshold from 0.75 to 0.68 to increase tree spawn rate by ~10%
     if (!hasNearbyTree) {
       const treeSeed = pseudoRandom(x + 6000, y + 6000);
-      if (treeSeed > 0.75) return "wood";
+      if (treeSeed > 0.68) return "wood";
     }
   }
   
