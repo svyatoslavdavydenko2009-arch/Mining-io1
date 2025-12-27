@@ -52,18 +52,20 @@ function getNoise(x: number, y: number, scale: number) {
 // Generate biome floor colors - plains and rocky biomes
 function getFloorColor(x: number, y: number): string {
   // Rocky biome generation - MUST match getTileAt scale and threshold
-  const rockyNoise = getNoise(x + 5000, y + 5000, 0.05);
+  // Use coarse scale 0.03 for large regional biomes (not scattered patches)
+  // Threshold 0.80 = rare but large mountain regions when they appear
+  const rockyNoise = getNoise(x + 5000, y + 5000, 0.03);
   
-  if (rockyNoise > 0.72) {
-    // Rocky biome - grey/brown stone colors
+  if (rockyNoise > 0.80) {
+    // Rocky biome - grey/brown stone colors with smooth variation
     let r = 110, g = 110, b = 110; // Default grey stone
     
-    const variation = getNoise(x + 5500, y + 5500, 0.06);
-    if (variation > 0.60) {
-      const t = (variation - 0.60) / 0.40;
-      r = Math.round(110 + (92 - 110) * t);
-      g = Math.round(110 + (92 - 110) * t);
-      b = Math.round(110 + (92 - 110) * t);
+    const variation = getNoise(x + 5500, y + 5500, 0.04);
+    if (variation > 0.50) {
+      const t = (variation - 0.50) / 0.50;
+      r = Math.round(110 + (95 - 110) * t);
+      g = Math.round(110 + (95 - 110) * t);
+      b = Math.round(110 + (95 - 110) * t);
     }
     
     return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
@@ -112,17 +114,17 @@ function isBiomeBorder(x: number, y: number): boolean {
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
-  // Rocky biome - coarse scale creates large, natural mountain/rocky regions
-  // Scale 0.05 creates large clusters (~200+ tile regions) instead of scattered patches
-  // MUST match getFloorColor threshold
-  const rockyNoise = getNoise(x + 5000, y + 5000, 0.05);
-  if (rockyNoise > 0.72) {
+  // Rocky biome - coarse scale 0.03 creates large, natural mountain/rocky regions
+  // This creates rare but large biomes instead of scattered patches
+  // MUST match getFloorColor scale and threshold exactly
+  const rockyNoise = getNoise(x + 5000, y + 5000, 0.03);
+  if (rockyNoise > 0.80) {
     // We're in a rocky biome area - check if it's part of a large cluster
     let rockyNeighborCount = 0;
     for (let ny = -1; ny <= 1; ny++) {
       for (let nx = -1; nx <= 1; nx++) {
-        const neighborNoise = getNoise(x + nx + 5000, y + ny + 5000, 0.05);
-        if (neighborNoise > 0.72) rockyNeighborCount++;
+        const neighborNoise = getNoise(x + nx + 5000, y + ny + 5000, 0.03);
+        if (neighborNoise > 0.80) rockyNeighborCount++;
       }
     }
     
