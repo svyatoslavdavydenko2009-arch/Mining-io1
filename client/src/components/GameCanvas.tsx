@@ -1151,10 +1151,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.stroke();
       ctx.restore();
 
-      // Draw head
+      // Draw head with layered effect
       ctx.save();
-      ctx.strokeStyle = "rgba(0,0,0,0.6)";
-      ctx.lineWidth = 3;
+      
+      // Layer 1: Dark outer outline for definition
+      ctx.strokeStyle = "rgba(0,0,0,0.8)";
+      ctx.lineWidth = 4;
       ctx.beginPath(); 
       ctx.moveTo(-14, headY + 4); 
       ctx.quadraticCurveTo(0, headY - 8, 14, headY + 4); 
@@ -1163,20 +1165,42 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.closePath();
       ctx.stroke();
 
+      // Layer 2: Main head with gradient
       const headSideGrad = ctx.createLinearGradient(-14, 0, 14, 0);
-      headSideGrad.addColorStop(0, "rgba(0,0,0,0.2)");
+      headSideGrad.addColorStop(0, "rgba(0,0,0,0.15)");
       headSideGrad.addColorStop(0.5, pickaxeColor);
-      headSideGrad.addColorStop(1, "rgba(0,0,0,0.2)");
+      headSideGrad.addColorStop(1, "rgba(0,0,0,0.15)");
       
       ctx.fillStyle = headSideGrad; 
       ctx.fill();
       
-      ctx.beginPath();
-      ctx.moveTo(-12, headY + 3.5);
-      ctx.quadraticCurveTo(0, headY - 6, 12, headY + 3.5);
-      ctx.strokeStyle = "rgba(255,255,255,0.05)";
-      ctx.lineWidth = 1;
+      // Layer 3: Inner outline for more definition
+      ctx.strokeStyle = "rgba(0,0,0,0.4)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); 
+      ctx.moveTo(-13, headY + 3.5); 
+      ctx.quadraticCurveTo(0, headY - 6.5, 13, headY + 3.5); 
+      ctx.lineTo(9, headY + 5); 
+      ctx.quadraticCurveTo(0, headY - 1, -9, headY + 5); 
+      ctx.closePath();
       ctx.stroke();
+      
+      // Layer 4: Top highlight - brighter and more prominent
+      ctx.beginPath();
+      ctx.moveTo(-11, headY + 2);
+      ctx.quadraticCurveTo(0, headY - 5, 11, headY + 2);
+      ctx.strokeStyle = "rgba(255,255,255,0.25)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Layer 5: Bottom shadow for depth
+      ctx.beginPath();
+      ctx.moveTo(-10, headY + 5);
+      ctx.quadraticCurveTo(0, headY + 1, 10, headY + 5);
+      ctx.strokeStyle = "rgba(0,0,0,0.25)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      
       ctx.restore();
       ctx.restore();
 
