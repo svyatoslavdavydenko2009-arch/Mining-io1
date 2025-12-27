@@ -216,6 +216,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const smoothTileHealth = useRef<Record<string, number>>({}); // Smooth health values for tiles
   const [destroyingTiles, setDestroyingTiles] = useState<Record<string, number>>({}); // Tiles being destroyed with progress 0-1
   const shakingTilesStartTime = useRef<Record<string, number>>({}); // Track shake start times
+  const destroyingTilesStartTime = useRef<Record<string, number>>({}); // Track destruction start times
   
   // Update button state every 50ms so cooldown is responsive
   useEffect(() => {
@@ -227,33 +228,34 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
   // Animate destruction of tiles
   useEffect(() => {
-    if (Object.keys(destroyingTiles).length === 0) return;
-    
     let frameId: number;
-    const startTime = performance.now();
     const animate = (now: number) => {
-      const elapsed = now - startTime;
+      let hasActive = false;
       setDestroyingTiles(prev => {
         const next = { ...prev };
-        let hasActive = false;
-        Object.entries(next).forEach(([key, progress]) => {
-          const newProgress = Math.min(progress + elapsed / 600, 1);
-          if (newProgress < 1) {
-            hasActive = true;
-            next[key] = newProgress;
-          } else {
-            delete next[key];
+        Object.entries(next).forEach(([key]) => {
+          const startTime = destroyingTilesStartTime.current[key];
+          if (startTime !== undefined) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / 600, 1);
+            if (progress < 1) {
+              hasActive = true;
+              next[key] = progress;
+            } else {
+              delete next[key];
+              delete destroyingTilesStartTime.current[key];
+            }
           }
         });
         return next;
       });
-      if (Object.keys(destroyingTiles).length > 0) {
+      if (hasActive) {
         frameId = requestAnimationFrame(animate);
       }
     };
     frameId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(frameId);
-  }, [destroyingTiles]);
+  }, []);
 
   const toggleFullscreen = useCallback(() => {
     onFullscreenChange?.(!isFullscreen);
@@ -541,6 +543,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const resDef = RESOURCES[t.resource];
           if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
             // Start destruction animation instead of particles
+            destroyingTilesStartTime.current[key] = performance.now();
             setDestroyingTiles(prev => ({ ...prev, [key]: 0 }));
             mine.mutate(t.resource, { onSuccess: () => {
               const id = Date.now() + Math.random();
@@ -810,7 +813,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   const shakeProgress = shakeElapsed / shakeDuration;
                   // Smooth shake animation using sine wave - decays over time
                   const shakeDecay = Math.cos(shakeProgress * Math.PI / 2); // Fades from 1 to 0
-                  const shakeAmount = 10 * shakeDecay;
+                  const shakeAmount = 6 * shakeDecay;
                   shake.x = Math.sin(shakeElapsed / 20) * shakeAmount; // Smooth oscillation
                   shake.y = Math.cos(shakeElapsed / 20) * shakeAmount;
                 }
