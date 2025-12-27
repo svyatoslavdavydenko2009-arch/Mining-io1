@@ -60,16 +60,17 @@ function getFloorColor(x: number, y: number): string {
     // Check if this rocky tile is part of a large enough cluster
     // Only render rocky biome if it has enough neighboring rocky tiles
     let rockyNeighborCount = 0;
-    for (let ny = -2; ny <= 2; ny++) {
-      for (let nx = -2; nx <= 2; nx++) {
+    // Check 3x3 area (9 tiles) instead of 5x5 for better performance
+    for (let ny = -1; ny <= 1; ny++) {
+      for (let nx = -1; nx <= 1; nx++) {
         const neighborNoise = getNoise(x + nx + 5000, y + ny + 5000, 0.03);
         if (neighborNoise > 0.80) rockyNeighborCount++;
       }
     }
     
-    // Only show rocky biome if it has enough neighboring rocky tiles (at least 8 in a 5x5 area)
+    // Only show rocky biome if it has enough neighboring rocky tiles (at least 5 in a 3x3 area)
     // This prevents tiny isolated rocky patches from appearing
-    if (rockyNeighborCount < 8) {
+    if (rockyNeighborCount < 5) {
       // Not part of a large cluster, render as plains instead
       const noise = getNoise(x, y, 0.05) * 0.7 + getNoise(x, y, 0.15) * 0.3;
       const grassNoise = getNoise(x + 1000, y + 1000, 0.06);
