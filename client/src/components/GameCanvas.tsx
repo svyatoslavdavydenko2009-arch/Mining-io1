@@ -19,7 +19,7 @@ const RESOURCE_HEALTH: Record<ResourceType, number> = {
   iron_ore: 4,
   gold_ore: 5,
   diamond: 6,
-  wood: 2,
+  wood: 6,
 };
 
 function pseudoRandom(x: number, y: number) {
@@ -294,6 +294,22 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
           const rockScale = 0.7 + sizeSeed * 1.5;
           const scaledCollisionDist = COLLISION_DISTANCE_SQ * rockScale;
+          
+          if (distSq < scaledCollisionDist) return true;
+        }
+        
+        // Check wood resource tiles
+        if (resource === "wood" && !isTileMined(ntx, nty)) {
+          const centerX = ntx;
+          const centerY = nty;
+          const distDx = x - centerX;
+          const distDy = y - centerY;
+          const distSq = distDx * distDx + distDy * distDy;
+          
+          // Scale collision distance based on wood size
+          const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
+          const woodScale = 0.7 + sizeSeed * 1.5;
+          const scaledCollisionDist = COLLISION_DISTANCE_SQ * woodScale;
           
           if (distSq < scaledCollisionDist) return true;
         }
@@ -825,13 +841,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.fill();
                 ctx.stroke();
               } else if (resType === "wood") {
-                // Draw wood as simple square with texture pattern
-                ctx.fillStyle = "#6b4423";
+                // Draw wood as simple square with texture pattern - darker green
+                ctx.fillStyle = "#1b4d2b";
                 ctx.beginPath(); ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 2); ctx.fill();
                 ctx.stroke();
                 
                 // Add vertical wood grain pattern
-                ctx.strokeStyle = "rgba(0,0,0,0.3)";
+                ctx.strokeStyle = "rgba(0,0,0,0.4)";
                 ctx.lineWidth = 1;
                 ctx.beginPath();
                 ctx.moveTo(dsx + 16, dsy + 8);
@@ -1033,14 +1049,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           ctx.fill();
           ctx.stroke();
         } else if (resType === "wood") {
-          ctx.fillStyle = `rgba(107,68,35,${alpha})`;
+          ctx.fillStyle = `rgba(27,77,43,${alpha})`;
           ctx.beginPath();
           ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 2);
           ctx.fill();
           ctx.stroke();
           
-          // Add vertical wood grain pattern with alpha
-          ctx.strokeStyle = `rgba(0,0,0,${0.3 * alpha})`;
+          // Add vertical wood grain pattern with alpha - darker green
+          ctx.strokeStyle = `rgba(0,0,0,${0.4 * alpha})`;
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(dsx + 16, dsy + 8);
