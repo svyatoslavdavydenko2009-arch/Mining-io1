@@ -120,22 +120,34 @@ function getTileAt(x: number, y: number): ResourceType | null {
     return null;
   }
   
-  // Plains biome - trees in clusters only
+  // Plains biome - natural forest with proper spacing
   
-  // Trees spawn in clusters in plains biome (reduced spawning)
-  // Coarse scale (0.04) creates larger cluster zones (~100 tile clusters)
-  const treeClusterZone = getNoise(x + 7000, y + 7000, 0.04);
+  // Fine-scale noise for evenly distributed trees across plains
+  const treePattern = getNoise(x + 7000, y + 7000, 0.10);
   
-  // Only spawn trees in cluster zones where noise > 0.70 (about 30% of plains, reduced from 35%)
-  if (treeClusterZone > 0.70) {
-    // Medium scale (0.08) creates local variation within clusters
-    const treeClusterDensity = getNoise(x + 7500, y + 7500, 0.08);
+  // Trees spawn in suitable areas (about 45% of plains)
+  if (treePattern > 0.55) {
+    // Check if there's already a tree nearby to maintain natural spacing (2-3 tile minimum distance)
+    let hasNearbyTree = false;
+    for (let ny = -2; ny <= 2; ny++) {
+      for (let nx = -2; nx <= 2; nx++) {
+        if (nx === 0 && ny === 0) continue;
+        // Check nearby location's noise value
+        const nearbyPattern = getNoise(x + nx + 7000, y + ny + 7000, 0.10);
+        const nearbyTreeSeed = pseudoRandom(x + nx + 6000, y + ny + 6000);
+        if (nearbyPattern > 0.55 && nearbyTreeSeed > 0.75) {
+          hasNearbyTree = true;
+          break;
+        }
+      }
+      if (hasNearbyTree) break;
+    }
     
-    // Spawn trees with higher threshold - less frequent than original
-    const treeSeed = pseudoRandom(x + 6000, y + 6000);
-    const threshold = 0.75 + (treeClusterDensity * 0.18); // 0.75-0.93 range (reduced from 0.70-0.90)
-    
-    if (treeSeed > threshold) return "wood";
+    // Only spawn tree if no nearby tree exists (natural spacing)
+    if (!hasNearbyTree) {
+      const treeSeed = pseudoRandom(x + 6000, y + 6000);
+      if (treeSeed > 0.75) return "wood";
+    }
   }
   
   return null;
