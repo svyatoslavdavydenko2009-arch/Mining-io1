@@ -57,6 +57,46 @@ function getFloorColor(x: number, y: number): string {
   const rockyNoise = getNoise(x + 5000, y + 5000, 0.03);
   
   if (rockyNoise > 0.80) {
+    // Check if this rocky tile is part of a large enough cluster
+    // Only render rocky biome if it has enough neighboring rocky tiles
+    let rockyNeighborCount = 0;
+    for (let ny = -2; ny <= 2; ny++) {
+      for (let nx = -2; nx <= 2; nx++) {
+        const neighborNoise = getNoise(x + nx + 5000, y + ny + 5000, 0.03);
+        if (neighborNoise > 0.80) rockyNeighborCount++;
+      }
+    }
+    
+    // Only show rocky biome if it has enough neighboring rocky tiles (at least 8 in a 5x5 area)
+    // This prevents tiny isolated rocky patches from appearing
+    if (rockyNeighborCount < 8) {
+      // Not part of a large cluster, render as plains instead
+      const noise = getNoise(x, y, 0.05) * 0.7 + getNoise(x, y, 0.15) * 0.3;
+      const grassNoise = getNoise(x + 1000, y + 1000, 0.06);
+
+      let r = 86, g = 172, b = 102;
+      if (grassNoise > 0.60) {
+        const intensity = (grassNoise - 0.60) / 0.40;
+        r = Math.round(86 + (54 - 86) * intensity);
+        g = Math.round(172 + (145 - 172) * intensity);
+        b = Math.round(102 + (84 - 102) * intensity);
+      } else if (grassNoise > 0.50) {
+        const intensity = (grassNoise - 0.50) / 0.10;
+        r = Math.round(86 + (68 - 86) * intensity);
+        g = Math.round(172 + (145 - 172) * intensity);
+        b = Math.round(102 + (84 - 102) * intensity);
+      }
+
+      if (noise > 0.3) {
+        const t = (noise - 0.3) / 0.7;
+        r = Math.round(r * (1 - t * 0.1) + 90 * t * 0.1);
+        g = Math.round(g * (1 - t * 0.1) + 150 * t * 0.1);
+        b = Math.round(b * (1 - t * 0.1) + 95 * t * 0.1);
+      }
+
+      return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+    }
+    
     // Rocky biome - uses same noise generation system as plains but with stone/grey colors
     // This creates natural terrain variation just like plains
     const noise = getNoise(x, y, 0.05) * 0.7 + getNoise(x, y, 0.15) * 0.3;
