@@ -139,24 +139,18 @@ function getTileAt(x: number, y: number): ResourceType | null {
   const forestNoise = getNoise(x + 3000, y + 3000, 0.08);
   // Only on darkest green forest blocks (forestNoise > 0.88)
   if (forestNoise > 0.88) {
-    // Use large-scale noise to find forest cluster centers
-    const clusterNoise = getNoise(x + 7000, y + 7000, 0.025); // Very coarse scale for clusters
+    // Use multi-scale noise to determine cluster zones
+    // Coarse scale (0.02) creates large cluster areas (~50 tile clusters)
+    const clusterZone = getNoise(x + 7000, y + 7000, 0.02);
     
-    // Clusters spawn where clusterNoise > 0.75
-    if (clusterNoise > 0.75) {
-      // Within a cluster, find the distance from cluster center
-      const centerNoise = getNoise(x + 7000, y + 7000, 0.05);
-      const centerX = Math.floor(x) - (Math.floor((x * 0.025) % 1) * 40);
-      const centerY = Math.floor(y) - (Math.floor((y * 0.025) % 1) * 40);
-      
-      const distX = x - centerX;
-      const distY = y - centerY;
-      const distSq = distX * distX + distY * distY;
-      
-      // Trees spawn in clusters with density based on distance from center
+    // Medium scale (0.06) creates local variation within clusters
+    const clusterDensity = getNoise(x + 7500, y + 7500, 0.06);
+    
+    // Spawn trees in cluster zones with varying density
+    if (clusterZone > 0.70) {
       const woodSeed = pseudoRandom(x + 6000, y + 6000);
-      const distanceFactor = Math.max(0, 1 - distSq / 25); // Maximum 5-tile radius
-      const threshold = 0.7 + (0.2 * distanceFactor); // 0.7 at edges, 0.9 at center
+      // Higher clusterDensity = higher spawn threshold = sparser trees
+      const threshold = 0.60 + (clusterDensity * 0.25); // 0.60-0.85 range
       
       if (woodSeed > threshold) return "wood";
     }
