@@ -54,8 +54,8 @@ function getFloorColor(x: number, y: number): string {
   // Use multi-scale noise for more organic "cloud-like" patches
   const noise = getNoise(x, y, 0.05) * 0.7 + getNoise(x, y, 0.15) * 0.3;
   
-  // Forest biome (dark green patches)
-  const forestNoise = getNoise(x + 3000, y + 3000, 0.08);
+  // Forest biome (dark green patches) - reduced scale from 0.08 to 0.05 for larger biomes
+  const forestNoise = getNoise(x + 3000, y + 3000, 0.05);
   
   // rarity check for grey biome (smaller patches)
   const greyNoise = getNoise(x + 5000, y + 5000, 0.08);
@@ -136,7 +136,8 @@ function getTileAt(x: number, y: number): ResourceType | null {
   if (stoneSeed > 0.99) return "stone";
   
   // Wood appears in forest biome as clusters/groups
-  const forestNoise = getNoise(x + 3000, y + 3000, 0.08);
+  // Using same scale (0.05) as forest biome generation for consistency
+  const forestNoise = getNoise(x + 3000, y + 3000, 0.05);
   // Only on darkest green forest blocks (forestNoise > 0.88)
   if (forestNoise > 0.88) {
     // Use multi-scale noise to determine cluster zones
@@ -149,8 +150,8 @@ function getTileAt(x: number, y: number): ResourceType | null {
     // Spawn trees in cluster zones with varying density
     if (clusterZone > 0.70) {
       const woodSeed = pseudoRandom(x + 6000, y + 6000);
-      // Higher clusterDensity = higher spawn threshold = sparser trees
-      const threshold = 0.60 + (clusterDensity * 0.25); // 0.60-0.85 range
+      // 2.5x more trees: lowered threshold from 0.60-0.85 to 0.40-0.65 range
+      const threshold = 0.40 + (clusterDensity * 0.25); // 0.40-0.65 range = 2.5x more frequent
       
       if (woodSeed > threshold) return "wood";
     }
