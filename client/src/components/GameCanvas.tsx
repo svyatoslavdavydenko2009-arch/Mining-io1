@@ -216,6 +216,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const smoothTileHealth = useRef<Record<string, number>>({}); // Smooth health values for tiles
   const shakingTilesStartTime = useRef<Record<string, number>>({}); // Track shake start times
   const tilesDisappearingStartTime = useRef<Record<string, number>>({}); // Track disappear start times
+  const tilesDisappearingType = useRef<Record<string, ResourceType>>({}); // Store resource type when disappearing
   
   // Update button state every 50ms so cooldown is responsive
   useEffect(() => {
@@ -510,8 +511,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         if (newHealth <= 0) {
           const resDef = RESOURCES[t.resource];
           if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
-            // Start simple fade animation - track start time
+            // Start simple fade animation - track start time and resource type
             tilesDisappearingStartTime.current[key] = performance.now();
+            tilesDisappearingType.current[key] = t.resource;
             mine.mutate(t.resource, { onSuccess: () => {
               const id = Date.now() + Math.random();
               setMiningNotifications(prev => [...prev, { id, resource: t.resource, x: t.x, y: t.y }]);
@@ -525,6 +527,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 return next;
               });
               delete tilesDisappearingStartTime.current[key];
+              delete tilesDisappearingType.current[key];
             }, 300);
           } else {
             toast({ title: `Pickaxe too weak for ${resDef.name}!`, variant: "destructive" });
@@ -953,7 +956,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const alpha = Math.max(0, 1 - (elapsed / 300));
         if (alpha <= 0) return;
         
-        const resType = getTileAt(wx, wy);
+        // Use stored resource type to ensure consistent rendering
+        const resType = tilesDisappearingType.current[key];
         const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
         const rockScale = 0.7 + sizeSeed * 1.5;
         
