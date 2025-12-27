@@ -49,9 +49,27 @@ function getNoise(x: number, y: number, scale: number) {
   return nx0 * (1 - sy) + nx1 * sy;
 }
 
-// Plains biome only - simple grass coloring
+// Generate biome floor colors - plains and rocky biomes
 function getFloorColor(x: number, y: number): string {
-  // Use multi-scale noise for grass color variation
+  // Rocky biome generation
+  const rockyNoise = getNoise(x + 5000, y + 5000, 0.08);
+  
+  if (rockyNoise > 0.80) {
+    // Rocky biome - grey/brown stone colors
+    let r = 110, g = 110, b = 110; // Default grey stone
+    
+    const variation = getNoise(x + 5500, y + 5500, 0.06);
+    if (variation > 0.60) {
+      const t = (variation - 0.60) / 0.40;
+      r = Math.round(110 + (92 - 110) * t);
+      g = Math.round(110 + (92 - 110) * t);
+      b = Math.round(110 + (92 - 110) * t);
+    }
+    
+    return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+  }
+  
+  // Plains biome - grass coloring
   const noise = getNoise(x, y, 0.05) * 0.7 + getNoise(x, y, 0.15) * 0.3;
   const grassNoise = getNoise(x + 1000, y + 1000, 0.06);
 
@@ -83,17 +101,47 @@ function getFloorColor(x: number, y: number): string {
 }
 
 function isBiomeBorder(x: number, y: number): boolean {
-  // All tiles are in the same biome (plains), so no borders
-  return false;
+  const myColor = getFloorColor(x, y);
+  const neighbors = [
+    getFloorColor(x + 1, y),
+    getFloorColor(x - 1, y),
+    getFloorColor(x, y + 1),
+    getFloorColor(x, y - 1)
+  ];
+  return neighbors.some(n => n !== myColor);
 }
 
 function getTileAt(x: number, y: number): ResourceType | null {
+  // Rocky biome - only stone spawns
+  const rockyNoise = getNoise(x + 5000, y + 5000, 0.08);
+  if (rockyNoise > 0.80) {
+    const stoneSeed = pseudoRandom(x + 2000, y + 2000);
+    if (stoneSeed > 0.98) return "stone";
+    return null;
+  }
+  
+  // Plains biome - trees in clusters and occasional stone
+  
   // Stone appears roughly every 15-20 tiles uniformly distributed
-  // Using pseudoRandom for deterministic but uniform distribution
   const stoneSeed = pseudoRandom(x + 2000, y + 2000);
   if (stoneSeed > 0.99) return "stone";
   
-  // No other resources in plains biome
+  // Trees spawn in clusters in plains biome (not too frequently)
+  // Coarse scale (0.03) creates large cluster zones (~80 tile clusters)
+  const treeClusterZone = getNoise(x + 7000, y + 7000, 0.03);
+  
+  // Only spawn trees in cluster zones where noise > 0.65 (about 35% of plains)
+  if (treeClusterZone > 0.65) {
+    // Medium scale (0.08) creates local variation within clusters
+    const treeClusterDensity = getNoise(x + 7500, y + 7500, 0.08);
+    
+    // Spawn trees with varying density - not too frequent
+    const treeSeed = pseudoRandom(x + 6000, y + 6000);
+    const threshold = 0.70 + (treeClusterDensity * 0.20); // 0.70-0.90 range
+    
+    if (treeSeed > threshold) return "wood";
+  }
+  
   return null;
 }
 
@@ -195,7 +243,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
   const hasCollision = (x: number, y: number): boolean => {
-    // Stone resource collision only (plains biome)
+    // Stone and wood resource collision (plains and rocky biomes)
     // We check a 3x3 grid around the precise position
     const tx = Math.round(x);
     const ty = Math.round(y);
@@ -205,21 +253,31 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const ntx = tx + dx;
         const nty = ty + dy;
         
-        // Check stone resource tiles
         const resource = getTileAt(ntx, nty);
-        if (resource === "stone" && !isTileMined(ntx, nty)) {
+        if (!isTileMined(ntx, nty)) {
           const centerX = ntx;
           const centerY = nty;
           const distDx = x - centerX;
           const distDy = y - centerY;
           const distSq = distDx * distDx + distDy * distDy;
           
-          // Scale collision distance based on stone size
-          const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
-          const rockScale = 0.7 + sizeSeed * 1.5;
-          const scaledCollisionDist = COLLISION_DISTANCE_SQ * rockScale;
+          // Check stone resource tiles
+          if (resource === "stone") {
+            const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
+            const rockScale = 0.7 + sizeSeed * 1.5;
+            const scaledCollisionDist = COLLISION_DISTANCE_SQ * rockScale;
+            
+            if (distSq < scaledCollisionDist) return true;
+          }
           
-          if (distSq < scaledCollisionDist) return true;
+          // Check wood resource tiles (trees in plains)
+          if (resource === "wood") {
+            const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
+            const treeScale = 0.7 + sizeSeed * 1.5;
+            const scaledCollisionDist = COLLISION_DISTANCE_SQ * treeScale;
+            
+            if (distSq < scaledCollisionDist) return true;
+          }
         }
       }
     }
