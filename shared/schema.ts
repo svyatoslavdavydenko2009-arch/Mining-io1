@@ -23,7 +23,7 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
 // Game Data Types
-export type ResourceType = "stone" | "copper_ore" | "iron_ore" | "gold_ore" | "diamond";
+export type ResourceType = "stone" | "copper_ore" | "iron_ore" | "gold_ore" | "diamond" | "wood";
 
 export interface ResourceDefinition {
   type: ResourceType;
@@ -38,6 +38,7 @@ export const RESOURCES: Record<ResourceType, ResourceDefinition> = {
   iron_ore: { type: "iron_ore", name: "Iron Ore", minPickaxeLevel: 2, color: "#d1d5db" },
   gold_ore: { type: "gold_ore", name: "Gold Ore", minPickaxeLevel: 3, color: "#fbbf24" },
   diamond: { type: "diamond", name: "Diamond", minPickaxeLevel: 4, color: "#3b82f6" },
+  wood: { type: "wood", name: "Wood", minPickaxeLevel: 1, color: "#92400e" },
 };
 
 export interface PickaxeDefinition {
