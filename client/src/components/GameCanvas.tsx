@@ -519,7 +519,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               setMiningNotifications(prev => [...prev, { id, resource: t.resource, x: t.x, y: t.y }]);
               setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
             }});
-            // Mark as mined and remove animation after 300ms
+            // Mark as mined and remove animation after 1200ms
             setTimeout(() => {
               setMinedTiles(prev => {
                 const next = new Set(prev);
@@ -528,7 +528,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               });
               delete tilesDisappearingStartTime.current[key];
               delete tilesDisappearingType.current[key];
-            }, 300);
+            }, 1200);
           } else {
             toast({ title: `Pickaxe too weak for ${resDef.name}!`, variant: "destructive" });
           }
@@ -939,8 +939,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         }
       }
 
-      // Render disappearing tiles with simple fade
+      // Render disappearing tiles with scale and fade
       const nowTime = performance.now();
+      const DISAPPEAR_DURATION = 1200; // Increased from 300ms to 1200ms
       Object.entries(tilesDisappearingStartTime.current).forEach(([key, startTime]) => {
         const [wxStr, wyStr] = key.split(',');
         const wx = parseInt(wxStr);
@@ -953,13 +954,27 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         
         // Calculate elapsed time and alpha
         const elapsed = nowTime - startTime;
-        const alpha = Math.max(0, 1 - (elapsed / 300));
+        const progress = Math.min(elapsed / DISAPPEAR_DURATION, 1);
+        const alpha = Math.max(0, 1 - progress);
         if (alpha <= 0) return;
+        
+        // Scale animation: grow for first half (0-0.5s), then shrink (0.5s-1.2s)
+        let scaleMultiplier = 1;
+        if (progress < 0.42) {
+          // First 500ms: grow from 1 to 1.3
+          const growProgress = progress / 0.42;
+          scaleMultiplier = 1 + growProgress * 0.3;
+        } else {
+          // Next 700ms: shrink from 1.3 back to 1 then to 0
+          const shrinkProgress = (progress - 0.42) / 0.58;
+          scaleMultiplier = 1.3 - shrinkProgress * 1.3;
+        }
         
         // Use stored resource type to ensure consistent rendering
         const resType = tilesDisappearingType.current[key];
         const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
         const rockScale = 0.7 + sizeSeed * 1.5;
+        const finalScale = rockScale * scaleMultiplier;
         
         const offsetX = (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12;
         const offsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12;
@@ -969,7 +984,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
-        ctx.scale(rockScale, rockScale);
+        ctx.scale(finalScale, finalScale);
         ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
         
         ctx.fillStyle = "#444";
