@@ -215,7 +215,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const smoothHandBob = useRef(0); // Smooth hand bob value
   const smoothTileHealth = useRef<Record<string, number>>({}); // Smooth health values for tiles
   const shakingTilesStartTime = useRef<Record<string, number>>({}); // Track shake start times
-  const [tilesDisappearing, setTilesDisappearing] = useState<Record<string, number>>({}); // Tiles disappearing with time elapsed
+  const tilesDisappearingStartTime = useRef<Record<string, number>>({}); // Track disappear start times
   
   // Update button state every 50ms so cooldown is responsive
   useEffect(() => {
@@ -510,8 +510,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         if (newHealth <= 0) {
           const resDef = RESOURCES[t.resource];
           if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
-            // Start simple fade animation
-            setTilesDisappearing(prev => ({ ...prev, [key]: 0 }));
+            // Start simple fade animation - track start time
+            tilesDisappearingStartTime.current[key] = performance.now();
             mine.mutate(t.resource, { onSuccess: () => {
               const id = Date.now() + Math.random();
               setMiningNotifications(prev => [...prev, { id, resource: t.resource, x: t.x, y: t.y }]);
@@ -524,11 +524,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 next.add(key);
                 return next;
               });
-              setTilesDisappearing(prev => {
-                const next = { ...prev };
-                delete next[key];
-                return next;
-              });
+              delete tilesDisappearingStartTime.current[key];
             }, 300);
           } else {
             toast({ title: `Pickaxe too weak for ${resDef.name}!`, variant: "destructive" });
@@ -940,7 +936,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       }
 
       // Render disappearing tiles with simple fade
-      Object.entries(tilesDisappearing).forEach(([key, elapsed]) => {
+      const nowTime = performance.now();
+      Object.entries(tilesDisappearingStartTime.current).forEach(([key, startTime]) => {
         const [wxStr, wyStr] = key.split(',');
         const wx = parseInt(wxStr);
         const wy = parseInt(wyStr);
@@ -950,7 +947,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         // Skip if off screen
         if (sx + TILE_SIZE < 0 || sx > rect.width || sy + TILE_SIZE < 0 || sy > rect.height) return;
         
-        // Simple fade: 300ms total
+        // Calculate elapsed time and alpha
+        const elapsed = nowTime - startTime;
         const alpha = Math.max(0, 1 - (elapsed / 300));
         if (alpha <= 0) return;
         
@@ -997,15 +995,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         }
         
         ctx.restore();
-      });
-      
-      // Update disappearing tiles animation
-      setTilesDisappearing(prev => {
-        const next = { ...prev };
-        Object.entries(next).forEach(([key]) => {
-          next[key] = (next[key] || 0) + (dt || 16);
-        });
-        return next;
       });
 
       const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
