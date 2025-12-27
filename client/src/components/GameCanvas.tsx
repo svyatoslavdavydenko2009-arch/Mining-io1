@@ -215,6 +215,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const smoothHandBob = useRef(0); // Smooth hand bob value
   const smoothTileHealth = useRef<Record<string, number>>({}); // Smooth health values for tiles
   const [destroyingTiles, setDestroyingTiles] = useState<Record<string, number>>({}); // Tiles being destroyed with progress 0-1
+  const shakingTilesStartTime = useRef<Record<string, number>>({}); // Track shake start times
   
   // Update button state every 50ms so cooldown is responsive
   useEffect(() => {
@@ -515,14 +516,16 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       targets.forEach(t => {
         const key = `${t.x},${t.y}`;
         
-        // Add stronger shake effect
-        setShakingTiles(prev => ({ ...prev, [key]: { x: (Math.random() - 0.5) * 20, y: (Math.random() - 0.5) * 20 } }));
+        // Start smooth shake animation
+        shakingTilesStartTime.current[key] = performance.now();
+        setShakingTiles(prev => ({ ...prev, [key]: { x: 0, y: 0 } }));
         setTimeout(() => {
           setShakingTiles(prev => {
             const next = { ...prev };
             delete next[key];
             return next;
           });
+          delete shakingTilesStartTime.current[key];
         }, 150);
 
         // Calculate dynamic health based on scale seed used in render
@@ -768,7 +771,22 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const resType = getTileAt(wx, wy);
         const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
         const rockScale = 0.7 + sizeSeed * 1.5;
-        const shake = shakingTiles[key] || { x: 0, y: 0 };
+        
+        // Calculate smooth shake based on time
+        let shake = { x: 0, y: 0 };
+        const shakeStartTime = shakingTilesStartTime.current[key];
+        if (shakeStartTime !== undefined) {
+          const shakeElapsed = performance.now() - shakeStartTime;
+          const shakeDuration = 150;
+          if (shakeElapsed < shakeDuration) {
+            const shakeProgress = shakeElapsed / shakeDuration;
+            // Smooth shake animation using sine wave - decays over time
+            const shakeDecay = Math.cos(shakeProgress * Math.PI / 2); // Fades from 1 to 0
+            const shakeAmount = 20 * shakeDecay;
+            shake.x = Math.sin(shakeElapsed / 20) * shakeAmount; // Smooth oscillation
+            shake.y = Math.cos(shakeElapsed / 20) * shakeAmount;
+          }
+        }
         
         const offsetX = (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12 + shake.x;
         const offsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12 + shake.y;
@@ -780,14 +798,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         // Rotate and scale during destruction
         ctx.rotate(easeProgress * Math.PI * 2); // Full spin
         ctx.scale(1 - easeProgress, 1 - easeProgress); // Scale down
-        ctx.globalAlpha = 1 - easeProgress; // Fade out
         
         ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
         ctx.scale(rockScale, rockScale);
         ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
         
+        // Apply fade to the entire stone during destruction
+        const stoneAlpha = 1 - easeProgress;
         ctx.fillStyle = "#444";
-        ctx.strokeStyle = "rgba(0,0,0,0.4)";
+        ctx.strokeStyle = `rgba(0,0,0,${0.4 * stoneAlpha})`;
         ctx.lineWidth = 2;
         
         if (resType === "stone") {
@@ -804,17 +823,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             else ctx.lineTo(x, y);
           }
           ctx.closePath();
+          ctx.fillStyle = `rgba(68,68,68,${stoneAlpha})`; // Fade stone texture
           ctx.fill();
           ctx.stroke();
         } else {
           ctx.beginPath();
           ctx.roundRect(dsx + 4, dsy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4);
+          ctx.fillStyle = `rgba(68,68,68,${stoneAlpha})`;
           ctx.fill();
           ctx.stroke();
         }
         
         ctx.restore();
-        ctx.globalAlpha = 1;
       });
       
       // Draw each biome region as a unified shape, sorted by brightness
