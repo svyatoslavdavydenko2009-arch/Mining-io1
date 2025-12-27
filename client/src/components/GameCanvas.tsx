@@ -49,6 +49,23 @@ function getNoise(x: number, y: number, scale: number) {
   return nx0 * (1 - sy) + nx1 * sy;
 }
 
+// Check if a tile is in the rocky biome
+function isRockyBiome(x: number, y: number): boolean {
+  const rockyNoise = getNoise(x + 5000, y + 5000, 0.03);
+  if (rockyNoise > 0.80) {
+    // Check if it's part of a large cluster
+    let rockyNeighborCount = 0;
+    for (let ny = -1; ny <= 1; ny++) {
+      for (let nx = -1; nx <= 1; nx++) {
+        const neighborNoise = getNoise(x + nx + 5000, y + ny + 5000, 0.03);
+        if (neighborNoise > 0.80) rockyNeighborCount++;
+      }
+    }
+    return rockyNeighborCount >= 5;
+  }
+  return false;
+}
+
 // Generate biome floor colors - plains and rocky biomes
 function getFloorColor(x: number, y: number): string {
   // Rocky biome generation - MUST match getTileAt scale and threshold
@@ -977,9 +994,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.fill();
               }
             } else {
-              // Draw hexagon rocks in grey biome
-              const greyNoise = getNoise(wx + 5000, wy + 5000, 0.08);
-              if (greyNoise > 0.83) {
+              // Draw hexagon rocks ONLY in rocky biome
+              if (isRockyBiome(wx, wy)) {
                 const rockSeed = pseudoRandom(wx + 777, wy + 777);
                 if (rockSeed > 0.95) {
                   let hasNeighbor = false;
