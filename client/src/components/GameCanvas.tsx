@@ -519,16 +519,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               setMiningNotifications(prev => [...prev, { id, resource: t.resource, x: t.x, y: t.y }]);
               setTimeout(() => setMiningNotifications(prev => prev.filter(n => n.id !== id)), 2000);
             }});
-            // Mark as mined and remove animation after 1200ms
-            setTimeout(() => {
-              setMinedTiles(prev => {
-                const next = new Set(prev);
-                next.add(key);
-                return next;
-              });
-              delete tilesDisappearingStartTime.current[key];
-              delete tilesDisappearingType.current[key];
-            }, 1200);
           } else {
             toast({ title: `Pickaxe too weak for ${resDef.name}!`, variant: "destructive" });
           }
@@ -956,7 +946,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const elapsed = nowTime - startTime;
         const progress = Math.min(elapsed / DISAPPEAR_DURATION, 1);
         const alpha = Math.max(0, 1 - progress);
-        if (alpha <= 0) return;
+        if (alpha <= 0) {
+          // Animation finished - mark as mined immediately to prevent flicker
+          setMinedTiles(prev => {
+            const next = new Set(prev);
+            next.add(key);
+            return next;
+          });
+          delete tilesDisappearingStartTime.current[key];
+          delete tilesDisappearingType.current[key];
+          return;
+        }
         
         // Scale animation: grow for first half (0-0.5s), then shrink (0.5s-1.2s)
         let scaleMultiplier = 1;
