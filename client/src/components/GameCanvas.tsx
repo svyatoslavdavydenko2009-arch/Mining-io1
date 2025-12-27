@@ -878,7 +878,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             const resType = getTileAt(wx, wy);
             if (resType) {
               const res = RESOURCES[resType]; 
-              const shake = shakingTiles[`${wx},${wy}`] || { x: 0, y: 0 };
+              
+              // Calculate smooth shake based on time
+              const tileKey = `${wx},${wy}`;
+              let shake = { x: 0, y: 0 };
+              const shakeStartTime = shakingTilesStartTime.current[tileKey];
+              if (shakeStartTime !== undefined) {
+                const shakeElapsed = performance.now() - shakeStartTime;
+                const shakeDuration = 150;
+                if (shakeElapsed < shakeDuration) {
+                  const shakeProgress = shakeElapsed / shakeDuration;
+                  // Smooth shake animation using sine wave - decays over time
+                  const shakeDecay = Math.cos(shakeProgress * Math.PI / 2); // Fades from 1 to 0
+                  const shakeAmount = 20 * shakeDecay;
+                  shake.x = Math.sin(shakeElapsed / 20) * shakeAmount; // Smooth oscillation
+                  shake.y = Math.cos(shakeElapsed / 20) * shakeAmount;
+                }
+              }
               
               // Deterministic visual offset and size for variety
               const seedX = wx + 1000;
@@ -933,7 +949,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               }
               ctx.restore();
               
-              const tileKey = `${wx},${wy}`;
               const h = tileHealth[tileKey] !== undefined ? tileHealth[tileKey] : (
                 rockScale <= 1.0 ? 2 :
                 rockScale <= 1.5 ? 3 : 4
