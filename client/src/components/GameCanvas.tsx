@@ -57,17 +57,35 @@ function getFloorColor(x: number, y: number): string {
   const rockyNoise = getNoise(x + 5000, y + 5000, 0.03);
   
   if (rockyNoise > 0.80) {
-    // Rocky biome - grey/brown stone colors with smooth variation
+    // Rocky biome - uses same noise generation system as plains but with stone/grey colors
+    // This creates natural terrain variation just like plains
+    const noise = getNoise(x, y, 0.05) * 0.7 + getNoise(x, y, 0.15) * 0.3;
+    const stoneNoise = getNoise(x + 1000, y + 1000, 0.06);
+
+    // Base stone colors for rocky biome (grey instead of green)
     let r = 110, g = 110, b = 110; // Default grey stone
-    
-    const variation = getNoise(x + 5500, y + 5500, 0.04);
-    if (variation > 0.50) {
-      const t = (variation - 0.50) / 0.50;
-      r = Math.round(110 + (95 - 110) * t);
-      g = Math.round(110 + (95 - 110) * t);
-      b = Math.round(110 + (95 - 110) * t);
+
+    // Vary shades of grey for visual interest (same logic as plains but grey palette)
+    if (stoneNoise > 0.60) {
+      const intensity = (stoneNoise - 0.60) / 0.40;
+      r = Math.round(110 + (95 - 110) * intensity);
+      g = Math.round(110 + (95 - 110) * intensity);
+      b = Math.round(110 + (95 - 110) * intensity);
+    } else if (stoneNoise > 0.50) {
+      const intensity = (stoneNoise - 0.50) / 0.10;
+      r = Math.round(110 + (100 - 110) * intensity);
+      g = Math.round(110 + (100 - 110) * intensity);
+      b = Math.round(110 + (100 - 110) * intensity);
     }
-    
+
+    // Subtle noise variation (same as plains but adapted for grey colors)
+    if (noise > 0.3) {
+      const t = (noise - 0.3) / 0.7;
+      r = Math.round(r * (1 - t * 0.1) + 105 * t * 0.1);
+      g = Math.round(g * (1 - t * 0.1) + 105 * t * 0.1);
+      b = Math.round(b * (1 - t * 0.1) + 105 * t * 0.1);
+    }
+
     return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
   }
   
