@@ -754,88 +754,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         return (r * 299 + g * 587 + b * 114) / 1000;
       };
 
-      // Animate destroying tiles - fade out, scale down, rotate
-      Object.entries(destroyingTiles).forEach(([key, progress]) => {
-        const [wxStr, wyStr] = key.split(',');
-        const wx = parseInt(wxStr);
-        const wy = parseInt(wyStr);
-        const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
-        const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
-        
-        // Skip if off screen
-        if (sx + TILE_SIZE < 0 || sx > rect.width || sy + TILE_SIZE < 0 || sy > rect.height) return;
-        
-        // Easing: ease-in for scale and opacity
-        const easeProgress = progress * progress; // quadratic ease-in
-        
-        const resType = getTileAt(wx, wy);
-        const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
-        const rockScale = 0.7 + sizeSeed * 1.5;
-        
-        // Calculate smooth shake based on time
-        let shake = { x: 0, y: 0 };
-        const shakeStartTime = shakingTilesStartTime.current[key];
-        if (shakeStartTime !== undefined) {
-          const shakeElapsed = performance.now() - shakeStartTime;
-          const shakeDuration = 150;
-          if (shakeElapsed < shakeDuration) {
-            const shakeProgress = shakeElapsed / shakeDuration;
-            // Smooth shake animation using sine wave - decays over time
-            const shakeDecay = Math.cos(shakeProgress * Math.PI / 2); // Fades from 1 to 0
-            const shakeAmount = 20 * shakeDecay;
-            shake.x = Math.sin(shakeElapsed / 20) * shakeAmount; // Smooth oscillation
-            shake.y = Math.cos(shakeElapsed / 20) * shakeAmount;
-          }
-        }
-        
-        const offsetX = (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12 + shake.x;
-        const offsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12 + shake.y;
-        const dsx = sx + offsetX;
-        const dsy = sy + offsetY;
-        
-        ctx.save();
-        ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
-        // Rotate and scale during destruction
-        ctx.rotate(easeProgress * Math.PI * 2); // Full spin
-        ctx.scale(1 - easeProgress, 1 - easeProgress); // Scale down
-        
-        ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
-        ctx.scale(rockScale, rockScale);
-        ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
-        
-        // Apply fade to the entire stone during destruction
-        const stoneAlpha = 1 - easeProgress;
-        ctx.fillStyle = "#444";
-        ctx.strokeStyle = `rgba(0,0,0,${0.4 * stoneAlpha})`;
-        ctx.lineWidth = 2;
-        
-        if (resType === "stone") {
-          ctx.beginPath();
-          const centerX = dsx + TILE_SIZE / 2;
-          const centerY = dsy + TILE_SIZE / 2;
-          const radius = (TILE_SIZE - 8) / 2;
-          const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
-          for (let i = 0; i < 5; i++) {
-            const angle = (i * 2 * Math.PI / 5) - Math.PI / 2 + randomRotation;
-            const x = centerX + radius * Math.cos(angle);
-            const y = centerY + radius * Math.sin(angle);
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          }
-          ctx.closePath();
-          ctx.fillStyle = `rgba(68,68,68,${stoneAlpha})`; // Fade stone texture
-          ctx.fill();
-          ctx.stroke();
-        } else {
-          ctx.beginPath();
-          ctx.roundRect(dsx + 4, dsy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4);
-          ctx.fillStyle = `rgba(68,68,68,${stoneAlpha})`;
-          ctx.fill();
-          ctx.stroke();
-        }
-        
-        ctx.restore();
-      });
+      // Render destroying tiles AFTER biome so fade-out is visible
+      // Store them and render later
       
       // Draw each biome region as a unified shape, sorted by brightness
       // First, draw a base layer of the darkest possible color to ensure no gaps at all
@@ -890,7 +810,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   const shakeProgress = shakeElapsed / shakeDuration;
                   // Smooth shake animation using sine wave - decays over time
                   const shakeDecay = Math.cos(shakeProgress * Math.PI / 2); // Fades from 1 to 0
-                  const shakeAmount = 20 * shakeDecay;
+                  const shakeAmount = 10 * shakeDecay;
                   shake.x = Math.sin(shakeElapsed / 20) * shakeAmount; // Smooth oscillation
                   shake.y = Math.cos(shakeElapsed / 20) * shakeAmount;
                 }
@@ -1048,6 +968,70 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           }
         }
       }
+
+      // Animate destroying tiles AFTER all tiles are drawn so fade-out is visible
+      Object.entries(destroyingTiles).forEach(([key, progress]) => {
+        const [wxStr, wyStr] = key.split(',');
+        const wx = parseInt(wxStr);
+        const wy = parseInt(wyStr);
+        const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
+        const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+        
+        // Skip if off screen
+        if (sx + TILE_SIZE < 0 || sx > rect.width || sy + TILE_SIZE < 0 || sy > rect.height) return;
+        
+        // Linear fade progress for destruction
+        const stoneAlpha = Math.max(0, 1 - progress);
+        
+        const resType = getTileAt(wx, wy);
+        const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
+        const rockScale = 0.7 + sizeSeed * 1.5;
+        
+        const offsetX = (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12;
+        const offsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12;
+        const dsx = sx + offsetX;
+        const dsy = sy + offsetY;
+        
+        ctx.save();
+        ctx.globalAlpha = stoneAlpha;
+        ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
+        // Rotate and scale during destruction
+        ctx.rotate(progress * Math.PI * 2); // Full spin
+        ctx.scale(1 - progress, 1 - progress); // Scale down
+        
+        ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
+        ctx.scale(rockScale, rockScale);
+        ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
+        
+        ctx.fillStyle = "#444";
+        ctx.strokeStyle = "rgba(0,0,0,0.4)";
+        ctx.lineWidth = 2;
+        
+        if (resType === "stone") {
+          ctx.beginPath();
+          const centerX = dsx + TILE_SIZE / 2;
+          const centerY = dsy + TILE_SIZE / 2;
+          const radius = (TILE_SIZE - 8) / 2;
+          const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
+          for (let i = 0; i < 5; i++) {
+            const angle = (i * 2 * Math.PI / 5) - Math.PI / 2 + randomRotation;
+            const x = centerX + radius * Math.cos(angle);
+            const y = centerY + radius * Math.sin(angle);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.roundRect(dsx + 4, dsy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4);
+          ctx.fill();
+          ctx.stroke();
+        }
+        
+        ctx.restore();
+      });
 
       const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const py = cy + (playerPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
