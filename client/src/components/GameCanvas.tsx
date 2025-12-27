@@ -760,13 +760,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           // Skip if off screen
           if (sx + TILE_SIZE < 0 || sx > rect.width || sy + TILE_SIZE < 0 || sy > rect.height) continue;
 
-          if (!isTileMined(wx, wy)) {
+          const tileKey = `${wx},${wy}`;
+          // Skip if tile is being removed or already mined
+          if (!isTileMined(wx, wy) && !tilesDisappearingStartTime.current[tileKey]) {
             const resType = getTileAt(wx, wy);
             if (resType) {
               const res = RESOURCES[resType]; 
               
               // Calculate smooth shake based on time
-              const tileKey = `${wx},${wy}`;
               let shake = { x: 0, y: 0 };
               const shakeStartTime = shakingTilesStartTime.current[tileKey];
               if (shakeStartTime !== undefined) {
