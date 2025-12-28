@@ -593,23 +593,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           if (canMoveY) updatedY = nextY;
           
           // Spawn footstep synced with walk cycle
-          const currentCycle = walkCycle.current % (Math.PI * 2);
-          const stepThreshold = Math.PI; 
+          // walkCycle.current goes from 0 to 2*PI during one full walk cycle
+          const cycle = walkCycle.current % (Math.PI * 2);
           
-          // Determine which step we are on (0 or 1)
-          const currentStepIndex = currentCycle < stepThreshold ? 0 : 1;
+          // Step 0: 0 to PI (Right foot)
+          // Step 1: PI to 2*PI (Left foot)
+          const currentStepIndex = cycle < Math.PI ? 0 : 1;
           
           if (currentStepIndex !== lastStepIndex.current && isWalking) {
             lastStepIndex.current = currentStepIndex;
             
             setFootsteps(prevSteps => {
-              // Limit number of footsteps
-              const nextSteps = prevSteps.length > 40 ? prevSteps.slice(-30) : [...prevSteps];
+              const nextSteps = prevSteps.length > 50 ? prevSteps.slice(-40) : [...prevSteps];
               
               const side = (currentStepIndex === 0) ? 1 : -1;
               const angle = Math.atan2(lookDir.dy, lookDir.dx) + Math.PI / 2;
-              const offset = 10; 
+              const offset = 14; 
               
+              // Correct positioning: apply offset based on angle
               const stepX = updatedX + (Math.cos(angle) * offset) / TILE_SIZE * side;
               const stepY = updatedY + (Math.sin(angle) * offset) / TILE_SIZE * side;
               
@@ -1012,9 +1013,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const fdy = cy + (f.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
         
         // Footsteps are now small dark circles per user request
-        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.5})`;
+        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.4})`; 
         ctx.beginPath();
-        ctx.arc(fdx + 16, fdy + 16, 4 * f.life, 0, Math.PI * 2);
+        ctx.arc(fdx + 16, fdy + 16, 5 * f.life, 0, Math.PI * 2); 
         ctx.fill();
       });
 
