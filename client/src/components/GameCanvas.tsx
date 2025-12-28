@@ -107,12 +107,25 @@ function isBoulderTile(x: number, y: number): boolean {
 
 // Generate biome floor colors - plains and rocky biomes
 function getFloorColor(x: number, y: number): string {
-  // Check if in a tree zone (for darker grass)
+  // Check if in a tree zone (for darker grass) with smooth transitions
   const groupZoneSize = 25;
   const groupZoneX = Math.floor(x / groupZoneSize);
   const groupZoneY = Math.floor(y / groupZoneSize);
-  const groupChance = pseudoRandom(groupZoneX + 8000, groupZoneY + 8000);
-  const isForestZone = groupChance <= 0.65; // 35% zones have trees
+  
+  // Calculate smooth transition: check nearby zones and blend
+  let forestZoneCount = 0;
+  for (let zy = -1; zy <= 1; zy++) {
+    for (let zx = -1; zx <= 1; zx++) {
+      const checkZoneX = groupZoneX + zx;
+      const checkZoneY = groupZoneY + zy;
+      const checkChance = pseudoRandom(checkZoneX + 8000, checkZoneY + 8000);
+      if (checkChance <= 0.65) forestZoneCount++; // 35% zones have trees
+    }
+  }
+  
+  // Blend factor: 0 = no nearby forests, 1 = all zones are forests
+  // Smoothly blend colors based on how many nearby zones are forests
+  const forestBlend = forestZoneCount / 9; // 9 zones in 3x3 area
   
   // Rocky biome generation - MUST match getTileAt scale and threshold
   // Use coarse scale 0.03 for large regional biomes (not scattered patches)
@@ -158,12 +171,10 @@ function getFloorColor(x: number, y: number): string {
         b = Math.round(b * (1 - t * 0.1) + 95 * t * 0.1);
       }
 
-      // Darken grass in forest zones
-      if (isForestZone) {
-        r = Math.round(r * 0.7);
-        g = Math.round(g * 0.7);
-        b = Math.round(b * 0.7);
-      }
+      // Smoothly darken grass in forest zones (blend based on nearby forest zones)
+      r = Math.round(r * (1 - forestBlend * 0.3));
+      g = Math.round(g * (1 - forestBlend * 0.3));
+      b = Math.round(b * (1 - forestBlend * 0.3));
 
       return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
     }
@@ -228,12 +239,10 @@ function getFloorColor(x: number, y: number): string {
     b = Math.round(b * (1 - t * 0.1) + 95 * t * 0.1);
   }
 
-  // Darken grass in forest zones
-  if (isForestZone) {
-    r = Math.round(r * 0.7);
-    g = Math.round(g * 0.7);
-    b = Math.round(b * 0.7);
-  }
+  // Smoothly darken grass in forest zones (blend based on nearby forest zones)
+  r = Math.round(r * (1 - forestBlend * 0.3));
+  g = Math.round(g * (1 - forestBlend * 0.3));
+  b = Math.round(b * (1 - forestBlend * 0.3));
 
   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 }
