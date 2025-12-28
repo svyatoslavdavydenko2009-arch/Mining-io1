@@ -1031,12 +1031,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   ctx.fillStyle = "#6b4423";
                   ctx.fillRect(dsx + TILE_SIZE - 8, dsy + 12, 6, 8);
                   
-                  // Add small tree on the branch (mini foliage)
+                  // Add small tree on the branch (mini foliage) with rounded corners
                   ctx.fillStyle = "#1b4d2b";
-                  ctx.fillRect(dsx + TILE_SIZE - 6, dsy + 6, 14, 14);
+                  ctx.beginPath();
+                  ctx.roundRect(dsx + TILE_SIZE - 2, dsy + 6, 14, 14, 3);
+                  ctx.fill();
                   ctx.strokeStyle = "rgba(0,0,0,0.4)";
                   ctx.lineWidth = 2;
-                  ctx.strokeRect(dsx + TILE_SIZE - 6, dsy + 6, 14, 14);
+                  ctx.stroke();
                 }
               } else {
                 ctx.fillStyle = "#444";
