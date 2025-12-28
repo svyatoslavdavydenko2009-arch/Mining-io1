@@ -1552,14 +1552,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             const range = 22; // Tiles to show
             const mTileSize = 256 / (range * 2);
             
-            // Draw tiles with slight overlap to eliminate grid lines
+            // Calculate smooth offsets for sub-tile movement
+            const offsetX = (localPos.x % 1) * mTileSize;
+            const offsetY = (localPos.y % 1) * mTileSize;
+            
+            // Draw tiles with smooth interpolation
             for (let my = -range; my <= range; my++) {
               for (let mx = -range; mx <= range; mx++) {
-                const wx = Math.round(localPos.x) + mx;
-                const wy = Math.round(localPos.y) + my;
+                const wx = Math.floor(localPos.x) + mx;
+                const wy = Math.floor(localPos.y) + my;
                 mctx.fillStyle = getFloorColor(wx, wy);
-                // mTileSize + 1 ensures no subpixel gaps (grid lines)
-                mctx.fillRect(128 + mx * mTileSize, 128 + my * mTileSize, mTileSize + 1, mTileSize + 1);
+                // Draw tiles offset by the fractional position of the player
+                mctx.fillRect(128 + mx * mTileSize - offsetX, 128 + my * mTileSize - offsetY, mTileSize + 1, mTileSize + 1);
               }
             }
             
