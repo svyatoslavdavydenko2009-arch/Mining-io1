@@ -1130,7 +1130,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.beginPath(); ctx.moveTo(dsx + 24, dsy + TILE_SIZE - 6); ctx.lineTo(dsx + 24, dsy + TILE_SIZE); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(dsx + 16, dsy + TILE_SIZE); ctx.lineTo(dsx + 24, dsy + TILE_SIZE); ctx.stroke();
                 ctx.fillStyle = "#1b4d2b";
-                ctx.beginPath(); ctx.roundRect(dsx + 9, dsy + TILE_SIZE, 14, 14, 3); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.roundRect(dsx + 13, dsy + TILE_SIZE, 14, 14, 3); ctx.fill(); ctx.stroke();
               } else if (branchSide === 2) {
                 // Left side trunk - aligns with left edge of tree (dsx + 6)
                 ctx.fillRect(dsx, dsy + 16, 6, 8);
@@ -1146,7 +1146,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.beginPath(); ctx.moveTo(dsx + 24, dsy); ctx.lineTo(dsx + 24, dsy + 6); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(dsx + 24, dsy + 6); ctx.lineTo(dsx + 16, dsy + 6); ctx.stroke();
                 ctx.fillStyle = "#1b4d2b";
-                ctx.beginPath(); ctx.roundRect(dsx + 9, dsy - 14, 14, 14, 3); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.roundRect(dsx + 13, dsy - 14, 14, 14, 3); ctx.fill(); ctx.stroke();
               }
             }
           } else {
