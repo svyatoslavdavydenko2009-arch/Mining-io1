@@ -1035,6 +1035,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               ctx.scale(rockScale, rockScale);
               ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
 
+              // Clip protection: Trees need careful rendering to not look "cut off"
+              // Increase the drawing area slightly if needed or ensure it's within bounds
               if (resType === "stone") {
                 ctx.fillStyle = "#444";
                 // Draw pentagon for stone with random rotation
