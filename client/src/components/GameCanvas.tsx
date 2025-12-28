@@ -469,10 +469,16 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             
             // Resources are generally wider than they are tall (visual perspective)
             // We scale the collision distance based on the visual scale
-            const baseDistSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
-            const scaledCollisionDist = COLLISION_DISTANCE_SQ * scale;
-            
-            if (baseDistSq < scaledCollisionDist) return true;
+            if (resource === "stone") {
+              const baseDistSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
+              const scaledCollisionDist = COLLISION_DISTANCE_SQ * scale;
+              if (baseDistSq < scaledCollisionDist) return true;
+            } else if (resource === "wood") {
+              // Wood (trees) are square with rounded corners
+              // We use an AABB check in local rotated space
+              const halfSize = (0.5 * scale) * 0.8; // Adjust multiplier for tightness
+              if (Math.abs(rotatedX) < halfSize && Math.abs(rotatedY) < halfSize) return true;
+            }
           }
         }
       }
