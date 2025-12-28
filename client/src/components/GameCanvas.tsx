@@ -610,17 +610,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               const stepX = updatedX + (Math.cos(angle) * offset) / TILE_SIZE * side;
               const stepY = updatedY + (Math.sin(angle) * offset) / TILE_SIZE * side;
               
-              // Determine brightness based on biome floor color
-              const floorColor = getFloorColor(updatedX, updatedY);
-              // Check if the floor color is a grass green (plains biome)
-              // The rgb values for plains biome range from approximately (50, 140, 80) to (90, 180, 110)
-              const isPlains = floorColor.includes("rgb(86") || floorColor.includes("rgb(68") || floorColor.includes("rgb(54") || floorColor.includes("rgb(7");
-              const footstepAlpha = isPlains ? 0.35 : 0.45;
-              const footstepBrightness = isPlains ? 0.3 : 0.5;
-
               return [
                 ...nextSteps,
-                { id: Math.random(), x: stepX, y: stepY, life: 1.0, brightness: footstepBrightness, alpha: footstepAlpha }
+                { id: Math.random(), x: stepX, y: stepY, life: 1.0, brightness: 0.5 }
               ];
             });
           }
@@ -917,13 +909,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Render Biome Regions
       // Limit draw radius to actual visible area
-      const drawRadius = 8; // Further reduced for performance
+      const drawRadius = 15; // Increased even more for better visibility and buffering
       const biomeTiles: Record<string, {wx: number, wy: number, sx: number, sy: number}[]> = {};
       
       const startX = Math.round(localPos.x) - drawRadius;
       const endX = Math.round(localPos.x) + drawRadius;
       const startY = Math.round(localPos.y) - drawRadius;
       const endY = Math.round(localPos.y) + drawRadius;
+
+      // Draw base floor color everywhere first
+      ctx.fillStyle = "#3f2817";
+      ctx.fillRect(0, 0, rect.width, rect.height);
 
       for (let wy = startY; wy <= endY; wy++) {
         for (let wx = startX; wx <= endX; wx++) {
@@ -949,14 +945,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         return (r * 299 + g * 587 + b * 114) / 1000;
       };
 
-      // Render destroying tiles AFTER biome so fade-out is visible
-      // Store them and render later
-      
       // Draw each biome region as a unified shape, sorted by brightness
-      // First, draw a base layer of the darkest possible color to ensure no gaps at all
-      ctx.fillStyle = "#1a120b";
-      ctx.fillRect(0, 0, rect.width, rect.height);
-
       Object.entries(biomeTiles)
         .sort(([colorA], [colorB]) => getBrightness(colorA) - getBrightness(colorB))
         .forEach(([color, tiles]) => {
@@ -968,17 +957,27 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           });
           
           // Then draw the "organic" rounded overlaps only on the borders
-          // BUT only if this biome is brighter than its neighbors or it's a border tile
           tiles.forEach(t => {
             if (isBiomeBorder(t.wx, t.wy)) {
-              const sizeBonus = TILE_SIZE * 0.05; // Extremely small overlap to eliminate the "blob" grid
+              const sizeBonus = TILE_SIZE * 0.05; 
               ctx.beginPath();
-              // Minimal rounding to maintain the "tile" structure but soften the hard corners
               ctx.roundRect(t.sx - sizeBonus / 2, t.sy - sizeBonus / 2, TILE_SIZE + sizeBonus, TILE_SIZE + sizeBonus, 4);
               ctx.fill();
             }
           });
         });
+
+      // Draw footsteps
+      ctx.save();
+      footsteps.forEach(f => {
+        const screenX = cx + (f.x - displayPos.x) * TILE_SIZE;
+        const screenY = cy + (f.y - displayPos.y) * TILE_SIZE;
+        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.8})`; 
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, 12 * f.life, 0, Math.PI * 2); 
+        ctx.fill();
+      });
+      ctx.restore();
 
       // Render Resources and Rocks in a separate pass
       const resourcesToRender: any[] = [];
@@ -1000,34 +999,30 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       resourcesToRender.sort((a, b) => a.wy - b.wy);
 
       // First draw all grounds
-      for (let wy = startY - 3; wy <= endY + 3; wy++) {
-        for (let wx = startX - 3; wx <= endX + 3; wx++) {
+      // Draw a larger area of ground tiles to ensure coverage
+      for (let wy = startY - 5; wy <= endY + 5; wy++) {
+        for (let wx = startX - 5; wx <= endX + 5; wx++) {
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
           if (sx + TILE_SIZE + 48 >= 0 && sx - 48 <= rect.width && sy + TILE_SIZE + 48 >= 0 && sy - 48 <= rect.height) {
             ctx.fillStyle = getFloorColor(wx, wy);
-            ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+            ctx.fillRect(sx - 1, sy - 1, TILE_SIZE + 2, TILE_SIZE + 2);
           }
         }
       }
 
       // Draw footsteps
       ctx.save();
+      // Render footsteps with absolute visibility
       footsteps.forEach(f => {
-        // Correct conversion from world to screen coordinates
-        // f.x, f.y are in tiles (e.g. 250, -133)
-        // displayPos.x, displayPos.y are also in tiles
-        // (f.x - displayPos.x) gives tile offset from camera center
-        // Multiplying by TILE_SIZE gives pixel offset
         const screenX = cx + (f.x - displayPos.x) * TILE_SIZE;
         const screenY = cy + (f.y - displayPos.y) * TILE_SIZE;
         
-        // Footsteps: simple dark circles that fade out
-        const fAny = f as any;
-        const alpha = fAny.alpha !== undefined ? fAny.alpha : 0.35;
-        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * alpha})`; 
+        // Solid black with high opacity for debugging visibility
+        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.95})`; 
         ctx.beginPath();
-        ctx.arc(screenX, screenY, 5 * f.life, 0, Math.PI * 2); 
+        // Larger circles
+        ctx.arc(screenX, screenY, 16 * f.life, 0, Math.PI * 2); 
         ctx.fill();
       });
       ctx.restore();
