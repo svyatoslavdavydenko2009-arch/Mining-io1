@@ -418,7 +418,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       setFootsteps(prev => {
         if (prev.length === 0) return prev;
         const next = prev.map(f => ({ ...f, life: f.life - 0.04 })).filter(f => f.life > 0);
-        return next.length === prev.length ? prev : next;
+        return next;
       });
     }, 100);
     return () => clearInterval(interval);
