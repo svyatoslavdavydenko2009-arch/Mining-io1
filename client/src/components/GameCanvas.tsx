@@ -1235,18 +1235,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 8);
           ctx.fill();
           ctx.stroke();
-          
-          // Add vertical wood grain pattern with alpha - darker green
-          ctx.strokeStyle = `rgba(0,0,0,${0.3 * alpha})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(dsx + 16, dsy + 8);
-          ctx.lineTo(dsx + 16, dsy + 40);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.moveTo(dsx + 32, dsy + 8);
-          ctx.lineTo(dsx + 32, dsy + 40);
-          ctx.stroke();
         } else {
           ctx.beginPath();
           ctx.roundRect(dsx + 4, dsy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4);
