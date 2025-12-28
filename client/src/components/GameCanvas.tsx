@@ -967,18 +967,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           });
         });
 
-      // Draw footsteps
-      ctx.save();
-      footsteps.forEach(f => {
-        const screenX = cx + (f.x - displayPos.x) * TILE_SIZE;
-        const screenY = cy + (f.y - displayPos.y) * TILE_SIZE;
-        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.8})`; 
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, 12 * f.life, 0, Math.PI * 2); 
-        ctx.fill();
-      });
-      ctx.restore();
-
       // Render Resources and Rocks in a separate pass
       const resourcesToRender: any[] = [];
       const resourceDrawRadius = 8; // Further reduced for performance
