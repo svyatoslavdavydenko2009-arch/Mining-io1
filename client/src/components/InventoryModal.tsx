@@ -1,6 +1,6 @@
-import { X } from "lucide-react";
+import { X, Trees } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { User } from "@shared/schema";
+import { User, RESOURCES, ResourceType } from "@shared/schema";
 import { StoneIcon } from "@/components/StoneIcon";
 
 interface InventoryModalProps {
@@ -9,17 +9,15 @@ interface InventoryModalProps {
   user: User;
 }
 
-function calculatePlaytime(createdAt: string | Date): string {
-  const created = typeof createdAt === 'string' ? new Date(createdAt) : createdAt;
-  const now = new Date();
-  const diffMs = now.getTime() - created.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
+function ResourceIcon({ type, size = 56 }: { type: string, size?: number }) {
+  const resource = RESOURCES[type as ResourceType];
+  const color = resource?.color || "#78716c";
 
-  if (diffDays > 0) return `${diffDays}d ${diffHours % 24}h`;
-  if (diffHours > 0) return `${diffHours}h ${diffMins % 60}m`;
-  return `${diffMins}m`;
+  if (type === "wood") {
+    return <Trees size={size} style={{ color }} />;
+  }
+
+  return <StoneIcon size={size} color={color} />;
 }
 
 export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps) {
@@ -87,7 +85,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
                   <div key={item} className="flex flex-col items-center gap-3">
-                    <StoneIcon size={56} />
+                    <ResourceIcon type={item} size={56} />
                     <p className="text-gray-400 dark:text-gray-500 text-3xl font-black antialiased">{count}</p>
                   </div>
                 ))
