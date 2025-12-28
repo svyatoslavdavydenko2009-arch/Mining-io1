@@ -95,7 +95,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
               lineHeight: '1.2'
             }}>Crafting</p>
             
-            {/* Crafting Grid matching the image style */}
+            {/* Crafting Grid matching the image style - 4x2 size */}
             <div 
               className="grid grid-cols-4 gap-2 p-3 rounded-md shadow-2xl" 
               style={{ 
@@ -104,7 +104,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
                 boxShadow: 'inset 0 0 15px rgba(0,0,0,0.4)'
               }}
             >
-              {[...Array(16)].map((_, i) => (
+              {[...Array(8)].map((_, i) => (
                 <div 
                   key={i} 
                   className="aspect-square rounded-sm flex items-center justify-center transition-all hover:brightness-110 cursor-pointer"
