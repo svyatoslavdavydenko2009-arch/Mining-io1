@@ -105,8 +105,8 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
             </div>
           </div>
 
-          <div className="border-t border-secondary/50 pt-6 bg-black/30 -mx-6 px-6 pb-6">
-            <p className="text-white/90 text-2xl mb-5 mt-6 font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Backpack</p>
+          <div className="border-t border-secondary/50 pt-0 bg-black/30 -mx-6 px-6 pb-6">
+            <p className="text-white/90 text-4xl mb-8 mt-4 font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'subpixel-antialiased' }}>Backpack</p>
             <div className="flex flex-wrap gap-10">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
@@ -116,7 +116,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
                   </div>
                 ))
               ) : (
-                <p className="text-white/60 text-2xl font-medium uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Empty</p>
+                <p className="text-white/60 text-2xl font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Empty</p>
               )}
             </div>
           </div>
