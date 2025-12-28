@@ -596,7 +596,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const cycle = walkCycle.current % (Math.PI * 2);
           const currentStepIndex = cycle < Math.PI ? 0 : 1;
           
-          if (currentStepIndex !== lastStepIndex.current && isWalking) {
+          // Create footsteps during movement (we know we're moving since we're in this block)
+          if (currentStepIndex !== lastStepIndex.current) {
             lastStepIndex.current = currentStepIndex;
             
             setFootsteps(prevSteps => {
@@ -999,19 +1000,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         }
       }
 
-      // Draw footsteps
+      // Draw footsteps - HIGHLY VISIBLE for debugging
       ctx.save();
-      // Render footsteps with absolute visibility
       footsteps.forEach(f => {
         const screenX = cx + (f.x - displayPos.x) * TILE_SIZE;
         const screenY = cy + (f.y - displayPos.y) * TILE_SIZE;
         
-        // Solid black with high opacity for debugging visibility
-        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.95})`; 
+        // Very dark/opaque footsteps for maximum visibility
+        ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(1, f.life * 1.2)})`; 
         ctx.beginPath();
-        // Larger circles
-        ctx.arc(screenX, screenY, 16 * f.life, 0, Math.PI * 2); 
+        // Much larger circles - at least 24 pixels
+        ctx.arc(screenX, screenY, Math.max(24, 24 * f.life), 0, Math.PI * 2); 
         ctx.fill();
+        
+        // DEBUG: Add an outline so we can see each footstep clearly
+        ctx.strokeStyle = `rgba(255, 0, 0, ${f.life * 0.8})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
       });
       ctx.restore();
 
