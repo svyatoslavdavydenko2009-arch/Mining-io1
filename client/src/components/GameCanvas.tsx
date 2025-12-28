@@ -1276,19 +1276,19 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Draw Body
       ctx.fillStyle = "#fbbf24";
-      ctx.strokeStyle = "rgba(0,0,0,0.8)"; // Much darker stroke
-      ctx.lineWidth = 3; // Slightly thicker for the main border
+      ctx.strokeStyle = "rgba(0,0,0,0.55)"; // Lightened outer stroke (from 0.8)
+      ctx.lineWidth = 2.5; // Slightly thinner outer stroke (from 3)
 
       ctx.beginPath();
       ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
-      // Add internal subtle yellow-darker ring for depth
-      ctx.strokeStyle = "rgba(180, 140, 0, 0.4)";
-      ctx.lineWidth = 1.5;
+      // Add internal ring for depth - thicker and darker yellow
+      ctx.strokeStyle = "rgba(160, 110, 0, 0.7)"; // Darkened (from 180,140,0 @ 0.4)
+      ctx.lineWidth = 2.5; // Thicker internal ring (from 1.5)
       ctx.beginPath();
-      ctx.arc(0, 0, (pSize / 2) - 1.5, 0, Math.PI * 2);
+      ctx.arc(0, 0, (pSize / 2) - 2, 0, Math.PI * 2);
       ctx.stroke();
 
       // Eyes
@@ -1435,9 +1435,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       ctx.translate(handMiningOffsetX, handMiningOffsetY);
       ctx.fillStyle = "#fbbf24";
-      ctx.strokeStyle = "rgba(0,0,0,0.8)"; // Darker hand stroke
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = "rgba(0,0,0,0.55)"; // Lightened hand stroke (from 0.8)
+      ctx.lineWidth = 2.2;
       ctx.beginPath(); ctx.arc(0, 0, handSize, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+      // Inner hand ring
+      ctx.strokeStyle = "rgba(160, 110, 0, 0.7)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(0, 0, handSize - 1.5, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
 
       // Drawing Right Hand
@@ -1445,9 +1450,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(miningBaseRot);
       ctx.translate(handOffsetSide, -handOffsetFront - handBob);
       ctx.fillStyle = "#fbbf24";
-      ctx.strokeStyle = "rgba(0,0,0,0.8)"; // Darker hand stroke
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = "rgba(0,0,0,0.55)"; // Lightened hand stroke (from 0.8)
+      ctx.lineWidth = 2.2;
       ctx.beginPath(); ctx.arc(0, 0, handSize, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      
+      // Inner hand ring
+      ctx.strokeStyle = "rgba(160, 110, 0, 0.7)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(0, 0, handSize - 1.5, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
       ctx.restore(); // Restore main player transform
 
