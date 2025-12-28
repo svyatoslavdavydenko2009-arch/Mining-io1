@@ -1014,9 +1014,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const screenX = cx + (f.x - displayPos.x) * TILE_SIZE;
         const screenY = cy + (f.y - displayPos.y) * TILE_SIZE;
         
-        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.6})`; 
+        // Footsteps: simple dark circles that fade out
+        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.35})`; 
         ctx.beginPath();
-        ctx.arc(screenX, screenY, 6 * f.life, 0, Math.PI * 2); 
+        ctx.arc(screenX, screenY, 5 * f.life, 0, Math.PI * 2); 
         ctx.fill();
       });
       ctx.restore();
