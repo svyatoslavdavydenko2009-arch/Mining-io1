@@ -1042,7 +1042,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const colorOpacity = f.life * f.life * f.life;
         
         // Draw footsteps 30% smaller (5.76px instead of 8px)
-        ctx.fillStyle = footstepColor.replace('rgb', 'rgba').replace(')', `, ${colorOpacity * 0.8})`);
+        ctx.fillStyle = footstepColor.replace('rgb', 'rgba').replace(')', `, ${colorOpacity})`);
         ctx.beginPath();
         const footstepRadius = 5.76 * sizeOpacity; // Size fades linearly
         ctx.arc(screenX, screenY, footstepRadius, 0, Math.PI * 2); 
