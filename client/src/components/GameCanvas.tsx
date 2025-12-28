@@ -1171,13 +1171,50 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             const barWidth = (TILE_SIZE - 8) * rockScale;
             const barX = dsx + TILE_SIZE / 2 - barWidth / 2;
             const barY = dsy + TILE_SIZE / 2 + ((TILE_SIZE - 8) / 2) * rockScale + 4;
+            
+            // Draw background bar
             ctx.fillStyle = `rgba(0,0,0,${0.5 * healthBarAlpha})`; 
             ctx.beginPath(); ctx.roundRect(barX, barY, barWidth, 5, 2); ctx.fill();
-            const colorR = hp > 0.5 ? 34 : hp > 0.25 ? 234 : 239;
-            const colorG = hp > 0.5 ? 197 : hp > 0.25 ? 179 : 68;
-            const colorB = hp > 0.5 ? 94 : hp > 0.25 ? 8 : 68;
+            
+            // Calculate health color with smooth transitions
+            let colorR, colorG, colorB;
+            if (hp >= 0.8) {
+              // 100%-80%: dark green to green
+              const t = (hp - 0.8) / 0.2; // 0 to 1
+              colorR = Math.round(34 + (34 - 34) * t);
+              colorG = Math.round(102 + (197 - 102) * t);
+              colorB = Math.round(68 + (94 - 68) * t);
+            } else if (hp >= 0.5) {
+              // 80%-50%: green to yellow
+              const t = (hp - 0.5) / 0.3; // 0 to 1
+              colorR = Math.round(34 + (220 - 34) * (1 - t));
+              colorG = Math.round(197 + (180 - 197) * (1 - t));
+              colorB = Math.round(94 + (0 - 94) * (1 - t));
+            } else if (hp >= 0.3) {
+              // 50%-30%: yellow to orange
+              const t = (hp - 0.3) / 0.2; // 0 to 1
+              colorR = Math.round(220 + (255 - 220) * (1 - t));
+              colorG = Math.round(180 + (152 - 180) * (1 - t));
+              colorB = Math.round(0 + (0 - 0) * (1 - t));
+            } else if (hp >= 0.15) {
+              // 30%-15%: orange to red
+              const t = (hp - 0.15) / 0.15; // 0 to 1
+              colorR = Math.round(255 + (239 - 255) * (1 - t));
+              colorG = Math.round(152 + (68 - 152) * (1 - t));
+              colorB = Math.round(0 + (68 - 0) * (1 - t));
+            } else {
+              // 15%-0%: red to dark red
+              colorR = 139;
+              colorG = 35;
+              colorB = 35;
+            }
+            
+            // Draw health bar fill with outline
             ctx.fillStyle = `rgba(${colorR},${colorG},${colorB},${healthBarAlpha})`; 
             ctx.beginPath(); ctx.roundRect(barX, barY, barWidth * hp, 5, 2); ctx.fill();
+            ctx.strokeStyle = `rgba(0,0,0,${0.55 * healthBarAlpha})`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
           }
         }
       });
