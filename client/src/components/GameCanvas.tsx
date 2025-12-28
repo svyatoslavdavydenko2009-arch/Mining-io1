@@ -410,6 +410,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const [miningDirection, setMiningDirection] = useState<{x: number, y: number} | null>(null);
   const [cooldownProgress, setCooldownProgress] = useState(1);
   const [lastMineTimeState, setLastMineTimeState] = useState(0);
+  const [footsteps, setFootsteps] = useState<{id: number, x: number, y: number, life: number}[]>([]);
+  const lastFootstepPos = useRef({ x: user.x, y: user.y });
   const [, setButtonUpdateTrigger] = useState(0); // Force re-renders for button
 
   const joystickDirRef = useRef({ dx: 0, dy: 0 });
@@ -419,6 +421,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const tilesDisappearingStartTime = useRef<Record<string, number>>({}); // Track disappear start times
   const tilesDisappearingType = useRef<Record<string, ResourceType>>({}); // Store resource type when disappearing
   
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFootsteps(prev => prev.map(f => ({ ...f, life: f.life - 0.02 })).filter(f => f.life > 0));
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
   // Update button state every 50ms so cooldown is responsive
   useEffect(() => {
     const interval = setInterval(() => {
@@ -589,6 +598,16 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
           if (canMoveX) updatedX = nextX;
           if (canMoveY) updatedY = nextY;
+          
+          // Spawn footstep
+          const distSinceLastStep = Math.sqrt(Math.pow(updatedX - lastFootstepPos.current.x, 2) + Math.pow(updatedY - lastFootstepPos.current.y, 2));
+          if (distSinceLastStep > 0.3) {
+            setFootsteps(prevSteps => [
+              ...prevSteps.slice(-15),
+              { id: Math.random(), x: updatedX, y: updatedY, life: 1.0 }
+            ]);
+            lastFootstepPos.current = { x: updatedX, y: updatedY };
+          }
           
           return { x: updatedX, y: updatedY };
         });
