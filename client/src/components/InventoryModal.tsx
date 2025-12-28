@@ -84,45 +84,39 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
         {/* Texture overlay */}
         <div 
           className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{
-            backgroundImage: `
-              repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.5) 2px, rgba(0,0,0,0.5) 4px),
-              repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.5) 2px, rgba(0,0,0,0.5) 4px)
-            `
-          }}
         />
 
         <div className="relative z-10 flex items-center justify-between mb-8">
-          <h2 className="text-primary text-3xl font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'geometricPrecision', WebkitFontSmoothing: 'antialiased' }}>INVENTORY</h2>
+          <h2 className="text-primary text-3xl font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'subpixel-antialiased' }}>INVENTORY</h2>
         </div>
 
         <div className="relative z-10 space-y-6">
           <div className="border-t border-secondary/50 pt-6">
-            <p className="text-white/90 text-2xl mb-5 font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'geometricPrecision' }}>Player</p>
+            <p className="text-white/90 text-2xl mb-5 font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Player</p>
             <div className="grid grid-cols-2 gap-6 text-2xl">
               <div>
-                <p className="text-white/70 text-lg mb-2 uppercase font-medium tracking-widest font-sans antialiased" style={{ textRendering: 'geometricPrecision' }}>Username</p>
-                <p className="text-white font-bold text-2xl font-sans antialiased" style={{ textRendering: 'geometricPrecision' }}>{user.username}</p>
+                <p className="text-white/70 text-lg mb-2 uppercase font-medium tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Username</p>
+                <p className="text-white font-bold text-2xl font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>{user.username}</p>
               </div>
               <div>
-                <p className="text-white/70 text-lg mb-2 uppercase font-medium tracking-widest font-sans antialiased" style={{ textRendering: 'geometricPrecision' }}>Playtime</p>
-                <p className="text-white font-bold text-2xl font-sans antialiased" style={{ textRendering: 'geometricPrecision' }}>{playtime}</p>
+                <p className="text-white/70 text-lg mb-2 uppercase font-medium tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Playtime</p>
+                <p className="text-white font-bold text-2xl font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>{playtime}</p>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-secondary/50 pt-6 bg-black/30 -mx-6 px-6 pb-6 shadow-inner">
-            <p className="text-white/90 text-2xl mb-5 mt-6 font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'geometricPrecision' }}>Backpack</p>
+          <div className="border-t border-secondary/50 pt-6 bg-black/30 -mx-6 px-6 pb-6">
+            <p className="text-white/90 text-2xl mb-5 mt-6 font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Backpack</p>
             <div className="flex flex-wrap gap-10">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
                   <div key={item} className="flex flex-col items-center gap-3">
                     <ResourceIcon type={item} size={56} />
-                    <p className="text-white/90 text-3xl font-bold font-sans antialiased" style={{ textRendering: 'geometricPrecision' }}>{count}</p>
+                    <p className="text-white/90 text-3xl font-bold font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>{count}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-white/60 text-2xl font-medium uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'geometricPrecision' }}>Empty</p>
+                <p className="text-white/60 text-2xl font-medium uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Empty</p>
               )}
             </div>
           </div>
