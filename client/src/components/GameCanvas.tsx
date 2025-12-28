@@ -1036,10 +1036,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         }
         
         // Realistic fade-out using separate size and opacity
-        // Size fades linearly for more natural appearance
+        // Both size and color opacity fade linearly for fully visible traces
         const sizeOpacity = f.life;
-        // Opacity fades with cubic easing for smooth disappearance
-        const colorOpacity = f.life * f.life * f.life;
+        const colorOpacity = f.life;
         
         // Draw footsteps 30% smaller (5.76px instead of 8px)
         ctx.fillStyle = footstepColor.replace('rgb', 'rgba').replace(')', `, ${colorOpacity})`);
