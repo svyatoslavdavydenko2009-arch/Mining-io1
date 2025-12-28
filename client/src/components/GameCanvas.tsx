@@ -1116,6 +1116,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               const branchSide = Math.floor(pseudoRandom(wx + 5000, wy + 5000) * 4);
               ctx.fillStyle = "#6b4423";
               if (branchSide === 0) {
+                // Right side trunk - aligns with right edge of tree (dsx + TILE_SIZE - 6)
                 ctx.fillRect(dsx + TILE_SIZE - 6, dsy + 16, 6, 8);
                 ctx.beginPath(); ctx.moveTo(dsx + TILE_SIZE - 6, dsy + 16); ctx.lineTo(dsx + TILE_SIZE, dsy + 16); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(dsx + TILE_SIZE, dsy + 16); ctx.lineTo(dsx + TILE_SIZE, dsy + 24); ctx.stroke();
@@ -1123,26 +1124,29 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.fillStyle = "#1b4d2b";
                 ctx.beginPath(); ctx.roundRect(dsx + TILE_SIZE, dsy + 13, 14, 14, 3); ctx.fill(); ctx.stroke();
               } else if (branchSide === 1) {
-                ctx.fillRect(dsx + 20, dsy + TILE_SIZE - 8, 8, 8);
-                ctx.beginPath(); ctx.moveTo(dsx + 20, dsy + TILE_SIZE - 8); ctx.lineTo(dsx + 20, dsy + TILE_SIZE); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(dsx + 28, dsy + TILE_SIZE - 8); ctx.lineTo(dsx + 28, dsy + TILE_SIZE); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(dsx + 20, dsy + TILE_SIZE); ctx.lineTo(dsx + 28, dsy + TILE_SIZE); ctx.stroke();
+                // Bottom side trunk - aligns with bottom edge of tree (dsy + TILE_SIZE - 6)
+                ctx.fillRect(dsx + 16, dsy + TILE_SIZE - 6, 8, 6);
+                ctx.beginPath(); ctx.moveTo(dsx + 16, dsy + TILE_SIZE - 6); ctx.lineTo(dsx + 16, dsy + TILE_SIZE); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + 24, dsy + TILE_SIZE - 6); ctx.lineTo(dsx + 24, dsy + TILE_SIZE); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + 16, dsy + TILE_SIZE); ctx.lineTo(dsx + 24, dsy + TILE_SIZE); ctx.stroke();
                 ctx.fillStyle = "#1b4d2b";
-                ctx.beginPath(); ctx.roundRect(dsx + 17, dsy + TILE_SIZE, 14, 14, 3); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.roundRect(dsx + 9, dsy + TILE_SIZE, 14, 14, 3); ctx.fill(); ctx.stroke();
               } else if (branchSide === 2) {
-                ctx.fillRect(dsx - 6, dsy + 16, 6, 8);
-                ctx.beginPath(); ctx.moveTo(dsx - 6, dsy + 16); ctx.lineTo(dsx, dsy + 16); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(dsx - 6, dsy + 16); ctx.lineTo(dsx - 6, dsy + 24); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(dsx - 6, dsy + 24); ctx.lineTo(dsx, dsy + 24); ctx.stroke();
+                // Left side trunk - aligns with left edge of tree (dsx + 6)
+                ctx.fillRect(dsx, dsy + 16, 6, 8);
+                ctx.beginPath(); ctx.moveTo(dsx, dsy + 16); ctx.lineTo(dsx + 6, dsy + 16); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx, dsy + 16); ctx.lineTo(dsx, dsy + 24); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx, dsy + 24); ctx.lineTo(dsx + 6, dsy + 24); ctx.stroke();
                 ctx.fillStyle = "#1b4d2b";
                 ctx.beginPath(); ctx.roundRect(dsx - 14, dsy + 13, 14, 14, 3); ctx.fill(); ctx.stroke();
               } else {
-                ctx.fillRect(dsx + 16, dsy - 6, 8, 6);
-                ctx.beginPath(); ctx.moveTo(dsx + 16, dsy - 6); ctx.lineTo(dsx + 24, dsy - 6); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(dsx + 24, dsy - 6); ctx.lineTo(dsx + 24, dsy); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(dsx + 24, dsy); ctx.lineTo(dsx + 16, dsy); ctx.stroke();
+                // Top side trunk - aligns with top edge of tree (dsy + 6)
+                ctx.fillRect(dsx + 16, dsy, 8, 6);
+                ctx.beginPath(); ctx.moveTo(dsx + 16, dsy); ctx.lineTo(dsx + 24, dsy); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + 24, dsy); ctx.lineTo(dsx + 24, dsy + 6); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + 24, dsy + 6); ctx.lineTo(dsx + 16, dsy + 6); ctx.stroke();
                 ctx.fillStyle = "#1b4d2b";
-                ctx.beginPath(); ctx.roundRect(dsx + 9, dsy - 20, 14, 14, 3); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.roundRect(dsx + 9, dsy - 14, 14, 14, 3); ctx.fill(); ctx.stroke();
               }
             }
           } else {
