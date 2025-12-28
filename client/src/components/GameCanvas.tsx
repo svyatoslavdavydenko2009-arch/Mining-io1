@@ -1549,8 +1549,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             
             mctx.clearRect(0, 0, 256, 256);
             
-            const range = 22; // Tiles to show
-            const mTileSize = 256 / (range * 2);
+            const range = 26; // Increased range to ensure corners are fully covered
+            const mTileSize = 256 / (20 * 2); // Keep tile size consistent for 20x20 view but draw more tiles
             
             // Calculate smooth offsets for sub-tile movement
             const offsetX = (localPos.x % 1) * mTileSize;
