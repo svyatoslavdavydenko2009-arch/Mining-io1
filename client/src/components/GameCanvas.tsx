@@ -1058,14 +1058,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     ctx.stroke();
                   } else if (branchSide === 1) {
                     // Bottom side
-                    ctx.fillRect(dsx + 20, dsy + TILE_SIZE - 10, 8, 10); // Moved trunk 2px higher (from -8 to -10)
+                    ctx.fillRect(dsx + 20, dsy + TILE_SIZE - 8, 8, 8); // Branch trunk (shortened)
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE - 10); // Outline matches trunk top
-                    ctx.lineTo(dsx + 20, dsy + TILE_SIZE); // Outline matches trunk bottom
+                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE - 8); // Start exactly at the top of the trunk
+                    ctx.lineTo(dsx + 20, dsy + TILE_SIZE); // End at the bottom of the trunk
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 28, dsy + TILE_SIZE - 10); // Outline matches trunk top
-                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE); // Outline matches trunk bottom
+                    ctx.moveTo(dsx + 28, dsy + TILE_SIZE - 8); // Start exactly at the top of the trunk
+                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE); // End at the bottom of the trunk
                     ctx.stroke();
                     ctx.beginPath();
                     ctx.moveTo(dsx + 20, dsy + TILE_SIZE); // Bottom outline matches trunk bottom
