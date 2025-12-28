@@ -612,8 +612,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               
               // Determine brightness based on biome floor color
               const floorColor = getFloorColor(updatedX, updatedY);
-              const isPlains = floorColor.includes("rgb(86") || floorColor.includes("rgb(68") || floorColor.includes("rgb(54");
-              const footstepAlpha = isPlains ? 0.25 : 0.35;
+              // Check if the floor color is a grass green (plains biome)
+              // The rgb values for plains biome range from approximately (50, 140, 80) to (90, 180, 110)
+              const isPlains = floorColor.includes("rgb(86") || floorColor.includes("rgb(68") || floorColor.includes("rgb(54") || floorColor.includes("rgb(7");
+              const footstepAlpha = isPlains ? 0.35 : 0.45;
               const footstepBrightness = isPlains ? 0.3 : 0.5;
 
               return [
@@ -1021,7 +1023,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const screenY = cy + (f.y - displayPos.y) * TILE_SIZE;
         
         // Footsteps: simple dark circles that fade out
-        const alpha = (f as any).alpha || 0.35;
+        const fAny = f as any;
+        const alpha = fAny.alpha !== undefined ? fAny.alpha : 0.35;
         ctx.fillStyle = `rgba(0, 0, 0, ${f.life * alpha})`; 
         ctx.beginPath();
         ctx.arc(screenX, screenY, 5 * f.life, 0, Math.PI * 2); 
