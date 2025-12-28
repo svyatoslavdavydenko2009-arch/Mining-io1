@@ -401,6 +401,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const [lastMineTimeState, setLastMineTimeState] = useState(0);
   const [footsteps, setFootsteps] = useState<{id: number, x: number, y: number, life: number, brightness: number}[]>([]);
   const lastFootstepPos = useRef({ x: user.x, y: user.y });
+  const lastStepRef = useRef(0);
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [, setButtonUpdateTrigger] = useState(0); // Force re-renders for button
 
@@ -593,10 +594,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           // Spawn footstep synced with walk cycle
           const stepFreq = 0.2; // How often a step occurs in the walk cycle
           const currentStep = Math.floor(walkCycle.current / (Math.PI * stepFreq));
-          const lastStep = useRef(0);
           
-          if (currentStep !== lastStep.current) {
-            lastStep.current = currentStep;
+          if (currentStep !== lastStepRef.current) {
+            lastStepRef.current = currentStep;
             
             setFootsteps(prevSteps => {
               if (prevSteps.length > 60) return prevSteps.slice(-40); 
