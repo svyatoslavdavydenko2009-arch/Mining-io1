@@ -1036,97 +1036,97 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   ctx.lineWidth = 2;
                   
                   if (branchSide === 0) {
-                    // Right side (default)
-                    ctx.fillRect(dsx + TILE_SIZE - 6, dsy + 16, 6, 8);
+                    // Right side - horizontal branch going right
+                    ctx.fillRect(dsx + TILE_SIZE - 6, dsy + 18, 8, 6);
                     // Outline without left side
                     ctx.beginPath();
-                    ctx.moveTo(dsx + TILE_SIZE - 6, dsy + 16);
-                    ctx.lineTo(dsx + TILE_SIZE, dsy + 16);
+                    ctx.moveTo(dsx + TILE_SIZE - 6, dsy + 18);
+                    ctx.lineTo(dsx + TILE_SIZE + 2, dsy + 18);
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + TILE_SIZE, dsy + 16);
-                    ctx.lineTo(dsx + TILE_SIZE, dsy + 24);
+                    ctx.moveTo(dsx + TILE_SIZE + 2, dsy + 18);
+                    ctx.lineTo(dsx + TILE_SIZE + 2, dsy + 24);
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + TILE_SIZE, dsy + 24);
+                    ctx.moveTo(dsx + TILE_SIZE + 2, dsy + 24);
                     ctx.lineTo(dsx + TILE_SIZE - 6, dsy + 24);
                     ctx.stroke();
                     // Small tree
                     ctx.fillStyle = "#1b4d2b";
                     ctx.beginPath();
-                    ctx.roundRect(dsx + TILE_SIZE, dsy + 13, 14, 14, 3);
+                    ctx.roundRect(dsx + TILE_SIZE + 2, dsy + 13, 14, 14, 3);
                     ctx.fill();
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
                     ctx.stroke();
                   } else if (branchSide === 1) {
-                    // Bottom side
-                    ctx.fillRect(dsx + 16, dsy + TILE_SIZE - 6, 8, 6);
+                    // Bottom side - vertical branch going down
+                    ctx.fillRect(dsx + 18, dsy + TILE_SIZE - 6, 6, 8);
                     // Outline without top side
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 16, dsy + TILE_SIZE);
+                    ctx.moveTo(dsx + 18, dsy + TILE_SIZE);
                     ctx.lineTo(dsx + 24, dsy + TILE_SIZE);
                     ctx.stroke();
                     ctx.beginPath();
                     ctx.moveTo(dsx + 24, dsy + TILE_SIZE);
-                    ctx.lineTo(dsx + 24, dsy + TILE_SIZE - 6);
+                    ctx.lineTo(dsx + 24, dsy + TILE_SIZE + 2);
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 24, dsy + TILE_SIZE - 6);
-                    ctx.lineTo(dsx + 16, dsy + TILE_SIZE - 6);
+                    ctx.moveTo(dsx + 24, dsy + TILE_SIZE + 2);
+                    ctx.lineTo(dsx + 18, dsy + TILE_SIZE + 2);
                     ctx.stroke();
                     // Small tree
                     ctx.fillStyle = "#1b4d2b";
                     ctx.beginPath();
-                    ctx.roundRect(dsx + 9, dsy + TILE_SIZE, 14, 14, 3);
+                    ctx.roundRect(dsx + 13, dsy + TILE_SIZE + 2, 14, 14, 3);
                     ctx.fill();
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
                     ctx.stroke();
                   } else if (branchSide === 2) {
-                    // Left side
-                    ctx.fillRect(dsx, dsy + 16, 6, 8);
+                    // Left side - horizontal branch going left
+                    ctx.fillRect(dsx - 8, dsy + 18, 8, 6);
                     // Outline without right side
                     ctx.beginPath();
-                    ctx.moveTo(dsx, dsy + 16);
-                    ctx.lineTo(dsx + 6, dsy + 16);
+                    ctx.moveTo(dsx - 8, dsy + 18);
+                    ctx.lineTo(dsx, dsy + 18);
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx, dsy + 16);
+                    ctx.moveTo(dsx - 8, dsy + 18);
+                    ctx.lineTo(dsx - 8, dsy + 24);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(dsx - 8, dsy + 24);
                     ctx.lineTo(dsx, dsy + 24);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(dsx, dsy + 24);
-                    ctx.lineTo(dsx + 6, dsy + 24);
                     ctx.stroke();
                     // Small tree
                     ctx.fillStyle = "#1b4d2b";
                     ctx.beginPath();
-                    ctx.roundRect(dsx - 14, dsy + 13, 14, 14, 3);
+                    ctx.roundRect(dsx - 22, dsy + 13, 14, 14, 3);
                     ctx.fill();
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
                     ctx.stroke();
                   } else {
-                    // Top side
-                    ctx.fillRect(dsx + 16, dsy, 8, 6);
+                    // Top side - vertical branch going up
+                    ctx.fillRect(dsx + 18, dsy - 8, 6, 8);
                     // Outline without bottom side
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 16, dsy);
+                    ctx.moveTo(dsx + 18, dsy - 8);
+                    ctx.lineTo(dsx + 24, dsy - 8);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(dsx + 24, dsy - 8);
                     ctx.lineTo(dsx + 24, dsy);
                     ctx.stroke();
                     ctx.beginPath();
                     ctx.moveTo(dsx + 24, dsy);
-                    ctx.lineTo(dsx + 24, dsy + 6);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(dsx + 24, dsy + 6);
-                    ctx.lineTo(dsx + 16, dsy + 6);
+                    ctx.lineTo(dsx + 18, dsy);
                     ctx.stroke();
                     // Small tree
                     ctx.fillStyle = "#1b4d2b";
                     ctx.beginPath();
-                    ctx.roundRect(dsx + 9, dsy - 14, 14, 14, 3);
+                    ctx.roundRect(dsx + 13, dsy - 22, 14, 14, 3);
                     ctx.fill();
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
