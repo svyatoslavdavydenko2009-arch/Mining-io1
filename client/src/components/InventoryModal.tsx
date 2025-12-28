@@ -47,13 +47,13 @@ function ResourceIcon({ type, size = 56 }: { type: string, size?: number }) {
     );
   }
 
-  const iconSize = size * 0.85;
+  const iconSize = size * 0.95; // Increased by 10% from 0.85
   return (
     <div 
       className="flex items-center justify-center"
       style={{ width: size, height: size }}
     >
-      <StoneIcon size={iconSize} color={color} />
+      <StoneIcon size={iconSize} color="#57534e" />
     </div>
   );
 }
