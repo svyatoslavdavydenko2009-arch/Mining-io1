@@ -604,12 +604,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               const nextSteps = prevSteps.length > 50 ? prevSteps.slice(-40) : [...prevSteps];
               
               const side = (currentStepIndex === 0) ? 1 : -1;
-              const angle = Math.atan2(lookDir.dy, lookDir.dx) + Math.PI / 2;
-              const offset = 12; 
               
-              // World position of the footstep
-              const stepX = updatedX + (Math.cos(angle) * offset) / TILE_SIZE * side;
-              const stepY = updatedY + (Math.sin(angle) * offset) / TILE_SIZE * side;
+              // Create perpendicular vector to movement direction for left/right foot placement
+              // If moving (dx, dy), perpendicular is (-dy, dx) rotated 90 degrees
+              const perpX = -lookDir.dy;
+              const perpY = lookDir.dx;
+              
+              const offset = 12 / TILE_SIZE; // Offset in tile units
+              
+              // World position of the footstep - offset left or right from center
+              const stepX = updatedX + perpX * offset * side;
+              const stepY = updatedY + perpY * offset * side;
               
               return [
                 ...nextSteps,
