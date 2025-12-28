@@ -72,9 +72,10 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
         className="relative border-2 border-secondary rounded-md p-6 max-w-md w-full mx-4 animate-in slide-in-from-bottom-50 duration-300 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         style={{
+          backgroundColor: '#3f2817',
           background: `
-            linear-gradient(135deg, rgba(180, 83, 9, 0.3) 0%, transparent 50%),
-            linear-gradient(225deg, rgba(140, 65, 10, 0.2) 0%, transparent 50%),
+            linear-gradient(135deg, rgba(80, 50, 30, 0.4) 0%, transparent 50%),
+            linear-gradient(225deg, rgba(60, 40, 25, 0.3) 0%, transparent 50%),
             #3f2817
           `,
           backgroundAttachment: 'fixed'
@@ -104,31 +105,31 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
 
         <div className="relative z-10 space-y-6">
           <div className="border-t border-secondary/50 pt-6">
-            <p className="text-slate-800 dark:text-slate-700 text-2xl mb-5 font-black uppercase tracking-widest">Player</p>
+            <p className="text-white/90 text-2xl mb-5 font-black uppercase tracking-widest">Player</p>
             <div className="grid grid-cols-2 gap-6 text-2xl">
               <div>
-                <p className="text-slate-800 dark:text-slate-700 text-lg mb-2 uppercase font-black tracking-widest">Username</p>
-                <p className="text-slate-800 dark:text-slate-700 font-black antialiased text-2xl">{user.username}</p>
+                <p className="text-white/70 text-lg mb-2 uppercase font-black tracking-widest">Username</p>
+                <p className="text-white font-black antialiased text-2xl">{user.username}</p>
               </div>
               <div>
-                <p className="text-slate-800 dark:text-slate-700 text-lg mb-2 uppercase font-black tracking-widest">Playtime</p>
-                <p className="text-slate-800 dark:text-slate-700 font-black antialiased text-2xl">{playtime}</p>
+                <p className="text-white/70 text-lg mb-2 uppercase font-black tracking-widest">Playtime</p>
+                <p className="text-white font-black antialiased text-2xl">{playtime}</p>
               </div>
             </div>
           </div>
 
           <div className="border-t border-secondary/50 pt-6">
-            <p className="text-slate-800 dark:text-slate-700 text-2xl mb-5 font-black uppercase tracking-widest">Backpack</p>
+            <p className="text-white/90 text-2xl mb-5 font-black uppercase tracking-widest">Backpack</p>
             <div className="flex flex-wrap gap-10">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
                   <div key={item} className="flex flex-col items-center gap-3">
                     <ResourceIcon type={item} size={56} />
-                    <p className="text-gray-400 dark:text-gray-500 text-3xl font-black antialiased">{count}</p>
+                    <p className="text-white/80 text-3xl font-black antialiased">{count}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-gray-400 dark:text-gray-500 text-2xl font-black uppercase tracking-widest">Empty</p>
+                <p className="text-white/60 text-2xl font-black uppercase tracking-widest">Empty</p>
               )}
             </div>
           </div>
