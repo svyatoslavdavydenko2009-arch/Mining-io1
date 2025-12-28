@@ -1523,13 +1523,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 handleMineButtonClick();
               }}
               disabled={isMining || isOnCooldown}
-              className="w-18 h-18 bg-[#fbbf24] rounded-full border-4 border-[#b45309] shadow-[0_0_12px_rgba(0,0,0,0.5),inset_-3px_-3px_0_rgba(0,0,0,0.2)] flex items-center justify-center transition-all active:scale-90 disabled:opacity-50 disabled:grayscale pointer-events-auto"
+              className="w-24 h-24 bg-[#fbbf24] rounded-full border-4 border-[#b45309] shadow-[0_0_12px_rgba(0,0,0,0.5),inset_-3px_-3px_0_rgba(0,0,0,0.2)] flex items-center justify-center transition-all active:scale-90 disabled:opacity-50 disabled:grayscale pointer-events-auto"
             >
               <div className="absolute inset-0 rounded-full border-2 border-white/10 pointer-events-none" />
-              <div className="w-10 h-10 flex items-center justify-center relative">
+              <div className="w-14 h-14 flex items-center justify-center relative">
                 {/* Background circle inside button to mimic joystick knob look */}
                 <div className="absolute inset-0 border border-[#b45309]/30 rounded-full" />
-                <Pickaxe className="w-7 h-7 text-white drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.5)]" />
+                <Pickaxe className="w-10 h-10 text-white drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.5)]" />
               </div>
             </button>
           );
