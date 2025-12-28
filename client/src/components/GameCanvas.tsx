@@ -1080,10 +1080,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     ctx.stroke();
                   } else if (branchSide === 2) {
                     // Left side
-                    ctx.fillRect(dsx, dsy + 16, 6, 8); // Moved from +2 to 0 (2px left)
+                    ctx.fillRect(dsx, dsy + 16, 6, 8); // Branch trunk
                     ctx.beginPath();
                     ctx.moveTo(dsx, dsy + 16);
-                    ctx.lineTo(dsx + 4, dsy + 16); // Adjusted to match new rect position
+                    ctx.lineTo(dsx + 6, dsy + 16); // Lengthened outline by 2px (from 4 to 6)
                     ctx.stroke();
                     ctx.beginPath();
                     ctx.moveTo(dsx, dsy + 16);
@@ -1091,11 +1091,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     ctx.stroke();
                     ctx.beginPath();
                     ctx.moveTo(dsx, dsy + 24);
-                    ctx.lineTo(dsx + 4, dsy + 24); // Adjusted to match new rect position
+                    ctx.lineTo(dsx + 6, dsy + 24); // Lengthened outline by 2px (from 4 to 6)
                     ctx.stroke();
                     ctx.fillStyle = "#1b4d2b";
                     ctx.beginPath();
-                    ctx.roundRect(dsx - 14, dsy + 13, 14, 14, 3); // Moved from -12 to -14 (2px left)
+                    ctx.roundRect(dsx - 14, dsy + 13, 14, 14, 3);
                     ctx.fill();
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
