@@ -1033,30 +1033,29 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         }
         
         // Calculate fade-out effect after 2 footsteps
-        // Latest 2 footsteps are fully visible, older ones smoothly fade out
+        // Latest 2 footsteps are fully visible, older ones smoothly fade out based on their age (life)
         const footstepsCount = footsteps.length;
-        let fadeFactor = 1;
         
         // distanceFromEnd: 0 = newest step, length-1 = oldest step
         const distanceFromEnd = footstepsCount - 1 - index;
         
+        // First 2 steps use life directly, others use life with cubic easing for smoother fade
+        let fadeFactor = f.life;
         if (distanceFromEnd >= 2) {
-          // Older than 2 steps: fade out smoothly over next 4 steps
-          // distanceFromEnd 2->6 should fade fadeFactor 1->0 (smooth curve)
-          const fadeProgress = (distanceFromEnd - 2) / 4;
-          // Use easing for smoother fade: 1 - x^2 creates a smoother curve
-          fadeFactor = Math.max(0, 1 - fadeProgress * fadeProgress);
+          // After 2 steps: apply cubic curve for ultra-smooth fade-out
+          // f.life goes from 1.0 -> 0.0, and we apply x^3 for a smooth acceleration of fade
+          fadeFactor = f.life * f.life * f.life;
         }
         
         // Draw footsteps 20% smaller (6.4px instead of 8px)
         ctx.fillStyle = footstepColor;
         ctx.beginPath();
-        const footstepRadius = 6.4 * f.life * fadeFactor; // 20% smaller, with fade
+        const footstepRadius = 6.4 * fadeFactor; // 20% smaller, smooth fade based on time
         ctx.arc(screenX, screenY, footstepRadius, 0, Math.PI * 2); 
         ctx.fill();
         
         // Outline matching hand outline style - black with opacity 0.55
-        ctx.strokeStyle = `rgba(0, 0, 0, ${0.55 * f.life * fadeFactor})`;
+        ctx.strokeStyle = `rgba(0, 0, 0, ${0.55 * fadeFactor})`;
         ctx.lineWidth = 2.5;
         ctx.stroke();
       });
