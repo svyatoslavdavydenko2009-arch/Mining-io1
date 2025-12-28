@@ -402,6 +402,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const [footsteps, setFootsteps] = useState<{id: number, x: number, y: number, life: number, brightness: number}[]>([]);
   const lastFootstepPos = useRef({ x: user.x, y: user.y });
   const lastStepRef = useRef(0);
+  const lastStepIndex = useRef(-1);
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [, setButtonUpdateTrigger] = useState(0); // Force re-renders for button
 
@@ -593,17 +594,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           
           // Spawn footstep synced with walk cycle
           const stepFreq = 0.2; // How often a step occurs in the walk cycle
-          const currentStep = Math.floor(walkCycle.current / (Math.PI * stepFreq));
+          const currentCycle = walkCycle.current % (Math.PI * 2);
+          const stepThreshold = Math.PI; // Half-way point for the second step
           
-          if (currentStep !== lastStepRef.current) {
-            lastStepRef.current = currentStep;
+          // Determine which step we are on (0 or 1)
+          const currentStepIndex = currentCycle < stepThreshold ? 0 : 1;
+          
+          if (currentStepIndex !== lastStepIndex.current && isWalking) {
+            lastStepIndex.current = currentStepIndex;
             
             setFootsteps(prevSteps => {
               if (prevSteps.length > 60) return prevSteps.slice(-40); 
               
-              // Alternating sides: 1 for right, -1 for left
-              // Even steps = Right, Odd steps = Left
-              const side = (currentStep % 2 === 0) ? 1 : -1;
+              // Alternating sides: 1 for right (step 0), -1 for left (step 1)
+              const side = (currentStepIndex === 0) ? 1 : -1;
               const angle = Math.atan2(lookDir.dy, lookDir.dx) + Math.PI / 2;
               const offset = 12; // Distance from center for each foot
               
