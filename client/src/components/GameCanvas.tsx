@@ -914,8 +914,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
           
-          // Skip if off screen
-          if (sx + TILE_SIZE < 0 || sx > rect.width || sy + TILE_SIZE < 0 || sy > rect.height) continue;
+          // Skip if off screen (with padding for large trees/branches)
+          const PADDING = TILE_SIZE * 2.5; 
+          if (sx + TILE_SIZE + PADDING < 0 || sx - PADDING > rect.width || sy + TILE_SIZE + PADDING < 0 || sy - PADDING > rect.height) continue;
           
           const color = getFloorColor(wx, wy);
           if (!biomeTiles[color]) biomeTiles[color] = [];
@@ -964,13 +965,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         });
 
       // Render Resources and Rocks in a separate pass
-      for (let wy = startY - 1; wy <= endY + 1; wy++) {
-        for (let wx = startX - 1; wx <= endX + 1; wx++) {
+      for (let wy = startY - 3; wy <= endY + 3; wy++) {
+        for (let wx = startX - 3; wx <= endX + 3; wx++) {
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
           
           // Draw ground (slightly outside visible area)
-          if (sx + TILE_SIZE >= 0 && sx <= rect.width && sy + TILE_SIZE >= 0 && sy <= rect.height) {
+          if (sx + TILE_SIZE + 48 >= 0 && sx - 48 <= rect.width && sy + TILE_SIZE + 48 >= 0 && sy - 48 <= rect.height) {
             ctx.fillStyle = getFloorColor(wx, wy);
             ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
           }
