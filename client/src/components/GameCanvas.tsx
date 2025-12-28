@@ -484,11 +484,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             if (distSq < scaledCollisionDist) return true;
           }
           
-          // Check for large boulders (hexagon rocks) - LARGE collision radius
+          // Check for large boulders (hexagon rocks) - same collision as stone
           if (isBoulderTile(ntx, nty)) {
-            // Use large fixed radius to ensure boulders are always impassable
-            // Radius of 1.0 tile - much larger than boulder visual size
-            const scaledCollisionDist = 1.0;
+            const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
+            const rockScale = 0.7 + sizeSeed * 1.5;
+            const scaledCollisionDist = COLLISION_DISTANCE_SQ * rockScale;
             
             if (distSq < scaledCollisionDist) return true;
           }
