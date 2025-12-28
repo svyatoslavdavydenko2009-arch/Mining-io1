@@ -1020,15 +1020,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         }
         
         // Calculate fade-out effect after 5 footsteps
-        // Oldest 5 footsteps are fully visible, then smoothly fade out
+        // Latest 5 footsteps are fully visible, older ones smoothly fade out
         const footstepsCount = footsteps.length;
         let fadeFactor = 1;
-        if (footstepsCount > 5) {
-          const stepsAfterFive = footstepsCount - index - 1; // Steps remaining after this one
-          if (stepsAfterFive < 5) {
-            // Smooth fade: 5->0 steps remaining = 1->0 opacity
-            fadeFactor = stepsAfterFive / 5;
-          }
+        
+        // distanceFromEnd: 0 = newest step, length-1 = oldest step
+        const distanceFromEnd = footstepsCount - 1 - index;
+        
+        if (distanceFromEnd >= 5) {
+          // Older than 5 steps: fade out smoothly
+          // distanceFromEnd 5->10 should fade fadeFactor 1->0
+          fadeFactor = Math.max(0, 1 - ((distanceFromEnd - 5) / 5));
         }
         
         // Draw footsteps 20% smaller (6.4px instead of 8px)
