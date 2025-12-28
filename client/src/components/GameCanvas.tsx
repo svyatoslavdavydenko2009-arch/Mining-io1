@@ -593,11 +593,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           if (canMoveY) updatedY = nextY;
           
           // Spawn footstep synced with walk cycle
-          // walkCycle.current goes from 0 to 2*PI during one full walk cycle
-          const cycle = walkCycle.current % (Math.PI * 2);
-          
-          // Step 0: 0 to PI (Right foot)
-          // Step 1: PI to 2*PI (Left foot)
+          const cycle = (walkCycle.current % (Math.PI * 2));
           const currentStepIndex = cycle < Math.PI ? 0 : 1;
           
           if (currentStepIndex !== lastStepIndex.current && isWalking) {
@@ -610,7 +606,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               const angle = Math.atan2(lookDir.dy, lookDir.dx) + Math.PI / 2;
               const offset = 14; 
               
-              // Correct positioning: apply offset based on angle
               const stepX = updatedX + (Math.cos(angle) * offset) / TILE_SIZE * side;
               const stepY = updatedY + (Math.sin(angle) * offset) / TILE_SIZE * side;
               
@@ -1009,13 +1004,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Draw footsteps
       footsteps.forEach(f => {
-        const fdx = cx + (f.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
-        const fdy = cy + (f.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
+        const fdx = (f.x - displayPos.x) * TILE_SIZE + cx;
+        const fdy = (f.y - displayPos.y) * TILE_SIZE + cy;
         
-        // Footsteps are now small dark circles per user request
         ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.4})`; 
         ctx.beginPath();
-        ctx.arc(fdx + 16, fdy + 16, 5 * f.life, 0, Math.PI * 2); 
+        ctx.arc(fdx, fdy, 5 * f.life, 0, Math.PI * 2); 
         ctx.fill();
       });
 
