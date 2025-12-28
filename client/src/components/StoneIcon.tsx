@@ -17,7 +17,7 @@ export function StoneIcon({ size = 24, color = "#78716c" }: StoneIconProps) {
     >
       {/* Pentagon stone shape with outline */}
       <polygon
-        points="12,2 22,11 18,22 6,22 2,11"
+        points="12,2 22,10 18,22 6,22 2,10"
         fill={color}
         stroke="rgba(0,0,0,0.4)"
         strokeWidth="1.5"
