@@ -1031,17 +1031,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   ctx.fillStyle = "#6b4423";
                   ctx.fillRect(dsx + TILE_SIZE - 8, dsy + 12, 6, 8);
                   
-                  // Add eyes (darker spots) for character
-                  ctx.fillStyle = "#0d3b1f";
-                  const eyeRadius = 2.5;
-                  // Left eye
-                  ctx.beginPath();
-                  ctx.arc(dsx + 10, dsy + 11, eyeRadius, 0, Math.PI * 2);
-                  ctx.fill();
-                  // Right eye
-                  ctx.beginPath();
-                  ctx.arc(dsx + 22, dsy + 11, eyeRadius, 0, Math.PI * 2);
-                  ctx.fill();
+                  // Add small tree on the branch (mini foliage)
+                  ctx.fillStyle = "#1b4d2b";
+                  ctx.fillRect(dsx + TILE_SIZE - 2, dsy + 8, 6, 6);
+                  ctx.strokeStyle = "rgba(0,0,0,0.4)";
+                  ctx.lineWidth = 1;
+                  ctx.strokeRect(dsx + TILE_SIZE - 2, dsy + 8, 6, 6);
                 }
               } else {
                 ctx.fillStyle = "#444";
