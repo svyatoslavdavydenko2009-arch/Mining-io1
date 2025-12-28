@@ -95,19 +95,19 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
               lineHeight: '1.1'
             }}>Crafting</p>
             
-            {/* Crafting Grid matching the image style - 4x2 size */}
+            {/* Crafting Grid matching the image style - 2x2 size */}
             <div 
-              className="grid grid-cols-4 gap-1.5 p-2 rounded-md shadow-xl" 
+              className="grid grid-cols-2 gap-3 p-3 rounded-md shadow-xl w-fit mx-auto" 
               style={{ 
                 backgroundColor: '#7d5c3d', 
                 border: '3px solid #2a1b0e', 
                 boxShadow: 'inset 0 0 10px rgba(0,0,0,0.4)'
               }}
             >
-              {[...Array(8)].map((_, i) => (
+              {[...Array(4)].map((_, i) => (
                 <div 
                   key={i} 
-                  className="aspect-square rounded-sm flex items-center justify-center transition-all hover:brightness-110 cursor-pointer"
+                  className="w-16 h-16 rounded-sm flex items-center justify-center transition-all hover:brightness-110 cursor-pointer"
                   style={{ 
                     backgroundColor: '#e6cc9b', 
                     border: '1.5px solid #5d432c', 
