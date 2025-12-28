@@ -1140,13 +1140,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.fillStyle = "#1b4d2b";
                 ctx.beginPath(); ctx.roundRect(dsx - 14, dsy + 13, 14, 14, 3); ctx.fill(); ctx.stroke();
               } else {
-                // Top side trunk - aligns with top edge of tree (dsy + 6)
-                ctx.fillRect(dsx + 16, dsy, 8, 6);
-                ctx.beginPath(); ctx.moveTo(dsx + 16, dsy); ctx.lineTo(dsx + 24, dsy); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(dsx + 24, dsy); ctx.lineTo(dsx + 24, dsy + 6); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(dsx + 24, dsy + 6); ctx.lineTo(dsx + 16, dsy + 6); ctx.stroke();
+                // Top side trunk - aligns with top edge of tree (dsy + 6), trunk goes upward
+                ctx.fillRect(dsx + 16, dsy - 6, 8, 6);
+                ctx.beginPath(); ctx.moveTo(dsx + 16, dsy); ctx.lineTo(dsx + 16, dsy - 6); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + 16, dsy - 6); ctx.lineTo(dsx + 24, dsy - 6); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + 24, dsy - 6); ctx.lineTo(dsx + 24, dsy); ctx.stroke();
                 ctx.fillStyle = "#1b4d2b";
-                ctx.beginPath(); ctx.roundRect(dsx + 13, dsy - 14, 14, 14, 3); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.roundRect(dsx + 13, dsy - 20, 14, 14, 3); ctx.fill(); ctx.stroke();
               }
             }
           } else {
