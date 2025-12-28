@@ -1000,22 +1000,35 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         }
       }
 
-      // Draw footsteps - HIGHLY VISIBLE for debugging
+      // Draw footsteps with biome-aware coloring
       ctx.save();
       footsteps.forEach(f => {
         const screenX = cx + (f.x - displayPos.x) * TILE_SIZE;
         const screenY = cy + (f.y - displayPos.y) * TILE_SIZE;
         
-        // Very dark/opaque footsteps for maximum visibility
-        ctx.fillStyle = `rgba(0, 0, 0, ${Math.min(1, f.life * 1.2)})`; 
+        // Determine biome at footstep location for color
+        const isRocky = isRockyBiome(Math.round(f.x), Math.round(f.y));
+        
+        // Footstep colors based on biome
+        let footstepColor;
+        if (isRocky) {
+          // Dark grey/dark brown for rocky biome
+          footstepColor = "rgb(60, 50, 40)"; // Dark brown for rocky areas
+        } else {
+          // Brown for plains biome
+          footstepColor = "rgb(101, 67, 33)"; // Brown color for plains
+        }
+        
+        // Draw footsteps the size of a hand (hand is 6px, make footsteps ~8px radius for visibility)
+        ctx.fillStyle = footstepColor;
         ctx.beginPath();
-        // Much larger circles - at least 24 pixels
-        ctx.arc(screenX, screenY, Math.max(24, 24 * f.life), 0, Math.PI * 2); 
+        const footstepRadius = 8 * f.life; // Size proportional to hand, fades out
+        ctx.arc(screenX, screenY, footstepRadius, 0, Math.PI * 2); 
         ctx.fill();
         
-        // DEBUG: Add an outline so we can see each footstep clearly
-        ctx.strokeStyle = `rgba(255, 0, 0, ${f.life * 0.8})`;
-        ctx.lineWidth = 2;
+        // Outline matching hand outline style - black with opacity 0.55
+        ctx.strokeStyle = `rgba(0, 0, 0, ${0.55 * f.life})`;
+        ctx.lineWidth = 2.5;
         ctx.stroke();
       });
       ctx.restore();
