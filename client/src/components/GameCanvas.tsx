@@ -1528,7 +1528,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               <div className="absolute inset-0 rounded-full border-2 border-white/10 pointer-events-none" />
               <div className="w-14 h-14 flex items-center justify-center relative">
                 {/* Background circle inside button to mimic joystick knob look */}
-                <div className="absolute inset-0 border border-[#b45309]/30 rounded-full" />
+                <div className="absolute inset-0 border-4 border-[#b45309]/40 rounded-full" />
                 <Pickaxe className="w-10 h-10 text-white drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.5)]" />
               </div>
             </button>
