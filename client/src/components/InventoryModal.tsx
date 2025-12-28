@@ -27,14 +27,16 @@ function ResourceIcon({ type, size = 56 }: { type: string, size?: number }) {
   const color = resource?.color || "#78716c";
 
   if (type === "wood") {
+    const iconSize = size * 0.85;
     return (
       <div 
         style={{ 
-          width: size, 
-          height: size, 
+          width: iconSize, 
+          height: iconSize, 
           backgroundColor: color,
           borderRadius: '8px',
-          border: '2px solid #064e3b'
+          boxShadow: '0 0 0 4px rgba(0, 0, 0, 0.3)',
+          border: '2px solid rgba(0, 0, 0, 0.4)'
         }} 
       />
     );
