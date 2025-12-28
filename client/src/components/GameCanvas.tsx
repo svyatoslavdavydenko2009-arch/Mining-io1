@@ -972,6 +972,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           // Skip if off screen
           if (sx + TILE_SIZE < 0 || sx > rect.width || sy + TILE_SIZE < 0 || sy > rect.height) continue;
 
+          // Draw ground
+          ctx.fillStyle = getFloorColor(wx, wy);
+          ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+
+          // Draw footsteps
+          footsteps.forEach(f => {
+            const fdx = cx + (f.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
+            const fdy = cy + (f.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
+            
+            // Only draw if within reasonable distance of this tile
+            if (Math.abs(f.x - wx) < 2 && Math.abs(f.y - wy) < 2) {
+              ctx.fillStyle = `rgba(101, 67, 33, ${f.life * 0.4})`;
+              ctx.beginPath();
+              ctx.arc(fdx + 16, fdy + 28, 4 * f.life, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          });
+
           const tileKey = `${wx},${wy}`;
           // Skip if tile is being removed or already mined
           if (!isTileMined(wx, wy) && !tilesDisappearingStartTime.current[tileKey]) {
