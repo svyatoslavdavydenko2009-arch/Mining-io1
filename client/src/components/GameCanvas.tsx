@@ -1169,8 +1169,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             const hp = smoothH / mh;
             const healthBarAlpha = Math.max(0, Math.min(1, (mh - smoothH) * 0.5));
             const barWidth = (TILE_SIZE - 8) * rockScale;
-            const barX = dsx + TILE_SIZE / 2 - barWidth / 2;
-            const barY = dsy + TILE_SIZE / 2 + ((TILE_SIZE - 8) / 2) * rockScale + 4;
+            // Position health bar without shake effect
+            const barX = sx + TILE_SIZE / 2 - barWidth / 2 + (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12;
+            const barY = sy + TILE_SIZE / 2 + ((TILE_SIZE - 8) / 2) * rockScale + 4 + (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12;
             
             // Draw background bar
             ctx.fillStyle = `rgba(0,0,0,${0.5 * healthBarAlpha})`; 
@@ -1213,7 +1214,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             ctx.fillStyle = `rgba(${colorR},${colorG},${colorB},${healthBarAlpha})`; 
             ctx.beginPath(); ctx.roundRect(barX, barY, barWidth * hp, 5, 2); ctx.fill();
             ctx.strokeStyle = `rgba(0,0,0,${0.55 * healthBarAlpha})`;
-            ctx.lineWidth = 1.5;
+            ctx.lineWidth = 2.5;
             ctx.stroke();
           }
         }
