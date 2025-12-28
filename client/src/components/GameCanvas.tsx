@@ -1036,10 +1036,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             const shakeElapsed = performance.now() - shakeStartTime;
             if (shakeElapsed < 150) {
               const shakeProgress = shakeElapsed / 150;
-              const shakeDecay = Math.cos(shakeProgress * Math.PI / 2);
-              const shakeAmount = 6 * shakeDecay;
-              shake.x = Math.sin(shakeElapsed / 20) * shakeAmount;
-              shake.y = Math.cos(shakeElapsed / 20) * shakeAmount;
+              const shakeDecay = Math.pow(1 - shakeProgress, 1.5); // Smoother exponential decay
+              const shakeAmount = 4 * shakeDecay; // Reduced from 6 to 4 (2px weaker)
+              shake.x = Math.sin(shakeElapsed / 15) * shakeAmount; // Increased frequency for "tighter" feel
+              shake.y = Math.cos(shakeElapsed / 15) * shakeAmount;
             }
           }
           
