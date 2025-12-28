@@ -107,6 +107,13 @@ function isBoulderTile(x: number, y: number): boolean {
 
 // Generate biome floor colors - plains and rocky biomes
 function getFloorColor(x: number, y: number): string {
+  // Check if in a tree zone (for darker grass)
+  const groupZoneSize = 25;
+  const groupZoneX = Math.floor(x / groupZoneSize);
+  const groupZoneY = Math.floor(y / groupZoneSize);
+  const groupChance = pseudoRandom(groupZoneX + 8000, groupZoneY + 8000);
+  const isForestZone = groupChance <= 0.65; // 35% zones have trees
+  
   // Rocky biome generation - MUST match getTileAt scale and threshold
   // Use coarse scale 0.03 for large regional biomes (not scattered patches)
   // Threshold 0.80 = rare but large mountain regions when they appear
@@ -149,6 +156,13 @@ function getFloorColor(x: number, y: number): string {
         r = Math.round(r * (1 - t * 0.1) + 90 * t * 0.1);
         g = Math.round(g * (1 - t * 0.1) + 150 * t * 0.1);
         b = Math.round(b * (1 - t * 0.1) + 95 * t * 0.1);
+      }
+
+      // Darken grass in forest zones
+      if (isForestZone) {
+        r = Math.round(r * 0.7);
+        g = Math.round(g * 0.7);
+        b = Math.round(b * 0.7);
       }
 
       return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
@@ -212,6 +226,13 @@ function getFloorColor(x: number, y: number): string {
     r = Math.round(r * (1 - t * 0.1) + 90 * t * 0.1);
     g = Math.round(g * (1 - t * 0.1) + 150 * t * 0.1);
     b = Math.round(b * (1 - t * 0.1) + 95 * t * 0.1);
+  }
+
+  // Darken grass in forest zones
+  if (isForestZone) {
+    r = Math.round(r * 0.7);
+    g = Math.round(g * 0.7);
+    b = Math.round(b * 0.7);
   }
 
   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
