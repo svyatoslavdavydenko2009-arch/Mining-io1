@@ -1058,22 +1058,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     ctx.stroke();
                   } else if (branchSide === 1) {
                     // Bottom side
-                    ctx.fillRect(dsx + 16, dsy + TILE_SIZE - 6, 8, 6);
+                    ctx.fillRect(dsx + 20, dsy + TILE_SIZE - 6, 8, 14); // Trunk points straight down (8x14)
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 16, dsy + TILE_SIZE);
-                    ctx.lineTo(dsx + 24, dsy + TILE_SIZE);
+                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE);
+                    ctx.lineTo(dsx + 20, dsy + TILE_SIZE + 8);
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 24, dsy + TILE_SIZE);
-                    ctx.lineTo(dsx + 24, dsy + TILE_SIZE + 6);
+                    ctx.moveTo(dsx + 28, dsy + TILE_SIZE);
+                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE + 8);
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 24, dsy + TILE_SIZE + 6);
-                    ctx.lineTo(dsx + 16, dsy + TILE_SIZE + 6);
+                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE + 8);
+                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE + 8);
                     ctx.stroke();
+                    
                     ctx.fillStyle = "#1b4d2b";
                     ctx.beginPath();
-                    ctx.roundRect(dsx + 9, dsy + TILE_SIZE + 6, 14, 14, 3);
+                    ctx.roundRect(dsx + 17, dsy + TILE_SIZE + 8, 14, 14, 3);
                     ctx.fill();
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
