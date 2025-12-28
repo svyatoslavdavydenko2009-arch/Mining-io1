@@ -417,7 +417,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const interval = setInterval(() => {
       setFootsteps(prev => {
         if (prev.length === 0) return prev;
-        const next = prev.map(f => ({ ...f, life: f.life - 0.04 })).filter(f => f.life > 0);
+        const next = prev.map(f => ({ ...f, life: f.life - 0.02 })).filter(f => f.life > 0);
         return next;
       });
     }, 100);
@@ -624,9 +624,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               const stepX = updatedX + perpX * offset * side;
               const stepY = updatedY + perpY * offset * side;
               
+              // 50% chance for the footstep to be slightly lighter
+              const brightness = Math.random() > 0.5 ? 0.6 : 0.5;
+              
               return [
                 ...nextSteps,
-                { id: Math.random(), x: stepX, y: stepY, life: 1.0, brightness: 0.5 }
+                { id: Math.random(), x: stepX, y: stepY, life: 1.0, brightness }
               ];
             });
           }
@@ -1047,10 +1050,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           fadeFactor = f.life * f.life * f.life;
         }
         
-        // Draw footsteps 20% smaller (6.4px instead of 8px)
+        // Draw footsteps 30% smaller (5.76px instead of 8px)
         ctx.fillStyle = footstepColor;
         ctx.beginPath();
-        const footstepRadius = 6.4 * fadeFactor; // 20% smaller, smooth fade based on time
+        const footstepRadius = 5.76 * fadeFactor; // 30% smaller, smooth fade based on time
         ctx.arc(screenX, screenY, footstepRadius, 0, Math.PI * 2); 
         ctx.fill();
         
