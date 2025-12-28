@@ -1024,6 +1024,25 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.lineWidth = 2;
                 ctx.beginPath(); ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 8); ctx.fill();
                 ctx.stroke();
+                
+                // Add texture details for larger trees (scale > 1.4)
+                if (rockScale > 1.4) {
+                  // Add branch sticking out
+                  ctx.fillStyle = "#6b4423";
+                  ctx.fillRect(dsx + TILE_SIZE - 8, dsy + 12, 6, 8);
+                  
+                  // Add eyes (darker spots) for character
+                  ctx.fillStyle = "#0d3b1f";
+                  const eyeRadius = 2.5;
+                  // Left eye
+                  ctx.beginPath();
+                  ctx.arc(dsx + 10, dsy + 11, eyeRadius, 0, Math.PI * 2);
+                  ctx.fill();
+                  // Right eye
+                  ctx.beginPath();
+                  ctx.arc(dsx + 22, dsy + 11, eyeRadius, 0, Math.PI * 2);
+                  ctx.fill();
+                }
               } else {
                 ctx.fillStyle = "#444";
                 ctx.beginPath(); ctx.roundRect(dsx + 4, dsy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
