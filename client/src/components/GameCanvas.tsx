@@ -610,9 +610,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               const stepX = updatedX + (Math.cos(angle) * offset) / TILE_SIZE * side;
               const stepY = updatedY + (Math.sin(angle) * offset) / TILE_SIZE * side;
               
+              // Determine brightness based on biome floor color
+              const floorColor = getFloorColor(updatedX, updatedY);
+              const isPlains = floorColor.includes("rgb(86") || floorColor.includes("rgb(68") || floorColor.includes("rgb(54");
+              const footstepAlpha = isPlains ? 0.25 : 0.35;
+              const footstepBrightness = isPlains ? 0.3 : 0.5;
+
               return [
                 ...nextSteps,
-                { id: Math.random(), x: stepX, y: stepY, life: 1.0, brightness: 0.5 }
+                { id: Math.random(), x: stepX, y: stepY, life: 1.0, brightness: footstepBrightness, alpha: footstepAlpha }
               ];
             });
           }
@@ -1015,7 +1021,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const screenY = cy + (f.y - displayPos.y) * TILE_SIZE;
         
         // Footsteps: simple dark circles that fade out
-        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.35})`; 
+        const alpha = (f as any).alpha || 0.35;
+        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * alpha})`; 
         ctx.beginPath();
         ctx.arc(screenX, screenY, 5 * f.life, 0, Math.PI * 2); 
         ctx.fill();
