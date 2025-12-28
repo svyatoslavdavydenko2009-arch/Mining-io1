@@ -69,7 +69,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
       onClick={() => onOpenChange(false)}
     >
       <div 
-        className="relative border-2 border-secondary rounded-md p-6 max-w-md w-full mx-4 animate-in slide-in-from-bottom-50 duration-300 overflow-hidden"
+        className="relative border-2 border-secondary rounded-md p-4 max-w-sm w-full mx-4 animate-in slide-in-from-bottom-50 duration-300 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         style={{
           backgroundColor: '#3f2817',
@@ -86,22 +86,22 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
           className="absolute inset-0 opacity-10 pointer-events-none"
         />
 
-        <div className="relative z-10 space-y-8">
-          <div className="pt-0 -mx-6 px-6">
-            <p className="text-white text-5xl mb-6 mt-2 font-bold uppercase tracking-tighter font-sans antialiased" style={{ 
+        <div className="relative z-10 space-y-4">
+          <div className="pt-0 -mx-4 px-4">
+            <p className="text-white text-3xl mb-3 mt-1 font-bold uppercase tracking-tighter font-sans antialiased" style={{ 
               textRendering: 'optimizeLegibility', 
               WebkitFontSmoothing: 'antialiased',
-              letterSpacing: '-0.02em',
-              lineHeight: '1.2'
+              letterSpacing: '-0.01em',
+              lineHeight: '1.1'
             }}>Crafting</p>
             
             {/* Crafting Grid matching the image style - 4x2 size */}
             <div 
-              className="grid grid-cols-4 gap-2 p-3 rounded-md shadow-2xl" 
+              className="grid grid-cols-4 gap-1.5 p-2 rounded-md shadow-xl" 
               style={{ 
-                backgroundColor: '#7d5c3d', // Outer brown frame color from image
-                border: '4px solid #2a1b0e', // Darker thick outer border
-                boxShadow: 'inset 0 0 15px rgba(0,0,0,0.4)'
+                backgroundColor: '#7d5c3d', 
+                border: '3px solid #2a1b0e', 
+                boxShadow: 'inset 0 0 10px rgba(0,0,0,0.4)'
               }}
             >
               {[...Array(8)].map((_, i) => (
@@ -109,9 +109,9 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
                   key={i} 
                   className="aspect-square rounded-sm flex items-center justify-center transition-all hover:brightness-110 cursor-pointer"
                   style={{ 
-                    backgroundColor: '#e6cc9b', // Light beige/yellow cell color from image
-                    border: '2px solid #5d432c', // Inner grid line color
-                    boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.2)'
+                    backgroundColor: '#e6cc9b', 
+                    border: '1.5px solid #5d432c', 
+                    boxShadow: 'inset 1px 1px 2px rgba(0,0,0,0.1)'
                   }}
                 >
                   <div className="w-full h-full opacity-0 hover:opacity-100 bg-white/10 transition-opacity" />
@@ -120,26 +120,26 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
             </div>
           </div>
 
-          <div className="pt-6 bg-black/40 -mx-6 px-6 pb-8 rounded-t-xl">
-            <p className="text-white text-5xl mb-10 mt-2 font-bold uppercase tracking-tighter font-sans antialiased" style={{ 
+          <div className="pt-4 bg-black/40 -mx-4 px-4 pb-6 rounded-t-lg">
+            <p className="text-white text-3xl mb-6 mt-1 font-bold uppercase tracking-tighter font-sans antialiased" style={{ 
               textRendering: 'optimizeLegibility', 
               WebkitFontSmoothing: 'antialiased',
-              letterSpacing: '-0.02em',
-              lineHeight: '1.2'
+              letterSpacing: '-0.01em',
+              lineHeight: '1.1'
             }}>Backpack</p>
-            <div className="flex flex-wrap gap-12">
+            <div className="flex flex-wrap gap-6">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
-                  <div key={item} className="flex flex-col items-center gap-4">
-                    <ResourceIcon type={item} size={64} />
-                    <p className="text-white text-4xl font-bold font-sans antialiased" style={{ 
+                  <div key={item} className="flex flex-col items-center gap-2">
+                    <ResourceIcon type={item} size={48} />
+                    <p className="text-white text-2xl font-bold font-sans antialiased" style={{ 
                       textRendering: 'optimizeLegibility',
                       WebkitFontSmoothing: 'antialiased'
                     }}>{count}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-white/60 text-3xl font-bold uppercase tracking-widest font-sans antialiased">Empty</p>
+                <p className="text-white/60 text-xl font-bold uppercase tracking-widest font-sans antialiased">Empty</p>
               )}
             </div>
           </div>
@@ -147,7 +147,7 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
 
         <button
           onClick={() => onOpenChange(false)}
-          className="relative z-10 w-full mt-10 p-4 bg-black/60 hover:bg-black/80 border-2 border-secondary rounded-md text-slate-800 dark:text-slate-700 transition-all active:scale-95 text-xl font-black uppercase tracking-widest"
+          className="relative z-10 w-full mt-4 p-3 bg-black/60 hover:bg-black/80 border-2 border-secondary rounded-md text-white transition-all active:scale-95 text-lg font-black uppercase tracking-widest"
         >
           Close
         </button>
