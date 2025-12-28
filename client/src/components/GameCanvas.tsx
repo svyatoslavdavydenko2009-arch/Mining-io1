@@ -1003,14 +1003,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         ctx.fill();
       });
 
-      // Now draw resources in sorted order
-      resourcesToRender.forEach(({ wx, wy, resType }) => {
-        const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
-        const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
-        const tileKey = `${wx},${wy}`;
+          // Now draw resources in sorted order
+          resourcesToRender.forEach(({ wx, wy, resType }: { wx: number, wy: number, resType: ResourceType | null }) => {
+            const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
+            const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+            const tileKey = `${wx},${wy}`;
 
-        if (resType) {
-          const res = RESOURCES[resType]; 
+            if (resType) {
+              const res = RESOURCES[resType as keyof typeof RESOURCES]; 
           let shake = { x: 0, y: 0 };
           const shakeStartTime = shakingTilesStartTime.current[tileKey];
           if (shakeStartTime !== undefined) {
