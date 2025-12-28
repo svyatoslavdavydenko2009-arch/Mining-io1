@@ -33,11 +33,15 @@
 
 @layer base {
   body {
-    @apply bg-background text-foreground antialiased overflow-hidden fixed inset-0;
+    @apply bg-background text-foreground antialiased overflow-hidden fixed inset-0 select-none;
     font-family: 'VT323', monospace;
     font-size: 1.25rem;
     image-rendering: pixelated; /* Critical for pixel art look */
     touch-action: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
