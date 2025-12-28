@@ -965,339 +965,209 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         });
 
       // Render Resources and Rocks in a separate pass
+      const resourcesToRender: any[] = [];
+      for (let wy = startY - 3; wy <= endY + 3; wy++) {
+        for (let wx = startX - 3; wx <= endX + 3; wx++) {
+          const resType = getTileAt(wx, wy);
+          const isMined = isTileMined(wx, wy);
+          const isDisappearing = tilesDisappearingStartTime.current[`${wx},${wy}`];
+          
+          if ((resType && !isMined && !isDisappearing) || isRockyBiome(wx, wy)) {
+            resourcesToRender.push({ wx, wy, resType });
+          }
+        }
+      }
+
+      // Sort resources by Y coordinate to ensure correct overlapping (top to bottom)
+      resourcesToRender.sort((a, b) => a.wy - b.wy);
+
+      // First draw all grounds
       for (let wy = startY - 3; wy <= endY + 3; wy++) {
         for (let wx = startX - 3; wx <= endX + 3; wx++) {
           const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
           const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
-          
-          // Draw ground (slightly outside visible area)
           if (sx + TILE_SIZE + 48 >= 0 && sx - 48 <= rect.width && sy + TILE_SIZE + 48 >= 0 && sy - 48 <= rect.height) {
             ctx.fillStyle = getFloorColor(wx, wy);
             ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
           }
+        }
+      }
 
-          // Draw footsteps
-          footsteps.forEach(f => {
-            const fdx = cx + (f.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
-            const fdy = cy + (f.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
-            
-            // Only draw if within reasonable distance of this tile
-            if (Math.abs(f.x - wx) < 2 && Math.abs(f.y - wy) < 2) {
-              ctx.fillStyle = `rgba(101, 67, 33, ${f.life * 0.4})`;
-              ctx.beginPath();
-              ctx.arc(fdx + 16, fdy + 28, 4 * f.life, 0, Math.PI * 2);
-              ctx.fill();
+      // Draw footsteps
+      footsteps.forEach(f => {
+        const fdx = cx + (f.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
+        const fdy = cy + (f.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
+        ctx.fillStyle = `rgba(101, 67, 33, ${f.life * 0.4})`;
+        ctx.beginPath();
+        ctx.arc(fdx + 16, fdy + 28, 4 * f.life, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Now draw resources in sorted order
+      resourcesToRender.forEach(({ wx, wy, resType }) => {
+        const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
+        const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+        const tileKey = `${wx},${wy}`;
+
+        if (resType) {
+          const res = RESOURCES[resType]; 
+          let shake = { x: 0, y: 0 };
+          const shakeStartTime = shakingTilesStartTime.current[tileKey];
+          if (shakeStartTime !== undefined) {
+            const shakeElapsed = performance.now() - shakeStartTime;
+            if (shakeElapsed < 150) {
+              const shakeProgress = shakeElapsed / 150;
+              const shakeDecay = Math.cos(shakeProgress * Math.PI / 2);
+              const shakeAmount = 6 * shakeDecay;
+              shake.x = Math.sin(shakeElapsed / 20) * shakeAmount;
+              shake.y = Math.cos(shakeElapsed / 20) * shakeAmount;
             }
-          });
+          }
+          
+          const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
+          const baseScale = resType === "wood" ? 1.1 : 0.7;
+          const rockScale = baseScale + sizeSeed * 1.5;
+          const dsx = sx + (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12 + shake.x;
+          const dsy = sy + (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12 + shake.y;
 
-          const tileKey = `${wx},${wy}`;
-          // Skip if tile is being removed or already mined
-          if (!isTileMined(wx, wy) && !tilesDisappearingStartTime.current[tileKey]) {
-            const resType = getTileAt(wx, wy);
-            if (resType) {
-              const res = RESOURCES[resType]; 
-              
-              // Calculate smooth shake based on time
-              let shake = { x: 0, y: 0 };
-              const shakeStartTime = shakingTilesStartTime.current[tileKey];
-              if (shakeStartTime !== undefined) {
-                const shakeElapsed = performance.now() - shakeStartTime;
-                const shakeDuration = 150;
-                if (shakeElapsed < shakeDuration) {
-                  const shakeProgress = shakeElapsed / shakeDuration;
-                  // Smooth shake animation using sine wave - decays over time
-                  const shakeDecay = Math.cos(shakeProgress * Math.PI / 2); // Fades from 1 to 0
-                  const shakeAmount = 6 * shakeDecay;
-                  shake.x = Math.sin(shakeElapsed / 20) * shakeAmount; // Smooth oscillation
-                  shake.y = Math.cos(shakeElapsed / 20) * shakeAmount;
-                }
+          ctx.save();
+          ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
+          ctx.scale(rockScale, rockScale);
+          ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
+          
+          ctx.strokeStyle = "rgba(0,0,0,0.4)";
+          ctx.lineWidth = 2;
+
+          if (resType === "stone") {
+            ctx.fillStyle = "#444";
+            ctx.beginPath();
+            const centerX = dsx + TILE_SIZE / 2;
+            const centerY = dsy + TILE_SIZE / 2;
+            const radius = (TILE_SIZE - 8) / 2;
+            const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
+            for (let i = 0; i < 5; i++) {
+              const angle = (i * 2 * Math.PI / 5) - Math.PI / 2 + randomRotation;
+              const x = centerX + radius * Math.cos(angle);
+              const y = centerY + radius * Math.sin(angle);
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          } else if (resType === "wood") {
+            ctx.fillStyle = "#1b4d2b";
+            ctx.beginPath(); ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 8); ctx.fill();
+            ctx.stroke();
+            
+            if (rockScale > 1.4) {
+              const branchSide = Math.floor(pseudoRandom(wx + 5000, wy + 5000) * 4);
+              ctx.fillStyle = "#6b4423";
+              if (branchSide === 0) {
+                ctx.fillRect(dsx + TILE_SIZE - 6, dsy + 16, 6, 8);
+                ctx.beginPath(); ctx.moveTo(dsx + TILE_SIZE - 6, dsy + 16); ctx.lineTo(dsx + TILE_SIZE, dsy + 16); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + TILE_SIZE, dsy + 16); ctx.lineTo(dsx + TILE_SIZE, dsy + 24); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + TILE_SIZE, dsy + 24); ctx.lineTo(dsx + TILE_SIZE - 6, dsy + 24); ctx.stroke();
+                ctx.fillStyle = "#1b4d2b";
+                ctx.beginPath(); ctx.roundRect(dsx + TILE_SIZE, dsy + 13, 14, 14, 3); ctx.fill(); ctx.stroke();
+              } else if (branchSide === 1) {
+                ctx.fillRect(dsx + 20, dsy + TILE_SIZE - 8, 8, 8);
+                ctx.beginPath(); ctx.moveTo(dsx + 20, dsy + TILE_SIZE - 8); ctx.lineTo(dsx + 20, dsy + TILE_SIZE); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + 28, dsy + TILE_SIZE - 8); ctx.lineTo(dsx + 28, dsy + TILE_SIZE); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + 20, dsy + TILE_SIZE); ctx.lineTo(dsx + 28, dsy + TILE_SIZE); ctx.stroke();
+                ctx.fillStyle = "#1b4d2b";
+                ctx.beginPath(); ctx.roundRect(dsx + 17, dsy + TILE_SIZE, 14, 14, 3); ctx.fill(); ctx.stroke();
+              } else if (branchSide === 2) {
+                ctx.fillRect(dsx, dsy + 16, 6, 8);
+                ctx.beginPath(); ctx.moveTo(dsx, dsy + 16); ctx.lineTo(dsx + 6, dsy + 16); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx, dsy + 16); ctx.lineTo(dsx, dsy + 24); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx, dsy + 24); ctx.lineTo(dsx + 6, dsy + 24); ctx.stroke();
+                ctx.fillStyle = "#1b4d2b";
+                ctx.beginPath(); ctx.roundRect(dsx - 14, dsy + 13, 14, 14, 3); ctx.fill(); ctx.stroke();
+              } else {
+                ctx.fillRect(dsx + 16, dsy - 6, 8, 6);
+                ctx.beginPath(); ctx.moveTo(dsx + 16, dsy - 6); ctx.lineTo(dsx + 24, dsy - 6); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + 24, dsy - 6); ctx.lineTo(dsx + 24, dsy); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx + 24, dsy); ctx.lineTo(dsx + 16, dsy); ctx.stroke();
+                ctx.fillStyle = "#1b4d2b";
+                ctx.beginPath(); ctx.roundRect(dsx + 9, dsy - 20, 14, 14, 3); ctx.fill(); ctx.stroke();
               }
-              
-              // Deterministic visual offset and size for variety
-              const seedX = wx + 1000;
-              const seedY = wy + 1000;
-              const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
-              // Trees have larger minimum size (1.1) than other resources (0.7)
-              const baseScale = resType === "wood" ? 1.1 : 0.7;
-              const rockScale = baseScale + sizeSeed * 1.5; // Range: 1.1-2.6 for trees, 0.7-2.2 for others
-              
-              const offsetX = (pseudoRandom(seedX, seedY) - 0.5) * 12 + shake.x;
-              const offsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12 + shake.y;
-              const dsx = sx + offsetX;
-              const dsy = sy + offsetY;
+            }
+          } else {
+            ctx.fillStyle = "#444";
+            ctx.beginPath(); ctx.roundRect(dsx + 4, dsy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
+            ctx.stroke();
+          }
+          
+          if (resType !== "stone" && resType !== "wood") {
+            ctx.fillStyle = res.color; 
+            ctx.fillRect(dsx + 10, dsy + 10, 8, 8); 
+            ctx.fillRect(dsx + 24, dsy + 16, 6, 6); 
+            ctx.fillRect(dsx + 16, dsy + 28, 8, 8);
+          }
+          ctx.restore();
 
-              // Draw outline
-              ctx.strokeStyle = "rgba(0,0,0,0.4)";
-              ctx.lineWidth = 2;
-              
+          // Draw health bar
+          let mh = resType === "wood" ? (rockScale <= 1.0 ? 6 : rockScale <= 1.5 ? 9 : 12) : (rockScale <= 1.0 ? 2 : rockScale <= 1.5 ? 3 : 4);
+          let h = tileHealth[tileKey] !== undefined ? tileHealth[tileKey] : mh;
+          if (!(tileKey in smoothTileHealth.current)) smoothTileHealth.current[tileKey] = h;
+          smoothTileHealth.current[tileKey] += (h - smoothTileHealth.current[tileKey]) * 0.15;
+          const smoothH = smoothTileHealth.current[tileKey];
+          
+          if (smoothH < mh - 0.01) {
+            const hp = smoothH / mh;
+            const healthBarAlpha = Math.max(0, Math.min(1, (mh - smoothH) * 0.5));
+            const barWidth = (TILE_SIZE - 8) * rockScale;
+            const barX = dsx + TILE_SIZE / 2 - barWidth / 2;
+            const barY = dsy + TILE_SIZE / 2 + ((TILE_SIZE - 8) / 2) * rockScale + 4;
+            ctx.fillStyle = `rgba(0,0,0,${0.5 * healthBarAlpha})`; 
+            ctx.beginPath(); ctx.roundRect(barX, barY, barWidth, 5, 2); ctx.fill();
+            const colorR = hp > 0.5 ? 34 : hp > 0.25 ? 234 : 239;
+            const colorG = hp > 0.5 ? 197 : hp > 0.25 ? 179 : 68;
+            const colorB = hp > 0.5 ? 94 : hp > 0.25 ? 8 : 68;
+            ctx.fillStyle = `rgba(${colorR},${colorG},${colorB},${healthBarAlpha})`; 
+            ctx.beginPath(); ctx.roundRect(barX, barY, barWidth * hp, 5, 2); ctx.fill();
+          }
+        } else if (isRockyBiome(wx, wy)) {
+          // Draw hexagon boulders
+          const rockSeed = pseudoRandom(wx + 777, wy + 777);
+          if (rockSeed > 0.95) {
+            let hasNeighborBoulder = false;
+            for (let ny = -1; ny <= 1; ny++) {
+              for (let nx = -1; nx <= 1; nx++) {
+                if (nx === 0 && ny === 0) continue;
+                if (pseudoRandom(wx + nx + 777, wy + ny + 777) > 0.95) { hasNeighborBoulder = true; break; }
+              }
+              if (hasNeighborBoulder) break;
+            }
+            
+            if (!hasNeighborBoulder) {
+              const sizeSeed = pseudoRandom(wx + 6000, wy + 6000);
+              const rockScale = 0.7 + sizeSeed * 1.5;
+              const dsx = sx + (pseudoRandom(wx + 888, wy + 888) - 0.5) * 16;
+              const dsy = sy + (pseudoRandom(wx + 999, wy + 999) - 0.5) * 16;
               ctx.save();
               ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
               ctx.scale(rockScale, rockScale);
               ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
-
-              // Clip protection: Trees need careful rendering to not look "cut off"
-              // Increase the drawing area slightly if needed or ensure it's within bounds
-              if (resType === "stone") {
-                ctx.fillStyle = "#444";
-                // Draw pentagon for stone with random rotation
-                ctx.beginPath();
-                const centerX = dsx + TILE_SIZE / 2;
-                const centerY = dsy + TILE_SIZE / 2;
-                const radius = (TILE_SIZE - 8) / 2;
-                // Deterministic random rotation based on tile position
-                const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
-                for (let i = 0; i < 5; i++) {
-                  const angle = (i * 2 * Math.PI / 5) - Math.PI / 2 + randomRotation;
-                  const x = centerX + radius * Math.cos(angle);
-                  const y = centerY + radius * Math.sin(angle);
-                  if (i === 0) ctx.moveTo(x, y);
-                  else ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-              } else if (resType === "wood") {
-                // Draw wood as simple square - darker green
-                ctx.fillStyle = "#1b4d2b";
-                ctx.strokeStyle = "rgba(0,0,0,0.4)";
-                ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 8); ctx.fill();
-                ctx.stroke();
-                
-                // Add texture details for larger trees (scale > 1.4)
-                if (rockScale > 1.4) {
-                  // Determine branch side (0=right, 1=bottom, 2=left, 3=top)
-                  const branchSide = Math.floor(pseudoRandom(wx + 5000, wy + 5000) * 4);
-                  
-                  ctx.fillStyle = "#6b4423";
-                  ctx.strokeStyle = "rgba(0,0,0,0.4)";
-                  ctx.lineWidth = 2;
-                  
-                  if (branchSide === 0) {
-                    // Right side
-                    ctx.fillRect(dsx + TILE_SIZE - 6, dsy + 16, 6, 8);
-                    ctx.beginPath();
-                    ctx.moveTo(dsx + TILE_SIZE - 6, dsy + 16);
-                    ctx.lineTo(dsx + TILE_SIZE, dsy + 16);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(dsx + TILE_SIZE, dsy + 16);
-                    ctx.lineTo(dsx + TILE_SIZE, dsy + 24);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(dsx + TILE_SIZE, dsy + 24);
-                    ctx.lineTo(dsx + TILE_SIZE - 6, dsy + 24);
-                    ctx.stroke();
-                    ctx.fillStyle = "#1b4d2b";
-                    ctx.beginPath();
-                    ctx.roundRect(dsx + TILE_SIZE, dsy + 13, 14, 14, 3);
-                    ctx.fill();
-                    ctx.strokeStyle = "rgba(0,0,0,0.4)";
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                  } else if (branchSide === 1) {
-                    // Bottom side
-                    ctx.fillRect(dsx + 20, dsy + TILE_SIZE - 8, 8, 8); // Restored to 8px height
-                    ctx.beginPath();
-                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE - 8); 
-                    ctx.lineTo(dsx + 20, dsy + TILE_SIZE); // Restored outline to match 8px trunk
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(dsx + 28, dsy + TILE_SIZE - 8); 
-                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE); // Restored outline to match 8px trunk
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE); // Bottom outline matches trunk bottom
-                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE); 
-                    ctx.stroke();
-                    
-                    ctx.fillStyle = "#1b4d2b";
-                    ctx.beginPath();
-                    ctx.roundRect(dsx + 17, dsy + TILE_SIZE, 14, 14, 3); // Leaf cube starts at trunk bottom
-                    ctx.fill();
-                    ctx.strokeStyle = "rgba(0,0,0,0.4)";
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                  } else if (branchSide === 2) {
-                    // Left side
-                    ctx.fillRect(dsx, dsy + 16, 6, 8); // Branch trunk
-                    ctx.beginPath();
-                    ctx.moveTo(dsx, dsy + 16);
-                    ctx.lineTo(dsx + 6, dsy + 16); // Lengthened outline by 2px (from 4 to 6)
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(dsx, dsy + 16);
-                    ctx.lineTo(dsx, dsy + 24);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(dsx, dsy + 24);
-                    ctx.lineTo(dsx + 6, dsy + 24); // Lengthened outline by 2px (from 4 to 6)
-                    ctx.stroke();
-                    ctx.fillStyle = "#1b4d2b";
-                    ctx.beginPath();
-                    ctx.roundRect(dsx - 14, dsy + 13, 14, 14, 3);
-                    ctx.fill();
-                    ctx.strokeStyle = "rgba(0,0,0,0.4)";
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                  } else {
-                    // Top side
-                    ctx.fillRect(dsx + 16, dsy - 6, 8, 6);
-                    ctx.beginPath();
-                    ctx.moveTo(dsx + 16, dsy - 6);
-                    ctx.lineTo(dsx + 24, dsy - 6);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(dsx + 24, dsy - 6);
-                    ctx.lineTo(dsx + 24, dsy);
-                    ctx.stroke();
-                    ctx.beginPath();
-                    ctx.moveTo(dsx + 24, dsy);
-                    ctx.lineTo(dsx + 16, dsy);
-                    ctx.stroke();
-                    ctx.fillStyle = "#1b4d2b";
-                    ctx.beginPath();
-                    ctx.roundRect(dsx + 9, dsy - 20, 14, 14, 3);
-                    ctx.fill();
-                    ctx.strokeStyle = "rgba(0,0,0,0.4)";
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                  }
-                }
-              } else {
-                ctx.fillStyle = "#444";
-                ctx.beginPath(); ctx.roundRect(dsx + 4, dsy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4); ctx.fill();
-                ctx.stroke();
+              ctx.fillStyle = "#333";
+              ctx.strokeStyle = "rgba(0,0,0,0.4)";
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              const rockSize = 32;
+              const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
+              for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i + randomRotation;
+                const hx = dsx + TILE_SIZE / 2 + Math.cos(angle) * rockSize;
+                const hy = dsy + TILE_SIZE / 2 + Math.sin(angle) * rockSize;
+                if (i === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy);
               }
-              
-              if (resType !== "stone" && resType !== "wood") {
-                ctx.fillStyle = res.color; 
-                ctx.fillRect(dsx + 10, dsy + 10, 8, 8); 
-                ctx.fillRect(dsx + 24, dsy + 16, 6, 6); 
-                ctx.fillRect(dsx + 16, dsy + 28, 8, 8);
-              }
+              ctx.closePath(); ctx.fill(); ctx.stroke();
               ctx.restore();
-              
-              let h, mh;
-              if (resType === "wood") {
-                // Wood has 3x health of stones
-                mh = rockScale <= 1.0 ? 6 : rockScale <= 1.5 ? 9 : 12;
-                h = tileHealth[tileKey] !== undefined ? tileHealth[tileKey] : mh;
-              } else {
-                mh = rockScale <= 1.0 ? 2 : rockScale <= 1.5 ? 3 : 4;
-                h = tileHealth[tileKey] !== undefined ? tileHealth[tileKey] : mh;
-              }
-              
-              // Smooth the health value for this tile
-              if (!(tileKey in smoothTileHealth.current)) {
-                smoothTileHealth.current[tileKey] = h;
-              }
-              smoothTileHealth.current[tileKey] += (h - smoothTileHealth.current[tileKey]) * 0.15;
-              const smoothH = smoothTileHealth.current[tileKey];
-              
-              if (smoothH < mh - 0.01) {
-                const hp = smoothH / mh;
-                // Smooth appearance - only show bar when health is below max with smooth fade in
-                const healthBarAlpha = Math.max(0, Math.min(1, (mh - smoothH) * 0.5));
-                
-                // Adjust health bar size based on rock scale
-                const barWidth = (TILE_SIZE - 8) * rockScale;
-                const barX = dsx + TILE_SIZE / 2 - barWidth / 2;
-                // Position health bar below the stone texture, scaled with rock size
-                const stoneRadius = (TILE_SIZE - 8) / 2;
-                const barY = dsy + TILE_SIZE / 2 + stoneRadius * rockScale + 4;
-                
-                ctx.fillStyle = `rgba(0,0,0,${0.5 * healthBarAlpha})`; 
-                ctx.beginPath(); 
-                ctx.roundRect(barX, barY, barWidth, 5, 2); 
-                ctx.fill();
-                
-                const colorR = hp > 0.5 ? 34 : hp > 0.25 ? 234 : 239;
-                const colorG = hp > 0.5 ? 197 : hp > 0.25 ? 179 : 68;
-                const colorB = hp > 0.5 ? 94 : hp > 0.25 ? 8 : 68;
-                ctx.fillStyle = `rgba(${colorR},${colorG},${colorB},${healthBarAlpha})`; 
-                ctx.beginPath(); 
-                ctx.roundRect(barX, barY, barWidth * hp, 5, 2); 
-                ctx.fill();
-              }
-            } else {
-              // Draw hexagon rocks ONLY in rocky biome
-              if (isRockyBiome(wx, wy)) {
-                const rockSeed = pseudoRandom(wx + 777, wy + 777);
-                if (rockSeed > 0.95) {
-                  // Check for neighbor boulders in 3x3 area
-                  let hasNeighborBoulder = false;
-                  for (let ny = -1; ny <= 1; ny++) {
-                    for (let nx = -1; nx <= 1; nx++) {
-                      if (nx === 0 && ny === 0) continue;
-                      if (pseudoRandom(wx + nx + 777, wy + ny + 777) > 0.95) {
-                        hasNeighborBoulder = true;
-                        break;
-                      }
-                    }
-                    if (hasNeighborBoulder) break;
-                  }
-                  
-                  // Also check for nearby regular stones in a 5x5 area
-                  let hasNearbyStone = false;
-                  if (!hasNeighborBoulder) {
-                    for (let ny = -2; ny <= 2; ny++) {
-                      for (let nx = -2; nx <= 2; nx++) {
-                        if (nx === 0 && ny === 0) continue;
-                        if (getTileAt(wx + nx, wy + ny) === "stone") {
-                          hasNearbyStone = true;
-                          break;
-                        }
-                      }
-                      if (hasNearbyStone) break;
-                    }
-                  }
-                  
-                  if (!hasNeighborBoulder && !hasNearbyStone) {
-                    const shake = shakingTiles[`${wx},${wy}`] || { x: 0, y: 0 };
-                    const sizeSeed = pseudoRandom(wx + 6000, wy + 6000);
-                    const rockScale = 0.7 + sizeSeed * 1.5; // Range: 0.7 to 2.2
-                    
-                    // Deterministic visual offset for rocks
-                    const offsetX = (pseudoRandom(wx + 888, wy + 888) - 0.5) * 16 + shake.x;
-                    const offsetY = (pseudoRandom(wx + 999, wy + 999) - 0.5) * 16 + shake.y;
-                    const dsx = sx + offsetX;
-                    const dsy = sy + offsetY;
-
-                    ctx.fillStyle = "#333";
-                    ctx.strokeStyle = "rgba(0,0,0,0.4)";
-                    ctx.lineWidth = 2;
-                    
-                    ctx.save();
-                    ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
-                    ctx.scale(rockScale, rockScale);
-                    ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
-                    
-                    ctx.beginPath();
-                    const rockSize = 32;
-                    // Visual offset to center the hexagon on the tile center (dsx + TILE_SIZE/2, dsy + TILE_SIZE/2)
-                    const renderCenterX = dsx + TILE_SIZE / 2;
-                    const renderCenterY = dsy + TILE_SIZE / 2;
-                    // Deterministic random rotation for each boulder
-                    const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
-                    for (let i = 0; i < 6; i++) {
-                      const angle = (Math.PI / 3) * i + randomRotation;
-                      const hx = renderCenterX + Math.cos(angle) * rockSize;
-                      const hy = renderCenterY + Math.sin(angle) * rockSize;
-                      if (i === 0) ctx.moveTo(hx, hy);
-                      else ctx.lineTo(hx, hy);
-                    }
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.restore();
-                  }
-                }
-              }
             }
           }
         }
-      }
+      });
 
       // Render disappearing tiles with scale and fade
       const nowTime = performance.now();
