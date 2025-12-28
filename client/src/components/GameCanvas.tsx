@@ -1032,18 +1032,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           footstepColor = "rgb(101, 67, 33)"; // Brown color for plains
         }
         
-        // Calculate fade-out effect after 5 footsteps
-        // Latest 5 footsteps are fully visible, older ones smoothly fade out
+        // Calculate fade-out effect after 2 footsteps
+        // Latest 2 footsteps are fully visible, older ones smoothly fade out
         const footstepsCount = footsteps.length;
         let fadeFactor = 1;
         
         // distanceFromEnd: 0 = newest step, length-1 = oldest step
         const distanceFromEnd = footstepsCount - 1 - index;
         
-        if (distanceFromEnd >= 5) {
-          // Older than 5 steps: fade out smoothly
-          // distanceFromEnd 5->10 should fade fadeFactor 1->0
-          fadeFactor = Math.max(0, 1 - ((distanceFromEnd - 5) / 5));
+        if (distanceFromEnd >= 2) {
+          // Older than 2 steps: fade out smoothly over next 4 steps
+          // distanceFromEnd 2->6 should fade fadeFactor 1->0 (smooth curve)
+          const fadeProgress = (distanceFromEnd - 2) / 4;
+          // Use easing for smoother fade: 1 - x^2 creates a smoother curve
+          fadeFactor = Math.max(0, 1 - fadeProgress * fadeProgress);
         }
         
         // Draw footsteps 20% smaller (6.4px instead of 8px)
