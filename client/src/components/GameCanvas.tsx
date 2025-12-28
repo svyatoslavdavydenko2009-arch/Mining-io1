@@ -606,9 +606,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               const side = (currentStepIndex === 0) ? 1 : -1;
               
               // Create perpendicular vector to movement direction for left/right foot placement
-              // If moving (dx, dy), perpendicular is (-dy, dx) rotated 90 degrees
-              const perpX = -lookDir.dy;
-              const perpY = lookDir.dx;
+              // Use lastLookDirRef to ensure we have the correct direction
+              const dir = lastLookDirRef.current;
+              
+              // Normalize the direction vector to ensure consistent offset
+              const dirMag = Math.sqrt(dir.dx * dir.dx + dir.dy * dir.dy);
+              const normalizedDx = dirMag > 0 ? dir.dx / dirMag : 1;
+              const normalizedDy = dirMag > 0 ? dir.dy / dirMag : 0;
+              
+              // Perpendicular vector: if moving (dx, dy), perpendicular is (-dy, dx)
+              const perpX = -normalizedDy;
+              const perpY = normalizedDx;
               
               const offset = 12 / TILE_SIZE; // Offset in tile units
               
