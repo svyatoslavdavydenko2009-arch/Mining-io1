@@ -1031,8 +1031,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           // Dark grey/dark brown for rocky biome
           footstepColor = "rgb(60, 50, 40)"; // Dark brown for rocky areas
         } else {
-          // Brown for plains biome
-          footstepColor = "rgb(101, 67, 33)"; // Brown color for plains
+          // Brown for plains biome (lighter)
+          footstepColor = "rgb(130, 90, 50)"; // Lighter brown color for plains
         }
         
         // Realistic fade-out using separate size and opacity
