@@ -132,10 +132,12 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
                 Object.entries(user.inventory).map(([item, count]) => (
                   <div key={item} className="flex flex-col items-center gap-2">
                     <ResourceIcon type={item} size={48} />
-                    <p className="text-white text-2xl font-bold font-sans antialiased" style={{ 
-                      textRendering: 'optimizeLegibility',
-                      WebkitFontSmoothing: 'antialiased'
-                    }}>{count}</p>
+                    <div className="bg-black/40 px-2 py-0.5 rounded-sm min-w-[2.5rem] flex items-center justify-center border border-white/5">
+                      <p className="text-white text-xl font-bold font-sans antialiased leading-none" style={{ 
+                        textRendering: 'optimizeLegibility',
+                        WebkitFontSmoothing: 'antialiased'
+                      }}>{count}</p>
+                    </div>
                   </div>
                 ))
               ) : (
