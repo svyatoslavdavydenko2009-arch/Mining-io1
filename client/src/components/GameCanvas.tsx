@@ -1058,23 +1058,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     ctx.stroke();
                   } else if (branchSide === 1) {
                     // Bottom side
-                    ctx.fillRect(dsx + 20, dsy + TILE_SIZE - 8, 8, 8); // Moved 2px up (from -6 to -8) and shortened to 8px
+                    ctx.fillRect(dsx + 20, dsy + TILE_SIZE - 8, 8, 8); // Branch trunk (shortened)
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE - 2); // Start outline 2px up
-                    ctx.lineTo(dsx + 20, dsy + TILE_SIZE + 8);
+                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE - 2); 
+                    ctx.lineTo(dsx + 20, dsy + TILE_SIZE + 6); // Shortened outline by 2px (from 8 to 6)
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 28, dsy + TILE_SIZE - 2); // Start outline 2px up
-                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE + 8);
+                    ctx.moveTo(dsx + 28, dsy + TILE_SIZE - 2); 
+                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE + 6); // Shortened outline by 2px (from 8 to 6)
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE + 8);
-                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE + 8);
+                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE + 6); // Moved up by 2px (from 8 to 6)
+                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE + 6); // Moved up by 2px (from 8 to 6)
                     ctx.stroke();
                     
                     ctx.fillStyle = "#1b4d2b";
                     ctx.beginPath();
-                    ctx.roundRect(dsx + 17, dsy + TILE_SIZE + 8, 14, 14, 3);
+                    ctx.roundRect(dsx + 17, dsy + TILE_SIZE + 6, 14, 14, 3); // Moved leaf cube up by 2px (from 8 to 6)
                     ctx.fill();
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
