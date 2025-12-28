@@ -30,19 +30,32 @@ function ResourceIcon({ type, size = 56 }: { type: string, size?: number }) {
     const iconSize = size * 0.85;
     return (
       <div 
-        style={{ 
-          width: iconSize, 
-          height: iconSize, 
-          backgroundColor: color,
-          borderRadius: '8px',
-          boxShadow: '0 0 0 4px rgba(0, 0, 0, 0.3)',
-          border: '2px solid rgba(0, 0, 0, 0.4)'
-        }} 
-      />
+        className="flex items-center justify-center"
+        style={{ width: size, height: size }}
+      >
+        <div 
+          style={{ 
+            width: iconSize, 
+            height: iconSize, 
+            backgroundColor: color,
+            borderRadius: '8px',
+            boxShadow: '0 0 0 4px rgba(0, 0, 0, 0.3)',
+            border: '2px solid rgba(0, 0, 0, 0.4)'
+          }} 
+        />
+      </div>
     );
   }
 
-  return <StoneIcon size={size} color={color} />;
+  const iconSize = size * 0.85;
+  return (
+    <div 
+      className="flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
+      <StoneIcon size={iconSize} color={color} />
+    </div>
+  );
 }
 
 export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps) {

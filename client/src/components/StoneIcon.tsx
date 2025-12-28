@@ -11,13 +11,16 @@ export function StoneIcon({ size = 24, color = "#78716c" }: StoneIconProps) {
       viewBox="0 0 24 24"
       fill={color}
       xmlns="http://www.w3.org/2000/svg"
+      style={{
+        filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))'
+      }}
     >
       {/* Pentagon stone shape with outline */}
       <polygon
         points="12,2 22,9 18,22 6,22 2,9"
         fill={color}
-        stroke="#3a3a3a"
-        strokeWidth="1.2"
+        stroke="rgba(0,0,0,0.4)"
+        strokeWidth="1.5"
       />
     </svg>
   );
