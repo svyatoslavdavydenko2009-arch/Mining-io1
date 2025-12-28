@@ -1523,15 +1523,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 handleMineButtonClick();
               }}
               disabled={isMining || isOnCooldown}
-              data-testid="button-mine"
-              className="relative w-16 h-16 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 disabled:from-gray-600 disabled:to-gray-700 disabled:opacity-50 border-2 border-yellow-800 disabled:border-gray-700 rounded-lg flex items-center justify-center transition-all active:scale-95 shadow-lg disabled:shadow-none font-pixel text-sm font-bold text-white pointer-events-auto"
+              className="w-24 h-24 bg-[#fbbf24] rounded-2xl border-4 border-[#b45309] shadow-[0_0_15px_rgba(0,0,0,0.5),inset_-4px_-4px_0_rgba(0,0,0,0.2)] flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 disabled:grayscale pointer-events-auto"
             >
-              <Pickaxe size={28} className="drop-shadow-lg" />
-              {isOnCooldown && (
-                <div className="absolute inset-1 rounded-md border-2 border-yellow-500 opacity-60" style={{
-                  clipPath: `inset(0 ${(1 - (Math.min(timeSinceLastMine, cooldown) / cooldown)) * 100}% 0 0)`
-                }} />
-              )}
+              <div className="absolute inset-0 rounded-2xl border-2 border-white/10 pointer-events-none" />
+              <div className="w-14 h-14 flex items-center justify-center relative">
+                {/* Background circle inside button to mimic joystick knob look */}
+                <div className="absolute inset-0 border-2 border-[#b45309]/30 rounded-full" />
+                <Pickaxe className="w-10 h-10 text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)]" />
+              </div>
             </button>
           );
         })()}
