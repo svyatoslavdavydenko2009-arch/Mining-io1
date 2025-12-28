@@ -601,16 +601,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             setFootsteps(prevSteps => {
               if (prevSteps.length > 60) return prevSteps.slice(-40); 
               
+              // Alternating sides: 1 for right, -1 for left
+              // Even steps = Right, Odd steps = Left
               const side = (currentStep % 2 === 0) ? 1 : -1;
               const angle = Math.atan2(lookDir.dy, lookDir.dx) + Math.PI / 2;
               const offset = 12; // Distance from center for each foot
               
-              const leftX = updatedX + Math.cos(angle) * (offset / TILE_SIZE) * side;
-              const leftY = updatedY + Math.sin(angle) * (offset / TILE_SIZE) * side;
+              const stepX = updatedX + Math.cos(angle) * (offset / TILE_SIZE) * side;
+              const stepY = updatedY + Math.sin(angle) * (offset / TILE_SIZE) * side;
               
               return [
                 ...prevSteps,
-                { id: Math.random(), x: leftX, y: leftY, life: 1.0, brightness: 0.4 + Math.random() * 0.4 }
+                { id: Math.random(), x: stepX, y: stepY, life: 1.0, brightness: 0.4 + Math.random() * 0.4 }
               ];
             });
           }
