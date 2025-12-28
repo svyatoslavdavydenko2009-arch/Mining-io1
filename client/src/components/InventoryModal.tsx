@@ -9,6 +9,19 @@ interface InventoryModalProps {
   user: User;
 }
 
+function calculatePlaytime(createdAt: string | Date): string {
+  const created = typeof createdAt === 'string' ? new Date(createdAt) : createdAt;
+  const now = new Date();
+  const diffMs = now.getTime() - created.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays > 0) return `${diffDays}d ${diffHours % 24}h`;
+  if (diffHours > 0) return `${diffHours}h ${diffMins % 60}m`;
+  return `${diffMins}m`;
+}
+
 function ResourceIcon({ type, size = 56 }: { type: string, size?: number }) {
   const resource = RESOURCES[type as ResourceType];
   const color = resource?.color || "#78716c";
