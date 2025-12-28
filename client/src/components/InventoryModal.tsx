@@ -93,43 +93,36 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
         />
 
         <div className="relative z-10 flex items-center justify-between mb-8">
-          <h2 className="text-primary text-3xl font-black uppercase tracking-widest">INVENTORY</h2>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="p-1 hover:bg-secondary/20 rounded transition-colors"
-            data-testid="button-close-inventory"
-          >
-            <X size={24} className="text-slate-800 dark:text-slate-700" />
-          </button>
+          <h2 className="text-primary text-3xl font-black uppercase tracking-widest font-sans">INVENTORY</h2>
         </div>
 
         <div className="relative z-10 space-y-6">
           <div className="border-t border-secondary/50 pt-6">
-            <p className="text-white/90 text-2xl mb-5 font-black uppercase tracking-widest">Player</p>
+            <p className="text-white/90 text-2xl mb-5 font-bold uppercase tracking-widest font-sans">Player</p>
             <div className="grid grid-cols-2 gap-6 text-2xl">
               <div>
-                <p className="text-white/70 text-lg mb-2 uppercase font-black tracking-widest">Username</p>
-                <p className="text-white font-black antialiased text-2xl">{user.username}</p>
+                <p className="text-white/70 text-lg mb-2 uppercase font-bold tracking-widest font-sans">Username</p>
+                <p className="text-white font-bold antialiased text-2xl font-sans">{user.username}</p>
               </div>
               <div>
-                <p className="text-white/70 text-lg mb-2 uppercase font-black tracking-widest">Playtime</p>
-                <p className="text-white font-black antialiased text-2xl">{playtime}</p>
+                <p className="text-white/70 text-lg mb-2 uppercase font-bold tracking-widest font-sans">Playtime</p>
+                <p className="text-white font-bold antialiased text-2xl font-sans">{playtime}</p>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-secondary/50 pt-6">
-            <p className="text-white/90 text-2xl mb-5 font-black uppercase tracking-widest">Backpack</p>
+          <div className="border-t border-secondary/50 pt-6 bg-black/20 -mx-6 px-6 pb-6">
+            <p className="text-white/90 text-2xl mb-5 mt-6 font-bold uppercase tracking-widest font-sans">Backpack</p>
             <div className="flex flex-wrap gap-10">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
                   <div key={item} className="flex flex-col items-center gap-3">
                     <ResourceIcon type={item} size={56} />
-                    <p className="text-white/80 text-3xl font-black antialiased">{count}</p>
+                    <p className="text-white/80 text-3xl font-bold antialiased font-sans">{count}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-white/60 text-2xl font-black uppercase tracking-widest">Empty</p>
+                <p className="text-white/60 text-2xl font-bold uppercase tracking-widest font-sans">Empty</p>
               )}
             </div>
           </div>
