@@ -968,12 +968,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const resourcesToRender: any[] = [];
       for (let wy = startY - 3; wy <= endY + 3; wy++) {
         for (let wx = startX - 3; wx <= endX + 3; wx++) {
+          const tileKey = `${wx},${wy}`;
           const resType = getTileAt(wx, wy);
-          const isMined = isTileMined(wx, wy);
-          const isDisappearing = tilesDisappearingStartTime.current[`${wx},${wy}`];
+          const isMined = minedTiles.has(tileKey);
+          const isDisappearing = tilesDisappearingStartTime.current[tileKey];
           
-          if ((resType && !isMined && !isDisappearing) || isRockyBiome(wx, wy)) {
-            resourcesToRender.push({ wx, wy, resType });
+          if (resType && !isMined && !isDisappearing) {
+            resourcesToRender.push({ wx, wy, resType, type: 'resource' });
+          } else if (isRockyBiome(wx, wy)) {
+            resourcesToRender.push({ wx, wy, type: 'boulder' });
           }
         }
       }
@@ -1004,13 +1007,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       });
 
           // Now draw resources in sorted order
-          resourcesToRender.forEach(({ wx, wy, resType }: { wx: number, wy: number, resType: ResourceType | null }) => {
-            const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
-            const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
-            const tileKey = `${wx},${wy}`;
+      resourcesToRender.forEach(({ wx, wy, resType, type }) => {
+        const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
+        const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+        const tileKey = `${wx},${wy}`;
 
-            if (resType) {
-              const res = RESOURCES[resType as keyof typeof RESOURCES]; 
+        if (type === 'resource' && resType) {
+          const res = RESOURCES[resType as keyof typeof RESOURCES]; 
           let shake = { x: 0, y: 0 };
           const shakeStartTime = shakingTilesStartTime.current[tileKey];
           if (shakeStartTime !== undefined) {
@@ -1128,7 +1131,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             ctx.fillStyle = `rgba(${colorR},${colorG},${colorB},${healthBarAlpha})`; 
             ctx.beginPath(); ctx.roundRect(barX, barY, barWidth * hp, 5, 2); ctx.fill();
           }
-        } else if (isRockyBiome(wx, wy)) {
+        } else if (type === 'boulder') {
           // Draw hexagon boulders
           const rockSeed = pseudoRandom(wx + 777, wy + 777);
           if (rockSeed > 0.95) {
