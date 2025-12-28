@@ -1080,22 +1080,22 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     ctx.stroke();
                   } else if (branchSide === 2) {
                     // Left side
-                    ctx.fillRect(dsx + 2, dsy + 16, 6, 8); // Moved from -4 to +2 (6px right)
+                    ctx.fillRect(dsx, dsy + 16, 6, 8); // Moved from +2 to 0 (2px left)
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 2, dsy + 16);
-                    ctx.lineTo(dsx + 6, dsy + 16); // Adjusted to match new rect position
+                    ctx.moveTo(dsx, dsy + 16);
+                    ctx.lineTo(dsx + 4, dsy + 16); // Adjusted to match new rect position
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 2, dsy + 16);
-                    ctx.lineTo(dsx + 2, dsy + 24);
+                    ctx.moveTo(dsx, dsy + 16);
+                    ctx.lineTo(dsx, dsy + 24);
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 2, dsy + 24);
-                    ctx.lineTo(dsx + 6, dsy + 24); // Adjusted to match new rect position
+                    ctx.moveTo(dsx, dsy + 24);
+                    ctx.lineTo(dsx + 4, dsy + 24); // Adjusted to match new rect position
                     ctx.stroke();
                     ctx.fillStyle = "#1b4d2b";
                     ctx.beginPath();
-                    ctx.roundRect(dsx - 12, dsy + 13, 14, 14, 3); // Moved from -18 to -12 (6px right)
+                    ctx.roundRect(dsx - 14, dsy + 13, 14, 14, 3); // Moved from -12 to -14 (2px left)
                     ctx.fill();
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
