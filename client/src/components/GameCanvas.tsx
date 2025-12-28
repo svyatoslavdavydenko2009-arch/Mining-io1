@@ -1058,23 +1058,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     ctx.stroke();
                   } else if (branchSide === 1) {
                     // Bottom side
-                    ctx.fillRect(dsx + 20, dsy + TILE_SIZE - 8, 8, 7.6); // Shortened trunk by 0.4px (from 8 to 7.6)
+                    ctx.fillRect(dsx + 20, dsy + TILE_SIZE - 8, 8, 8); // Restored to 8px height
                     ctx.beginPath();
                     ctx.moveTo(dsx + 20, dsy + TILE_SIZE - 8); 
-                    ctx.lineTo(dsx + 20, dsy + TILE_SIZE - 0.4); // Adjusted outline to match new trunk length
+                    ctx.lineTo(dsx + 20, dsy + TILE_SIZE); // Restored outline to match 8px trunk
                     ctx.stroke();
                     ctx.beginPath();
                     ctx.moveTo(dsx + 28, dsy + TILE_SIZE - 8); 
-                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE - 0.4); // Adjusted outline to match new trunk length
+                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE); // Restored outline to match 8px trunk
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE - 0.4); // Bottom outline matches new trunk bottom
-                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE - 0.4); 
+                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE); // Bottom outline matches trunk bottom
+                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE); 
                     ctx.stroke();
                     
                     ctx.fillStyle = "#1b4d2b";
                     ctx.beginPath();
-                    ctx.roundRect(dsx + 17, dsy + TILE_SIZE - 0.4, 14, 14, 3); // Leaf cube starts at new trunk bottom
+                    ctx.roundRect(dsx + 17, dsy + TILE_SIZE, 14, 14, 3); // Leaf cube starts at trunk bottom
                     ctx.fill();
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
