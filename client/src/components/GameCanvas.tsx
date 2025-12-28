@@ -1004,17 +1004,22 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       }
 
       // Draw footsteps
+      ctx.save();
       footsteps.forEach(f => {
         // Correct conversion from world to screen coordinates
-        // wx, wy -> pixel coordinates
+        // f.x, f.y are in tiles (e.g. 250, -133)
+        // displayPos.x, displayPos.y are also in tiles
+        // (f.x - displayPos.x) gives tile offset from camera center
+        // Multiplying by TILE_SIZE gives pixel offset
         const screenX = cx + (f.x - displayPos.x) * TILE_SIZE;
         const screenY = cy + (f.y - displayPos.y) * TILE_SIZE;
         
-        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.4})`; 
+        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.6})`; 
         ctx.beginPath();
-        ctx.arc(screenX, screenY, 4 * f.life, 0, Math.PI * 2); 
+        ctx.arc(screenX, screenY, 6 * f.life, 0, Math.PI * 2); 
         ctx.fill();
       });
+      ctx.restore();
 
           // Now draw resources in sorted order
       resourcesToRender.forEach(({ wx, wy, resType, type }) => {
