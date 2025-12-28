@@ -1539,29 +1539,53 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       <div className="absolute top-4 left-4 w-32 h-32 bg-black/60 border-2 border-secondary rounded-lg overflow-hidden pointer-events-none shadow-xl">
         <canvas 
           id="minimap-canvas"
-          width={128}
-          height={128}
-          className="w-full h-full opacity-80"
+          width={256}
+          height={256}
+          className="w-full h-full opacity-90"
           ref={(el) => {
             if (!el) return;
             const mctx = el.getContext("2d");
             if (!mctx) return;
-            mctx.clearRect(0, 0, 128, 128);
-            const range = 20; // Tiles to show
-            const mTileSize = 128 / (range * 2);
+            
+            mctx.clearRect(0, 0, 256, 256);
+            
+            const range = 22; // Tiles to show
+            const mTileSize = 256 / (range * 2);
+            
+            // Draw tiles with slight overlap to eliminate grid lines
             for (let my = -range; my <= range; my++) {
               for (let mx = -range; mx <= range; mx++) {
                 const wx = Math.round(localPos.x) + mx;
                 const wy = Math.round(localPos.y) + my;
                 mctx.fillStyle = getFloorColor(wx, wy);
-                mctx.fillRect(64 + mx * mTileSize, 64 + my * mTileSize, mTileSize, mTileSize);
+                // mTileSize + 1 ensures no subpixel gaps (grid lines)
+                mctx.fillRect(128 + mx * mTileSize, 128 + my * mTileSize, mTileSize + 1, mTileSize + 1);
               }
             }
-            // Draw player
+            
+            // Draw high-quality player marker
+            mctx.save();
+            mctx.shadowBlur = 6;
+            mctx.shadowColor = "rgba(0,0,0,0.6)";
+            
+            // Outer stroke for definition
+            mctx.strokeStyle = "rgba(0,0,0,0.8)";
+            mctx.lineWidth = 3;
             mctx.fillStyle = "#fbbf24";
+            
             mctx.beginPath();
-            mctx.arc(64, 64, 3, 0, Math.PI * 2);
+            mctx.arc(128, 128, 7, 0, Math.PI * 2);
             mctx.fill();
+            mctx.stroke();
+            
+            // Inner highlight for depth
+            mctx.shadowBlur = 0;
+            mctx.strokeStyle = "rgba(255,255,255,0.4)";
+            mctx.lineWidth = 2;
+            mctx.beginPath();
+            mctx.arc(128, 128, 4, 0, Math.PI * 2);
+            mctx.stroke();
+            mctx.restore();
           }}
         />
       </div>
