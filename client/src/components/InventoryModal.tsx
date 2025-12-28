@@ -32,31 +32,11 @@ function ResourceIcon({ type, size = 56 }: { type: string, size?: number }) {
         style={{ 
           width: size, 
           height: size, 
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        {/* Simple representation of the tree from map: dark trunk and green top */}
-        <div style={{
-          position: 'absolute',
-          bottom: '15%',
-          width: '30%',
-          height: '40%',
-          backgroundColor: '#5d4037',
-          borderRadius: '2px'
-        }} />
-        <div style={{
-          position: 'absolute',
-          top: '10%',
-          width: '80%',
-          height: '60%',
           backgroundColor: color,
-          borderRadius: '50%',
+          borderRadius: '8px',
           border: '2px solid #064e3b'
-        }} />
-      </div>
+        }} 
+      />
     );
   }
 
