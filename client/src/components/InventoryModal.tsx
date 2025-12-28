@@ -39,8 +39,8 @@ function ResourceIcon({ type, size = 56 }: { type: string, size?: number }) {
             height: iconSize, 
             backgroundColor: color,
             borderRadius: '8px',
-            boxShadow: '0 0 0 4px rgba(0, 0, 0, 0.3)',
-            border: '2px solid rgba(0, 0, 0, 0.4)'
+            boxShadow: '0 0 0 3px rgba(0, 0, 0, 0.4)',
+            border: '1.5px solid rgba(0, 0, 0, 0.5)'
           }} 
         />
       </div>
