@@ -451,28 +451,29 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         if (!isTileMined(ntx, nty)) {
           const centerX = ntx;
           const centerY = nty;
-          const distDx = x - centerX;
-          const distDy = y - centerY;
-          const distSq = distDx * distDx + distDy * distDy;
           
-          // Check stone resource tiles
-          if (resource === "stone") {
+          // Check resource tiles
+          if (resource === "stone" || resource === "wood") {
             const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
-            const rockScale = 0.7 + sizeSeed * 1.5;
-            const scaledCollisionDist = COLLISION_DISTANCE_SQ * rockScale;
+            const rotation = sizeSeed * Math.PI * 2;
+            const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
             
-            if (distSq < scaledCollisionDist) return true;
-          }
-          
-          // Check wood resource tiles (trees in plains)
-          if (resource === "wood") {
-            const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
-            const treeScale = 1.1 + sizeSeed * 1.5;
-            const scaledCollisionDist = COLLISION_DISTANCE_SQ * treeScale;
+            // Transform player relative position into resource local space (account for rotation)
+            const dx_rel = x - centerX;
+            const dy_rel = y - centerY;
             
-            if (distSq < scaledCollisionDist) return true;
+            // Rotate the point BACKWARDS to check against the base collision shape
+            // (Standard hexagon collision is roughly circular, but we can make it elliptical or more precise)
+            const rotatedX = dx_rel * Math.cos(-rotation) - dy_rel * Math.sin(-rotation);
+            const rotatedY = dx_rel * Math.sin(-rotation) + dy_rel * Math.cos(-rotation);
+            
+            // Resources are generally wider than they are tall (visual perspective)
+            // We scale the collision distance based on the visual scale
+            const baseDistSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
+            const scaledCollisionDist = COLLISION_DISTANCE_SQ * scale;
+            
+            if (baseDistSq < scaledCollisionDist) return true;
           }
-          
         }
       }
     }
