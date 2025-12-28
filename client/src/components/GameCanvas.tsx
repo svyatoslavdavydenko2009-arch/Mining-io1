@@ -11,7 +11,16 @@ const VIEW_RADIUS = 8;
 const WORLD_SEED = 12345;
 const PLAYER_SIZE = 32; // Player is 32px circle
 const ROCK_SIZE = 32; // Rock is 32px hexagon
-const COLLISION_DISTANCE_SQ = 0.40; // Distance squared for collision detection 
+const COLLISION_DISTANCE_SQ = 0.40; // Distance squared for collision detection
+
+// Cache for expensive calculations
+const noiseCache = new Map<string, number>();
+const floorColorCache = new Map<string, string>();
+const rockyBiomeCache = new Map<string, boolean>();
+
+function getCacheKey(x: number, y: number, scale?: number): string {
+  return scale !== undefined ? `${x},${y},${scale}` : `${x},${y}`;
+} 
 
 const RESOURCE_HEALTH: Record<ResourceType, number> = {
   stone: 2,
@@ -28,8 +37,11 @@ function pseudoRandom(x: number, y: number) {
   return sin - Math.floor(sin);
 }
 
-// Organic noise using value noise approach
+// Organic noise using value noise approach with caching
 function getNoise(x: number, y: number, scale: number) {
+  const key = getCacheKey(x, y, scale);
+  if (noiseCache.has(key)) return noiseCache.get(key)!;
+  
   const x0 = Math.floor(x * scale);
   const y0 = Math.floor(y * scale);
   const x1 = x0 + 1;
@@ -46,11 +58,16 @@ function getNoise(x: number, y: number, scale: number) {
   const nx0 = n00 * (1 - sx) + n10 * sx;
   const nx1 = n01 * (1 - sx) + n11 * sx;
   
-  return nx0 * (1 - sy) + nx1 * sy;
+  const result = nx0 * (1 - sy) + nx1 * sy;
+  noiseCache.set(key, result);
+  return result;
 }
 
-// Check if a tile is in the rocky biome
+// Check if a tile is in the rocky biome - with caching
 function isRockyBiome(x: number, y: number): boolean {
+  const key = getCacheKey(x, y);
+  if (rockyBiomeCache.has(key)) return rockyBiomeCache.get(key)!;
+  
   const rockyNoise = getNoise(x + 5000, y + 5000, 0.03);
   if (rockyNoise > 0.80) {
     // Check if it's part of a large cluster
@@ -61,14 +78,19 @@ function isRockyBiome(x: number, y: number): boolean {
         if (neighborNoise > 0.80) rockyNeighborCount++;
       }
     }
-    return rockyNeighborCount >= 5;
+    const result = rockyNeighborCount >= 5;
+    rockyBiomeCache.set(key, result);
+    return result;
   }
+  rockyBiomeCache.set(key, false);
   return false;
 }
 
 
-// Generate biome floor colors - plains and rocky biomes
+// Generate biome floor colors - plains and rocky biomes - with caching
 function getFloorColor(x: number, y: number): string {
+  const key = getCacheKey(x, y);
+  if (floorColorCache.has(key)) return floorColorCache.get(key)!;
   // Check if in a tree zone (for darker grass) with smooth transitions
   const groupZoneSize = 25;
   const groupZoneX = Math.floor(x / groupZoneSize);
@@ -206,11 +228,16 @@ function getFloorColor(x: number, y: number): string {
   g = Math.round(g * (1 - forestBlend * 0.3));
   b = Math.round(b * (1 - forestBlend * 0.3));
 
-  return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+  const color = `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+  floorColorCache.set(key, color);
+  return color;
 }
 
 function isBiomeBorder(x: number, y: number): boolean {
   const myColor = getFloorColor(x, y);
+  // Quick early exit check: skip border rendering for rocky biome (performance)
+  if (myColor.includes("105")) return false; // Rocky color RGB starts with 105
+  
   const neighbors = [
     getFloorColor(x + 1, y),
     getFloorColor(x - 1, y),
