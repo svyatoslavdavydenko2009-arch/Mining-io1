@@ -86,20 +86,41 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
           className="absolute inset-0 opacity-10 pointer-events-none"
         />
 
-        <div className="relative z-10 space-y-6">
-          <div className="pt-0 -mx-6 px-6 pb-2">
-            <p className="text-white text-5xl mb-4 mt-2 font-bold uppercase tracking-tighter font-sans antialiased" style={{ 
+        <div className="relative z-10 space-y-8">
+          <div className="pt-0 -mx-6 px-6">
+            <p className="text-white text-5xl mb-6 mt-2 font-bold uppercase tracking-tighter font-sans antialiased" style={{ 
               textRendering: 'optimizeLegibility', 
               WebkitFontSmoothing: 'antialiased',
               letterSpacing: '-0.02em',
               lineHeight: '1.2'
             }}>Crafting</p>
-            <div className="h-24 flex items-center justify-center border-2 border-dashed border-white/20 rounded-md bg-black/20">
-              <p className="text-white/40 text-xl font-bold uppercase tracking-widest">Coming Soon</p>
+            
+            {/* Crafting Grid matching the image style */}
+            <div 
+              className="grid grid-cols-4 gap-2 p-3 rounded-md shadow-2xl" 
+              style={{ 
+                backgroundColor: '#7d5c3d', // Outer brown frame color from image
+                border: '4px solid #2a1b0e', // Darker thick outer border
+                boxShadow: 'inset 0 0 15px rgba(0,0,0,0.4)'
+              }}
+            >
+              {[...Array(16)].map((_, i) => (
+                <div 
+                  key={i} 
+                  className="aspect-square rounded-sm flex items-center justify-center transition-all hover:brightness-110 cursor-pointer"
+                  style={{ 
+                    backgroundColor: '#e6cc9b', // Light beige/yellow cell color from image
+                    border: '2px solid #5d432c', // Inner grid line color
+                    boxShadow: 'inset 2px 2px 4px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  <div className="w-full h-full opacity-0 hover:opacity-100 bg-white/10 transition-opacity" />
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="pt-4 bg-black/40 -mx-6 px-6 pb-8 rounded-t-lg">
+          <div className="pt-6 bg-black/40 -mx-6 px-6 pb-8 rounded-t-xl">
             <p className="text-white text-5xl mb-10 mt-2 font-bold uppercase tracking-tighter font-sans antialiased" style={{ 
               textRendering: 'optimizeLegibility', 
               WebkitFontSmoothing: 'antialiased',
