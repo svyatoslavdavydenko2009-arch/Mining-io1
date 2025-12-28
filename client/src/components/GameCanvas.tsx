@@ -1027,33 +1027,33 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 
                 // Add texture details for larger trees (scale > 1.4)
                 if (rockScale > 1.4) {
-                  // Add branch sticking out
+                  // Add branch sticking out (aligned with tree right edge)
                   ctx.fillStyle = "#6b4423";
-                  ctx.fillRect(dsx + TILE_SIZE - 8, dsy + 12, 6, 8);
+                  ctx.fillRect(dsx + TILE_SIZE - 6, dsy + 12, 6, 8);
                   
                   // Draw branch outline without left side
                   ctx.strokeStyle = "rgba(0,0,0,0.4)";
                   ctx.lineWidth = 2;
                   // Top line
                   ctx.beginPath();
-                  ctx.moveTo(dsx + TILE_SIZE - 8, dsy + 12);
-                  ctx.lineTo(dsx + TILE_SIZE - 2, dsy + 12);
+                  ctx.moveTo(dsx + TILE_SIZE - 6, dsy + 12);
+                  ctx.lineTo(dsx + TILE_SIZE, dsy + 12);
                   ctx.stroke();
                   // Right line
                   ctx.beginPath();
-                  ctx.moveTo(dsx + TILE_SIZE - 2, dsy + 12);
-                  ctx.lineTo(dsx + TILE_SIZE - 2, dsy + 20);
+                  ctx.moveTo(dsx + TILE_SIZE, dsy + 12);
+                  ctx.lineTo(dsx + TILE_SIZE, dsy + 20);
                   ctx.stroke();
                   // Bottom line
                   ctx.beginPath();
-                  ctx.moveTo(dsx + TILE_SIZE - 2, dsy + 20);
-                  ctx.lineTo(dsx + TILE_SIZE - 8, dsy + 20);
+                  ctx.moveTo(dsx + TILE_SIZE, dsy + 20);
+                  ctx.lineTo(dsx + TILE_SIZE - 6, dsy + 20);
                   ctx.stroke();
                   
                   // Add small tree on the branch (mini foliage) with rounded corners
                   ctx.fillStyle = "#1b4d2b";
                   ctx.beginPath();
-                  ctx.roundRect(dsx + TILE_SIZE - 2, dsy + 9, 14, 14, 3);
+                  ctx.roundRect(dsx + TILE_SIZE, dsy + 9, 14, 14, 3);
                   ctx.fill();
                   ctx.strokeStyle = "rgba(0,0,0,0.4)";
                   ctx.lineWidth = 2;
