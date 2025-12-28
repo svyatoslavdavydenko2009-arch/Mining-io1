@@ -1002,7 +1002,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Draw footsteps with biome-aware coloring
       ctx.save();
-      footsteps.forEach(f => {
+      footsteps.forEach((f, index) => {
         const screenX = cx + (f.x - displayPos.x) * TILE_SIZE;
         const screenY = cy + (f.y - displayPos.y) * TILE_SIZE;
         
@@ -1019,15 +1019,27 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           footstepColor = "rgb(101, 67, 33)"; // Brown color for plains
         }
         
-        // Draw footsteps the size of a hand (hand is 6px, make footsteps ~8px radius for visibility)
+        // Calculate fade-out effect after 5 footsteps
+        // Oldest 5 footsteps are fully visible, then smoothly fade out
+        const footstepsCount = footsteps.length;
+        let fadeFactor = 1;
+        if (footstepsCount > 5) {
+          const stepsAfterFive = footstepsCount - index - 1; // Steps remaining after this one
+          if (stepsAfterFive < 5) {
+            // Smooth fade: 5->0 steps remaining = 1->0 opacity
+            fadeFactor = stepsAfterFive / 5;
+          }
+        }
+        
+        // Draw footsteps 20% smaller (6.4px instead of 8px)
         ctx.fillStyle = footstepColor;
         ctx.beginPath();
-        const footstepRadius = 8 * f.life; // Size proportional to hand, fades out
+        const footstepRadius = 6.4 * f.life * fadeFactor; // 20% smaller, with fade
         ctx.arc(screenX, screenY, footstepRadius, 0, Math.PI * 2); 
         ctx.fill();
         
         // Outline matching hand outline style - black with opacity 0.55
-        ctx.strokeStyle = `rgba(0, 0, 0, ${0.55 * f.life})`;
+        ctx.strokeStyle = `rgba(0, 0, 0, ${0.55 * f.life * fadeFactor})`;
         ctx.lineWidth = 2.5;
         ctx.stroke();
       });
