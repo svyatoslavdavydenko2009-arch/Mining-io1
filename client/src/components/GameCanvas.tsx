@@ -1061,20 +1061,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     ctx.fillRect(dsx + 20, dsy + TILE_SIZE - 8, 8, 8); // Branch trunk (shortened)
                     ctx.beginPath();
                     ctx.moveTo(dsx + 20, dsy + TILE_SIZE - 2); 
-                    ctx.lineTo(dsx + 20, dsy + TILE_SIZE + 6); // Shortened outline by 2px (from 8 to 6)
+                    ctx.lineTo(dsx + 20, dsy + TILE_SIZE + 4); // Shortened outline by another 2px (from 6 to 4)
                     ctx.stroke();
                     ctx.beginPath();
                     ctx.moveTo(dsx + 28, dsy + TILE_SIZE - 2); 
-                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE + 6); // Shortened outline by 2px (from 8 to 6)
+                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE + 4); // Shortened outline by another 2px (from 6 to 4)
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE + 6); // Moved up by 2px (from 8 to 6)
-                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE + 6); // Moved up by 2px (from 8 to 6)
+                    ctx.moveTo(dsx + 20, dsy + TILE_SIZE + 4); // Moved up by 2px (from 6 to 4)
+                    ctx.lineTo(dsx + 28, dsy + TILE_SIZE + 4); // Moved up by 2px (from 6 to 4)
                     ctx.stroke();
                     
                     ctx.fillStyle = "#1b4d2b";
                     ctx.beginPath();
-                    ctx.roundRect(dsx + 17, dsy + TILE_SIZE + 6, 14, 14, 3); // Moved leaf cube up by 2px (from 8 to 6)
+                    ctx.roundRect(dsx + 17, dsy + TILE_SIZE + 4, 14, 14, 3); // Moved leaf cube up by another 2px (from 6 to 4)
                     ctx.fill();
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
