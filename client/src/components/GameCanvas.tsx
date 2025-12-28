@@ -1271,13 +1271,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const handSize = 6;
 
       ctx.fillStyle = "#fbbf24";
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(0,0,0,0.4)";
+      ctx.lineWidth = 2.5;
 
       // Draw Body
-      ctx.fillStyle = "#fbbf24";
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
-      ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(0, 0, pSize / 2, 0, Math.PI * 2);
       ctx.fill();
@@ -1285,10 +1282,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Eyes
       ctx.fillStyle = "black";
-      ctx.strokeStyle = "rgba(255,255,255,0.2)";
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill();
       
       ctx.restore(); // Restore body rotation
 
@@ -1429,8 +1424,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       ctx.translate(handMiningOffsetX, handMiningOffsetY);
       ctx.fillStyle = "#fbbf24";
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(0,0,0,0.4)";
+      ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(0, 0, handSize, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       ctx.restore();
 
@@ -1439,8 +1434,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.rotate(miningBaseRot);
       ctx.translate(handOffsetSide, -handOffsetFront - handBob);
       ctx.fillStyle = "#fbbf24";
-      ctx.strokeStyle = "rgba(0,0,0,0.3)";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(0,0,0,0.4)";
+      ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.arc(0, 0, handSize, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       ctx.restore();
       ctx.restore(); // Restore main player transform
