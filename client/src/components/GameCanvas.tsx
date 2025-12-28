@@ -410,7 +410,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const [miningDirection, setMiningDirection] = useState<{x: number, y: number} | null>(null);
   const [cooldownProgress, setCooldownProgress] = useState(1);
   const [lastMineTimeState, setLastMineTimeState] = useState(0);
-  const [footsteps, setFootsteps] = useState<{id: number, x: number, y: number, life: number}[]>([]);
+  const [footsteps, setFootsteps] = useState<{id: number, x: number, y: number, life: number, brightness: number}[]>([]);
   const lastFootstepPos = useRef({ x: user.x, y: user.y });
   const [, setButtonUpdateTrigger] = useState(0); // Force re-renders for button
 
@@ -604,7 +604,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           if (distSinceLastStep > 0.3) {
             setFootsteps(prevSteps => [
               ...prevSteps.slice(-15),
-              { id: Math.random(), x: updatedX, y: updatedY, life: 1.0 }
+              { id: Math.random(), x: updatedX, y: updatedY, life: 1.0, brightness: 0.7 + Math.random() * 0.6 }
             ]);
             lastFootstepPos.current = { x: updatedX, y: updatedY };
           }
@@ -901,7 +901,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Render Biome Regions
       // Limit draw radius to actual visible area
-      const drawRadius = 10;
+      const drawRadius = 9; // Slightly reduced from 10 for better performance
       const biomeTiles: Record<string, {wx: number, wy: number, sx: number, sy: number}[]> = {};
       
       const startX = Math.round(localPos.x) - drawRadius;
@@ -966,8 +966,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Render Resources and Rocks in a separate pass
       const resourcesToRender: any[] = [];
-      for (let wy = startY - 3; wy <= endY + 3; wy++) {
-        for (let wx = startX - 3; wx <= endX + 3; wx++) {
+      const resourceDrawRadius = 9; // Reduced from 12 (startY-3)
+      for (let wy = Math.round(localPos.y) - resourceDrawRadius; wy <= Math.round(localPos.y) + resourceDrawRadius; wy++) {
+        for (let wx = Math.round(localPos.x) - resourceDrawRadius; wx <= Math.round(localPos.x) + resourceDrawRadius; wx++) {
           const tileKey = `${wx},${wy}`;
           const resType = getTileAt(wx, wy);
           const isMined = minedTiles.has(tileKey);
@@ -1000,7 +1001,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       footsteps.forEach(f => {
         const fdx = cx + (f.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
         const fdy = cy + (f.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
-        ctx.fillStyle = `rgba(101, 67, 33, ${f.life * 0.4})`;
+        
+        // Vary brown color brightness based on f.brightness
+        const r = Math.round(101 * f.brightness);
+        const g = Math.round(67 * f.brightness);
+        const b = Math.round(33 * f.brightness);
+        
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${f.life * 0.4})`;
         ctx.beginPath();
         ctx.arc(fdx + 16, fdy + 28, 4 * f.life, 0, Math.PI * 2);
         ctx.fill();
