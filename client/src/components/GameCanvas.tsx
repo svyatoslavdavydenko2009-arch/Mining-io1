@@ -412,6 +412,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const [lastMineTimeState, setLastMineTimeState] = useState(0);
   const [footsteps, setFootsteps] = useState<{id: number, x: number, y: number, life: number, brightness: number}[]>([]);
   const lastFootstepPos = useRef({ x: user.x, y: user.y });
+  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [, setButtonUpdateTrigger] = useState(0); // Force re-renders for button
 
   const joystickDirRef = useRef({ dx: 0, dy: 0 });
@@ -420,19 +421,22 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const shakingTilesStartTime = useRef<Record<string, number>>({}); // Track shake start times
   const tilesDisappearingStartTime = useRef<Record<string, number>>({}); // Track disappear start times
   const tilesDisappearingType = useRef<Record<string, ResourceType>>({}); // Store resource type when disappearing
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
-      setFootsteps(prev => prev.map(f => ({ ...f, life: f.life - 0.02 })).filter(f => f.life > 0));
-    }, 50);
+      setFootsteps(prev => {
+        if (prev.length === 0) return prev;
+        const next = prev.map(f => ({ ...f, life: f.life - 0.04 })).filter(f => f.life > 0);
+        return next.length === prev.length ? prev : next;
+      });
+    }, 100);
     return () => clearInterval(interval);
   }, []);
 
-  // Update button state every 50ms so cooldown is responsive
   useEffect(() => {
     const interval = setInterval(() => {
       setButtonUpdateTrigger(t => t + 1);
-    }, 50);
+    }, 100);
     return () => clearInterval(interval);
   }, []);
 
@@ -602,10 +606,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           // Spawn footstep
           const distSinceLastStep = Math.sqrt(Math.pow(updatedX - lastFootstepPos.current.x, 2) + Math.pow(updatedY - lastFootstepPos.current.y, 2));
           if (distSinceLastStep > 0.3) {
-            setFootsteps(prevSteps => [
-              ...prevSteps.slice(-15),
-              { id: Math.random(), x: updatedX, y: updatedY, life: 1.0, brightness: 0.7 + Math.random() * 0.6 }
-            ]);
+            setFootsteps(prevSteps => {
+              if (prevSteps.length > 30) return prevSteps; // Safety limit
+              
+              // Randomize brightness for the footstep
+              const brightness = 0.6 + Math.random() * 0.8;
+              
+              return [
+                ...prevSteps.slice(-15),
+                { id: Math.random(), x: updatedX, y: updatedY, life: 1.0, brightness }
+              ];
+            });
             lastFootstepPos.current = { x: updatedX, y: updatedY };
           }
           
@@ -901,7 +912,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Render Biome Regions
       // Limit draw radius to actual visible area
-      const drawRadius = 9; // Slightly reduced from 10 for better performance
+      const drawRadius = 8; // Further reduced for performance
       const biomeTiles: Record<string, {wx: number, wy: number, sx: number, sy: number}[]> = {};
       
       const startX = Math.round(localPos.x) - drawRadius;
@@ -966,7 +977,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Render Resources and Rocks in a separate pass
       const resourcesToRender: any[] = [];
-      const resourceDrawRadius = 9; // Reduced from 12 (startY-3)
+      const resourceDrawRadius = 8; // Further reduced for performance
       for (let wy = Math.round(localPos.y) - resourceDrawRadius; wy <= Math.round(localPos.y) + resourceDrawRadius; wy++) {
         for (let wx = Math.round(localPos.x) - resourceDrawRadius; wx <= Math.round(localPos.x) + resourceDrawRadius; wx++) {
           const tileKey = `${wx},${wy}`;
