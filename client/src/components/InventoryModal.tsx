@@ -86,37 +86,27 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
           className="absolute inset-0 opacity-10 pointer-events-none"
         />
 
-        <div className="relative z-10 flex items-center justify-between mb-8">
-          <h2 className="text-primary text-3xl font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'subpixel-antialiased' }}>INVENTORY</h2>
-        </div>
-
         <div className="relative z-10 space-y-6">
-          <div className="border-t border-secondary/50 pt-6">
-            <p className="text-white/90 text-2xl mb-5 font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Player</p>
-            <div className="grid grid-cols-2 gap-6 text-2xl">
-              <div>
-                <p className="text-white/70 text-lg mb-2 uppercase font-medium tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Username</p>
-                <p className="text-white font-bold text-2xl font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>{user.username}</p>
-              </div>
-              <div>
-                <p className="text-white/70 text-lg mb-2 uppercase font-medium tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Playtime</p>
-                <p className="text-white font-bold text-2xl font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>{playtime}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-secondary/50 pt-0 bg-black/30 -mx-6 px-6 pb-6">
-            <p className="text-white/90 text-4xl mb-8 mt-4 font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility', WebkitFontSmoothing: 'subpixel-antialiased' }}>Backpack</p>
-            <div className="flex flex-wrap gap-10">
+          <div className="pt-0 bg-black/40 -mx-6 px-6 pb-8 rounded-t-lg">
+            <p className="text-white text-5xl mb-10 mt-2 font-bold uppercase tracking-tighter font-sans antialiased" style={{ 
+              textRendering: 'optimizeLegibility', 
+              WebkitFontSmoothing: 'antialiased',
+              letterSpacing: '-0.02em',
+              lineHeight: '1.2'
+            }}>Backpack</p>
+            <div className="flex flex-wrap gap-12">
               {Object.entries(user.inventory).length > 0 ? (
                 Object.entries(user.inventory).map(([item, count]) => (
-                  <div key={item} className="flex flex-col items-center gap-3">
-                    <ResourceIcon type={item} size={56} />
-                    <p className="text-white/90 text-3xl font-bold font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>{count}</p>
+                  <div key={item} className="flex flex-col items-center gap-4">
+                    <ResourceIcon type={item} size={64} />
+                    <p className="text-white text-4xl font-bold font-sans antialiased" style={{ 
+                      textRendering: 'optimizeLegibility',
+                      WebkitFontSmoothing: 'antialiased'
+                    }}>{count}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-white/60 text-2xl font-bold uppercase tracking-widest font-sans antialiased" style={{ textRendering: 'optimizeLegibility' }}>Empty</p>
+                <p className="text-white/60 text-3xl font-bold uppercase tracking-widest font-sans antialiased">Empty</p>
               )}
             </div>
           </div>
