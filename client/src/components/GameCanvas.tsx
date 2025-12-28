@@ -1053,7 +1053,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   // Add small tree on the branch (mini foliage) with rounded corners
                   ctx.fillStyle = "#1b4d2b";
                   ctx.beginPath();
-                  ctx.roundRect(dsx + TILE_SIZE, dsy + 9, 14, 14, 3);
+                  ctx.roundRect(dsx + TILE_SIZE, dsy + 13, 14, 14, 3);
                   ctx.fill();
                   ctx.strokeStyle = "rgba(0,0,0,0.4)";
                   ctx.lineWidth = 2;
