@@ -1080,22 +1080,22 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                     ctx.stroke();
                   } else if (branchSide === 2) {
                     // Left side
-                    ctx.fillRect(dsx - 6, dsy + 16, 6, 8);
+                    ctx.fillRect(dsx - 4, dsy + 16, 6, 8); // Moved from -6 to -4 (2px right)
                     ctx.beginPath();
-                    ctx.moveTo(dsx - 6, dsy + 16);
+                    ctx.moveTo(dsx - 4, dsy + 16);
                     ctx.lineTo(dsx, dsy + 16);
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx - 6, dsy + 16);
-                    ctx.lineTo(dsx - 6, dsy + 24);
+                    ctx.moveTo(dsx - 4, dsy + 16);
+                    ctx.lineTo(dsx - 4, dsy + 24);
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(dsx - 6, dsy + 24);
+                    ctx.moveTo(dsx - 4, dsy + 24);
                     ctx.lineTo(dsx, dsy + 24);
                     ctx.stroke();
                     ctx.fillStyle = "#1b4d2b";
                     ctx.beginPath();
-                    ctx.roundRect(dsx - 20, dsy + 13, 14, 14, 3);
+                    ctx.roundRect(dsx - 18, dsy + 13, 14, 14, 3); // Moved from -20 to -18 (2px right)
                     ctx.fill();
                     ctx.strokeStyle = "rgba(0,0,0,0.4)";
                     ctx.lineWidth = 2;
