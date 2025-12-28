@@ -1030,14 +1030,30 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   // Add branch sticking out
                   ctx.fillStyle = "#6b4423";
                   ctx.fillRect(dsx + TILE_SIZE - 8, dsy + 12, 6, 8);
+                  
+                  // Draw branch outline without left side
                   ctx.strokeStyle = "rgba(0,0,0,0.4)";
                   ctx.lineWidth = 2;
-                  ctx.strokeRect(dsx + TILE_SIZE - 8, dsy + 12, 6, 8);
+                  // Top line
+                  ctx.beginPath();
+                  ctx.moveTo(dsx + TILE_SIZE - 8, dsy + 12);
+                  ctx.lineTo(dsx + TILE_SIZE - 2, dsy + 12);
+                  ctx.stroke();
+                  // Right line
+                  ctx.beginPath();
+                  ctx.moveTo(dsx + TILE_SIZE - 2, dsy + 12);
+                  ctx.lineTo(dsx + TILE_SIZE - 2, dsy + 20);
+                  ctx.stroke();
+                  // Bottom line
+                  ctx.beginPath();
+                  ctx.moveTo(dsx + TILE_SIZE - 2, dsy + 20);
+                  ctx.lineTo(dsx + TILE_SIZE - 8, dsy + 20);
+                  ctx.stroke();
                   
                   // Add small tree on the branch (mini foliage) with rounded corners
                   ctx.fillStyle = "#1b4d2b";
                   ctx.beginPath();
-                  ctx.roundRect(dsx + TILE_SIZE - 2, dsy + 10, 14, 14, 3);
+                  ctx.roundRect(dsx + TILE_SIZE - 2, dsy + 9, 14, 14, 3);
                   ctx.fill();
                   ctx.strokeStyle = "rgba(0,0,0,0.4)";
                   ctx.lineWidth = 2;
