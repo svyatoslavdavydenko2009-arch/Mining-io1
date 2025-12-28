@@ -253,40 +253,27 @@ function getTileAt(x: number, y: number): ResourceType | null {
     return null;
   }
   
-  // Plains biome - tree groups spawn every 20-30 tiles
-  // Divide world into grid zones for tree group placement
-  const groupZoneSize = 25; // Each group zone is 25x25 tiles
+  // Plains biome - tree groups with exactly 4-6 trees per 25x25 zone
+  const groupZoneSize = 25; // Each zone is 25x25 tiles
   const groupZoneX = Math.floor(x / groupZoneSize);
   const groupZoneY = Math.floor(y / groupZoneSize);
   
-  // Determine if this zone has a tree group
+  // Determine if this zone has a tree group (~35% of zones)
   const groupChance = pseudoRandom(groupZoneX + 8000, groupZoneY + 8000);
-  if (groupChance > 0.65) return null; // ~35% of zones have tree groups
+  if (groupChance > 0.65) return null; // 65% empty zones, 35% with trees
   
-  // Calculate group center within the zone (with some randomness)
-  const centerOffsetX = pseudoRandom(groupZoneX + 9000, groupZoneY + 9000);
-  const centerOffsetY = pseudoRandom(groupZoneX + 9001, groupZoneY + 9001);
-  const groupCenterX = groupZoneX * groupZoneSize + groupZoneSize / 2 + (centerOffsetX - 0.5) * 6;
-  const groupCenterY = groupZoneY * groupZoneSize + groupZoneSize / 2 + (centerOffsetY - 0.5) * 6;
+  // Generate exactly 4-6 trees for this zone
+  const treeCountSeed = pseudoRandom(groupZoneX + 8001, groupZoneY + 8001);
+  const treeCount = 4 + Math.floor(treeCountSeed * 3); // 4-6 trees
   
-  // Calculate distance from current tile to group center
-  const distX = x - groupCenterX;
-  const distY = y - groupCenterY;
-  const distFromCenter = Math.sqrt(distX * distX + distY * distY);
-  
-  // Trees spawn within 3-6 tiles of group center
-  if (distFromCenter <= 6) {
-    // Higher spawn chance closer to center
-    const treeSeed = pseudoRandom(x + 6000, y + 6000);
-    if (distFromCenter <= 2) {
-      // Core: 70% spawn chance
-      if (treeSeed > 0.30) return "wood";
-    } else if (distFromCenter <= 4) {
-      // Middle: 50% spawn chance
-      if (treeSeed > 0.50) return "wood";
-    } else {
-      // Edge: 30% spawn chance
-      if (treeSeed > 0.70) return "wood";
+  // Generate tree positions for this zone
+  for (let i = 0; i < treeCount; i++) {
+    const treeX = groupZoneX * groupZoneSize + Math.floor(pseudoRandom(groupZoneX + 8002 + i, groupZoneY + 8002) * groupZoneSize);
+    const treeY = groupZoneY * groupZoneSize + Math.floor(pseudoRandom(groupZoneX + 8003 + i, groupZoneY + 8003) * groupZoneSize);
+    
+    // Check if current position matches a tree position
+    if (x === treeX && y === treeY) {
+      return "wood";
     }
   }
   
