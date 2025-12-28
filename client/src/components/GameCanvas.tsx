@@ -1416,8 +1416,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.fillStyle = "black";
       ctx.strokeStyle = "rgba(255,255,255,0.2)";
       ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(-pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.beginPath(); ctx.arc(pSize / 4, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      // If facing left (smoothLookDir.dx < 0), offset eyes slightly to the right
+      const eyeOffsetX = smoothLookDir.current.dx < -0.1 ? 4 : 0;
+      ctx.beginPath(); ctx.arc(-pSize / 4 + eyeOffsetX, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(pSize / 4 + eyeOffsetX, -pSize / 4, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
       
       ctx.restore(); // Restore body rotation
 
