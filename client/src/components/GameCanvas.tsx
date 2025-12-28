@@ -484,24 +484,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             if (distSq < scaledCollisionDist) return true;
           }
           
-          // Check for large boulders (hexagon rocks) - collision depends on size
+          // Check for large boulders (hexagon rocks) - LARGE collision radius
           if (isBoulderTile(ntx, nty)) {
-            // Account for visual offset of boulder (same as rendering)
-            const boulderOffsetX = (pseudoRandom(ntx + 888, nty + 888) - 0.5) * 16 / TILE_SIZE;
-            const boulderOffsetY = (pseudoRandom(ntx + 999, nty + 999) - 0.5) * 16 / TILE_SIZE;
-            const centerX = ntx + boulderOffsetX;
-            const centerY = nty + boulderOffsetY;
-            const offsetDistDx = x - centerX;
-            const offsetDistDy = y - centerY;
-            const offsetDistSq = offsetDistDx * offsetDistDx + offsetDistDy * offsetDistDy;
+            // Use large fixed radius to ensure boulders are always impassable
+            // Radius of 1.0 tile - much larger than boulder visual size
+            const scaledCollisionDist = 1.0;
             
-            // Calculate size same as rendering to match collision with visual
-            const sizeSeed = pseudoRandom(ntx + 6000, nty + 6000);
-            const boulderScale = 0.7 + sizeSeed * 1.5; // Range: 0.7 to 2.2
-            // Large boulders have substantial collision - scales with size squared for bigger impacts
-            const scaledCollisionDist = COLLISION_DISTANCE_SQ * boulderScale * boulderScale * 2.5;
-            
-            if (offsetDistSq < scaledCollisionDist) return true;
+            if (distSq < scaledCollisionDist) return true;
           }
         }
       }
