@@ -1035,20 +1035,21 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           footstepColor = "rgb(101, 67, 33)"; // Brown color for plains
         }
         
-        // Smooth cubic easing for fade-out
-        // Apply cubic curve for smooth acceleration of fade
-        // f.life goes from 1.0 -> 0.0, and we apply x^3 for consistent smooth fade
-        const fadeFactor = f.life * f.life * f.life;
+        // Realistic fade-out using separate size and opacity
+        // Size fades linearly for more natural appearance
+        const sizeOpacity = f.life;
+        // Opacity fades with cubic easing for smooth disappearance
+        const colorOpacity = f.life * f.life * f.life;
         
         // Draw footsteps 30% smaller (5.76px instead of 8px)
-        ctx.fillStyle = footstepColor;
+        ctx.fillStyle = footstepColor.replace('rgb', 'rgba').replace(')', `, ${colorOpacity * 0.8})`);
         ctx.beginPath();
-        const footstepRadius = 5.76 * fadeFactor; // 30% smaller, smooth fade based on time
+        const footstepRadius = 5.76 * sizeOpacity; // Size fades linearly
         ctx.arc(screenX, screenY, footstepRadius, 0, Math.PI * 2); 
         ctx.fill();
         
-        // Outline matching hand outline style - black with opacity 0.55
-        ctx.strokeStyle = `rgba(0, 0, 0, ${0.55 * fadeFactor})`;
+        // Outline with opacity fade
+        ctx.strokeStyle = `rgba(0, 0, 0, ${0.55 * colorOpacity})`;
         ctx.lineWidth = 2.5;
         ctx.stroke();
       });
