@@ -1033,10 +1033,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                   
                   // Add small tree on the branch (mini foliage)
                   ctx.fillStyle = "#1b4d2b";
-                  ctx.fillRect(dsx + TILE_SIZE - 2, dsy + 8, 6, 6);
+                  ctx.fillRect(dsx + TILE_SIZE - 6, dsy + 6, 14, 14);
                   ctx.strokeStyle = "rgba(0,0,0,0.4)";
-                  ctx.lineWidth = 1;
-                  ctx.strokeRect(dsx + TILE_SIZE - 2, dsy + 8, 6, 6);
+                  ctx.lineWidth = 2;
+                  ctx.strokeRect(dsx + TILE_SIZE - 6, dsy + 6, 14, 14);
                 }
               } else {
                 ctx.fillStyle = "#444";
