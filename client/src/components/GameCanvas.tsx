@@ -1130,10 +1130,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
                 ctx.fillStyle = "#1b4d2b";
                 ctx.beginPath(); ctx.roundRect(dsx + 17, dsy + TILE_SIZE, 14, 14, 3); ctx.fill(); ctx.stroke();
               } else if (branchSide === 2) {
-                ctx.fillRect(dsx, dsy + 16, 6, 8);
-                ctx.beginPath(); ctx.moveTo(dsx, dsy + 16); ctx.lineTo(dsx + 6, dsy + 16); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(dsx, dsy + 16); ctx.lineTo(dsx, dsy + 24); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(dsx, dsy + 24); ctx.lineTo(dsx + 6, dsy + 24); ctx.stroke();
+                ctx.fillRect(dsx - 6, dsy + 16, 6, 8);
+                ctx.beginPath(); ctx.moveTo(dsx - 6, dsy + 16); ctx.lineTo(dsx, dsy + 16); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx - 6, dsy + 16); ctx.lineTo(dsx - 6, dsy + 24); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(dsx - 6, dsy + 24); ctx.lineTo(dsx, dsy + 24); ctx.stroke();
                 ctx.fillStyle = "#1b4d2b";
                 ctx.beginPath(); ctx.roundRect(dsx - 14, dsy + 13, 14, 14, 3); ctx.fill(); ctx.stroke();
               } else {
