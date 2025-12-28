@@ -417,7 +417,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const interval = setInterval(() => {
       setFootsteps(prev => {
         if (prev.length === 0) return prev;
-        const next = prev.map(f => ({ ...f, life: f.life - 0.02 })).filter(f => f.life > 0);
+        const next = prev.map(f => ({ ...f, life: f.life - 0.04 })).filter(f => f.life > 0);
         return next;
       });
     }, 100);
@@ -1035,20 +1035,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           footstepColor = "rgb(101, 67, 33)"; // Brown color for plains
         }
         
-        // Calculate fade-out effect after 2 footsteps
-        // Latest 2 footsteps are fully visible, older ones smoothly fade out based on their age (life)
-        const footstepsCount = footsteps.length;
-        
-        // distanceFromEnd: 0 = newest step, length-1 = oldest step
-        const distanceFromEnd = footstepsCount - 1 - index;
-        
-        // First 2 steps use life directly, others use life with cubic easing for smoother fade
-        let fadeFactor = f.life;
-        if (distanceFromEnd >= 2) {
-          // After 2 steps: apply cubic curve for ultra-smooth fade-out
-          // f.life goes from 1.0 -> 0.0, and we apply x^3 for a smooth acceleration of fade
-          fadeFactor = f.life * f.life * f.life;
-        }
+        // Smooth cubic easing for fade-out
+        // Apply cubic curve for smooth acceleration of fade
+        // f.life goes from 1.0 -> 0.0, and we apply x^3 for consistent smooth fade
+        const fadeFactor = f.life * f.life * f.life;
         
         // Draw footsteps 30% smaller (5.76px instead of 8px)
         ctx.fillStyle = footstepColor;
