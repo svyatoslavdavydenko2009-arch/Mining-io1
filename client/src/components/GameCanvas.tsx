@@ -66,44 +66,6 @@ function isRockyBiome(x: number, y: number): boolean {
   return false;
 }
 
-// Check if a tile has a large boulder (hexagon rock)
-function isBoulderTile(x: number, y: number): boolean {
-  if (!isRockyBiome(x, y)) return false;
-  
-  const rockSeed = pseudoRandom(x + 777, y + 777);
-  if (rockSeed > 0.95) {
-    // Check if it has no neighbor boulders
-    let hasNeighborBoulder = false;
-    for (let ny = -1; ny <= 1; ny++) {
-      for (let nx = -1; nx <= 1; nx++) {
-        if (nx === 0 && ny === 0) continue;
-        if (pseudoRandom(x + nx + 777, y + ny + 777) > 0.95) {
-          hasNeighborBoulder = true;
-          break;
-        }
-      }
-      if (hasNeighborBoulder) break;
-    }
-    
-    // Also check for nearby regular stones in a 5x5 area
-    let hasNearbyStone = false;
-    if (!hasNeighborBoulder) {
-      for (let ny = -2; ny <= 2; ny++) {
-        for (let nx = -2; nx <= 2; nx++) {
-          if (nx === 0 && ny === 0) continue;
-          if (getTileAt(x + nx, y + ny) === "stone") {
-            hasNearbyStone = true;
-            break;
-          }
-        }
-        if (hasNearbyStone) break;
-      }
-    }
-    
-    return !hasNeighborBoulder && !hasNearbyStone;
-  }
-  return false;
-}
 
 // Generate biome floor colors - plains and rocky biomes
 function getFloorColor(x: number, y: number): string {
@@ -484,14 +446,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             if (distSq < scaledCollisionDist) return true;
           }
           
-          // Check for large boulders (hexagon rocks) - same collision as stone
-          if (isBoulderTile(ntx, nty)) {
-            const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
-            const rockScale = 0.7 + sizeSeed * 1.5;
-            const scaledCollisionDist = COLLISION_DISTANCE_SQ * rockScale;
-            
-            if (distSq < scaledCollisionDist) return true;
-          }
         }
       }
     }
@@ -986,8 +940,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           
           if (resType && !isMined && !isDisappearing) {
             resourcesToRender.push({ wx, wy, resType, type: 'resource' });
-          } else if (isRockyBiome(wx, wy)) {
-            resourcesToRender.push({ wx, wy, type: 'boulder' });
           }
         }
       }
@@ -1147,44 +1099,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             const colorB = hp > 0.5 ? 94 : hp > 0.25 ? 8 : 68;
             ctx.fillStyle = `rgba(${colorR},${colorG},${colorB},${healthBarAlpha})`; 
             ctx.beginPath(); ctx.roundRect(barX, barY, barWidth * hp, 5, 2); ctx.fill();
-          }
-        } else if (type === 'boulder') {
-          // Draw hexagon boulders
-          const rockSeed = pseudoRandom(wx + 777, wy + 777);
-          if (rockSeed > 0.95) {
-            let hasNeighborBoulder = false;
-            for (let ny = -1; ny <= 1; ny++) {
-              for (let nx = -1; nx <= 1; nx++) {
-                if (nx === 0 && ny === 0) continue;
-                if (pseudoRandom(wx + nx + 777, wy + ny + 777) > 0.95) { hasNeighborBoulder = true; break; }
-              }
-              if (hasNeighborBoulder) break;
-            }
-            
-            if (!hasNeighborBoulder) {
-              const sizeSeed = pseudoRandom(wx + 6000, wy + 6000);
-              const rockScale = 0.7 + sizeSeed * 1.5;
-              const dsx = sx + (pseudoRandom(wx + 888, wy + 888) - 0.5) * 16;
-              const dsy = sy + (pseudoRandom(wx + 999, wy + 999) - 0.5) * 16;
-              ctx.save();
-              ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
-              ctx.scale(rockScale, rockScale);
-              ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
-              ctx.fillStyle = "#333";
-              ctx.strokeStyle = "rgba(0,0,0,0.4)";
-              ctx.lineWidth = 2;
-              ctx.beginPath();
-              const rockSize = 32;
-              const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
-              for (let i = 0; i < 6; i++) {
-                const angle = (Math.PI / 3) * i + randomRotation;
-                const hx = dsx + TILE_SIZE / 2 + Math.cos(angle) * rockSize;
-                const hy = dsy + TILE_SIZE / 2 + Math.sin(angle) * rockSize;
-                if (i === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy);
-              }
-              ctx.closePath(); ctx.fill(); ctx.stroke();
-              ctx.restore();
-            }
           }
         }
       });
