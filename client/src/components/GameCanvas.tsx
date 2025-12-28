@@ -489,7 +489,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             // Calculate size same as rendering to match collision with visual
             const sizeSeed = pseudoRandom(ntx + 6000, nty + 6000);
             const boulderScale = 0.7 + sizeSeed * 1.5; // Range: 0.7 to 2.2
-            const scaledCollisionDist = COLLISION_DISTANCE_SQ * boulderScale * 1.6;
+            // Larger boulders have exponentially larger collision - scales with size squared
+            const scaledCollisionDist = COLLISION_DISTANCE_SQ * boulderScale * (1.3 + boulderScale * 0.5);
             
             if (distSq < scaledCollisionDist) return true;
           }
