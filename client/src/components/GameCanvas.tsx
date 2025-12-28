@@ -1338,14 +1338,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Draw handle
       ctx.save();
-      ctx.strokeStyle = pickaxeColor; // Match head color
-      ctx.globalAlpha = 0.8; // Slightly transparent stroke for handle
+      ctx.strokeStyle = "rgba(0,0,0,0.8)"; // Dark stroke matching the head outline
       ctx.lineWidth = 7; 
       ctx.beginPath(); 
       ctx.moveTo(0, headY); 
       ctx.lineTo(0, 0); 
       ctx.stroke();
-      ctx.globalAlpha = 1.0;
 
       const handleGrad = ctx.createLinearGradient(-3, 0, 3, 0);
       handleGrad.addColorStop(0, "rgba(0,0,0,0.3)");
