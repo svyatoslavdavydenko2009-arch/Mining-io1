@@ -618,7 +618,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
               const perpX = -normalizedDy;
               const perpY = normalizedDx;
               
-              const offset = 12 / TILE_SIZE; // Offset in tile units
+              const offset = 8 / TILE_SIZE; // Offset in tile units
               
               // World position of the footstep - offset left or right from center
               const stepX = updatedX + perpX * offset * side;
