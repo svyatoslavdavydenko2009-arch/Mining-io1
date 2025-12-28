@@ -590,21 +590,29 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           if (canMoveX) updatedX = nextX;
           if (canMoveY) updatedY = nextY;
           
-          // Spawn footstep
-          const distSinceLastStep = Math.sqrt(Math.pow(updatedX - lastFootstepPos.current.x, 2) + Math.pow(updatedY - lastFootstepPos.current.y, 2));
-          if (distSinceLastStep > 0.3) {
+          // Spawn footstep synced with walk cycle
+          const stepFreq = 0.2; // How often a step occurs in the walk cycle
+          const currentStep = Math.floor(walkCycle.current / (Math.PI * stepFreq));
+          const lastStep = useRef(0);
+          
+          if (currentStep !== lastStep.current) {
+            lastStep.current = currentStep;
+            
             setFootsteps(prevSteps => {
-              if (prevSteps.length > 30) return prevSteps; // Safety limit
+              if (prevSteps.length > 60) return prevSteps.slice(-40); 
               
-              // Randomize brightness for the footstep
-              const brightness = 0.6 + Math.random() * 0.8;
+              const side = (currentStep % 2 === 0) ? 1 : -1;
+              const angle = Math.atan2(lookDir.dy, lookDir.dx) + Math.PI / 2;
+              const offset = 12; // Distance from center for each foot
+              
+              const leftX = updatedX + Math.cos(angle) * (offset / TILE_SIZE) * side;
+              const leftY = updatedY + Math.sin(angle) * (offset / TILE_SIZE) * side;
               
               return [
-                ...prevSteps.slice(-15),
-                { id: Math.random(), x: updatedX, y: updatedY, life: 1.0, brightness }
+                ...prevSteps,
+                { id: Math.random(), x: leftX, y: leftY, life: 1.0, brightness: 0.4 + Math.random() * 0.4 }
               ];
             });
-            lastFootstepPos.current = { x: updatedX, y: updatedY };
           }
           
           return { x: updatedX, y: updatedY };
@@ -998,14 +1006,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const fdx = cx + (f.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
         const fdy = cy + (f.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
         
-        // Vary brown color brightness based on f.brightness
-        const r = Math.round(101 * f.brightness);
-        const g = Math.round(67 * f.brightness);
-        const b = Math.round(33 * f.brightness);
-        
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${f.life * 0.4})`;
+        // Footsteps are now small dark circles per user request
+        ctx.fillStyle = `rgba(0, 0, 0, ${f.life * 0.5})`;
         ctx.beginPath();
-        ctx.arc(fdx + 16, fdy + 28, 4 * f.life, 0, Math.PI * 2);
+        ctx.arc(fdx + 16, fdy + 16, 4 * f.life, 0, Math.PI * 2);
         ctx.fill();
       });
 
