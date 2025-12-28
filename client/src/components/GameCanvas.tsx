@@ -253,7 +253,7 @@ function getTileAt(x: number, y: number): ResourceType | null {
     return null;
   }
   
-  // Plains biome - tree groups with exactly 4-6 trees per 25x25 zone
+  // Plains biome - tree groups with exactly 10-15 trees per 25x25 zone
   const groupZoneSize = 25; // Each zone is 25x25 tiles
   const groupZoneX = Math.floor(x / groupZoneSize);
   const groupZoneY = Math.floor(y / groupZoneSize);
@@ -262,17 +262,44 @@ function getTileAt(x: number, y: number): ResourceType | null {
   const groupChance = pseudoRandom(groupZoneX + 8000, groupZoneY + 8000);
   if (groupChance > 0.65) return null; // 65% empty zones, 35% with trees
   
-  // Generate exactly 4-6 trees for this zone
+  // Generate tree positions for this zone with distance checking
   const treeCountSeed = pseudoRandom(groupZoneX + 8001, groupZoneY + 8001);
-  const treeCount = 4 + Math.floor(treeCountSeed * 3); // 4-6 trees
+  const treeCount = 10 + Math.floor(treeCountSeed * 6); // 10-15 trees
   
-  // Generate tree positions for this zone
-  for (let i = 0; i < treeCount; i++) {
-    const treeX = groupZoneX * groupZoneSize + Math.floor(pseudoRandom(groupZoneX + 8002 + i, groupZoneY + 8002) * groupZoneSize);
-    const treeY = groupZoneY * groupZoneSize + Math.floor(pseudoRandom(groupZoneX + 8003 + i, groupZoneY + 8003) * groupZoneSize);
+  const trees: Array<{x: number, y: number}> = [];
+  
+  // Try to place trees with minimum distance of 3 tiles between them (accounting for tree size 1.1-2.6)
+  const minDistance = 3;
+  let attempts = 0;
+  const maxAttempts = treeCount * 5; // Allow multiple attempts to place trees
+  
+  while (trees.length < treeCount && attempts < maxAttempts) {
+    const treeX = groupZoneX * groupZoneSize + Math.floor(pseudoRandom(groupZoneX + 8002 + attempts, groupZoneY + 8002 + attempts * 17) * groupZoneSize);
+    const treeY = groupZoneY * groupZoneSize + Math.floor(pseudoRandom(groupZoneX + 8003 + attempts * 13, groupZoneY + 8003 + attempts) * groupZoneSize);
     
-    // Check if current position matches a tree position
-    if (x === treeX && y === treeY) {
+    // Check distance to existing trees
+    let tooClose = false;
+    for (const existingTree of trees) {
+      const dx = treeX - existingTree.x;
+      const dy = treeY - existingTree.y;
+      const distSq = dx * dx + dy * dy;
+      if (distSq < minDistance * minDistance) {
+        tooClose = true;
+        break;
+      }
+    }
+    
+    // Add tree if far enough from others
+    if (!tooClose) {
+      trees.push({x: treeX, y: treeY});
+    }
+    
+    attempts++;
+  }
+  
+  // Check if current position matches a tree position
+  for (const tree of trees) {
+    if (x === tree.x && y === tree.y) {
       return "wood";
     }
   }
