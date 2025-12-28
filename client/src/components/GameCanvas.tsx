@@ -593,9 +593,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           if (canMoveY) updatedY = nextY;
           
           // Spawn footstep synced with walk cycle
-          const stepFreq = 0.2; // How often a step occurs in the walk cycle
           const currentCycle = walkCycle.current % (Math.PI * 2);
-          const stepThreshold = Math.PI; // Half-way point for the second step
+          const stepThreshold = Math.PI; 
           
           // Determine which step we are on (0 or 1)
           const currentStepIndex = currentCycle < stepThreshold ? 0 : 1;
@@ -604,19 +603,19 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
             lastStepIndex.current = currentStepIndex;
             
             setFootsteps(prevSteps => {
-              if (prevSteps.length > 60) return prevSteps.slice(-40); 
+              // Limit number of footsteps
+              const nextSteps = prevSteps.length > 40 ? prevSteps.slice(-30) : [...prevSteps];
               
-              // Alternating sides: 1 for right (step 0), -1 for left (step 1)
               const side = (currentStepIndex === 0) ? 1 : -1;
               const angle = Math.atan2(lookDir.dy, lookDir.dx) + Math.PI / 2;
-              const offset = 12; // Distance from center for each foot
+              const offset = 10; 
               
-              const stepX = updatedX + Math.cos(angle) * (offset / TILE_SIZE) * side;
-              const stepY = updatedY + Math.sin(angle) * (offset / TILE_SIZE) * side;
+              const stepX = updatedX + (Math.cos(angle) * offset) / TILE_SIZE * side;
+              const stepY = updatedY + (Math.sin(angle) * offset) / TILE_SIZE * side;
               
               return [
-                ...prevSteps,
-                { id: Math.random(), x: stepX, y: stepY, life: 1.0, brightness: 0.4 + Math.random() * 0.4 }
+                ...nextSteps,
+                { id: Math.random(), x: stepX, y: stepY, life: 1.0, brightness: 0.5 }
               ];
             });
           }
