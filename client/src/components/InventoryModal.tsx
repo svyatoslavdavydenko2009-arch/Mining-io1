@@ -87,7 +87,19 @@ export function InventoryModal({ open, onOpenChange, user }: InventoryModalProps
         />
 
         <div className="relative z-10 space-y-6">
-          <div className="pt-0 bg-black/40 -mx-6 px-6 pb-8 rounded-t-lg">
+          <div className="pt-0 -mx-6 px-6 pb-2">
+            <p className="text-white text-5xl mb-4 mt-2 font-bold uppercase tracking-tighter font-sans antialiased" style={{ 
+              textRendering: 'optimizeLegibility', 
+              WebkitFontSmoothing: 'antialiased',
+              letterSpacing: '-0.02em',
+              lineHeight: '1.2'
+            }}>Crafting</p>
+            <div className="h-24 flex items-center justify-center border-2 border-dashed border-white/20 rounded-md bg-black/20">
+              <p className="text-white/40 text-xl font-bold uppercase tracking-widest">Coming Soon</p>
+            </div>
+          </div>
+
+          <div className="pt-4 bg-black/40 -mx-6 px-6 pb-8 rounded-t-lg">
             <p className="text-white text-5xl mb-10 mt-2 font-bold uppercase tracking-tighter font-sans antialiased" style={{ 
               textRendering: 'optimizeLegibility', 
               WebkitFontSmoothing: 'antialiased',
