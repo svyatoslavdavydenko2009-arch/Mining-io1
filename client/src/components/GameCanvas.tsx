@@ -489,15 +489,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
     const hitRadiusTiles = 20 / TILE_SIZE;
 
     if (resource === "stone") {
-      const collisionRadius = Math.sqrt(COLLISION_DISTANCE_SQ * scale);
+      const collisionRadius = Math.sqrt(0.20 * scale);
       const distSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
       const combinedRadius = collisionRadius + hitRadiusTiles;
       return distSq < (combinedRadius * combinedRadius);
     } else {
-      const halfSize = (0.5 * scale) * 0.8;
-      // Approximate rectangle-circle intersection or just check bounds + radius
-      const closestX = Math.max(-halfSize, Math.min(rotatedX, halfSize));
-      const closestY = Math.max(-halfSize, Math.min(rotatedY, halfSize));
+      const canopyHalfSize = (0.5 * scale) * 0.7;
+      // Mining hit check for the canopy area
+      const closestX = Math.max(-canopyHalfSize, Math.min(rotatedX, canopyHalfSize));
+      const closestY = Math.max(-canopyHalfSize, Math.min(rotatedY, canopyHalfSize));
       const distSq = (rotatedX - closestX) ** 2 + (rotatedY - closestY) ** 2;
       return distSq < (hitRadiusTiles * hitRadiusTiles);
     }
@@ -539,11 +539,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             
             if (resource === "stone") {
               const baseDistSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
-              const scaledCollisionDist = COLLISION_DISTANCE_SQ * scale;
+              // Stones are 32px hexagon visuals, COLLISION_DISTANCE_SQ = 0.40 (~0.63 radius)
+              // Shrink it to ~0.45 radius (0.20 distance sq) to match the visual hexagon tighter
+              const scaledCollisionDist = 0.20 * scale; 
               if (baseDistSq < scaledCollisionDist) return true;
             } else if (resource === "wood") {
-              const halfSize = (0.5 * scale) * 0.8; 
-              if (Math.abs(rotatedX) < halfSize && Math.abs(rotatedY) < halfSize) return true;
+              // Tree structure: Canopy (large) and Trunk (small)
+              // Canopy is the main square part
+              const canopyHalfSize = (0.5 * scale) * 0.7; // Tighter canopy
+              const inCanopy = Math.abs(rotatedX) < canopyHalfSize && Math.abs(rotatedY) < canopyHalfSize;
+              
+              // Trunk is a thin rectangle extending downwards in local space
+              // Based on render: ctx.fillRect(dsx + 16, dsy + TILE_SIZE - 6, 8, 6);
+              // In local space (centered), this is roughly at y = +halfSize, width = 8/48 (0.16)
+              const trunkWidth = (8 / TILE_SIZE) * scale;
+              const trunkHeight = (12 / TILE_SIZE) * scale;
+              const inTrunk = Math.abs(rotatedX) < trunkWidth/2 && rotatedY > 0 && rotatedY < canopyHalfSize + trunkHeight;
+              
+              if (inCanopy || inTrunk) return true;
             }
           }
         }
@@ -1167,17 +1180,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             ctx.rotate(rotation);
 
             if (resType === "stone") {
-              const radius = Math.sqrt(COLLISION_DISTANCE_SQ * scale) * TILE_SIZE;
+              const radius = Math.sqrt(0.20 * scale) * TILE_SIZE;
               ctx.beginPath();
               ctx.arc(0, 0, radius, 0, Math.PI * 2);
               ctx.stroke();
               ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
               ctx.fill();
             } else if (resType === "wood") {
-              const halfSize = (0.5 * scale) * 0.8 * TILE_SIZE;
-              ctx.strokeRect(-halfSize, -halfSize, halfSize * 2, halfSize * 2);
+              const canopyHalfSize = (0.5 * scale) * 0.7 * TILE_SIZE;
+              // Canopy hitbox
+              ctx.strokeRect(-canopyHalfSize, -canopyHalfSize, canopyHalfSize * 2, canopyHalfSize * 2);
               ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
-              ctx.fillRect(-halfSize, -halfSize, halfSize * 2, halfSize * 2);
+              ctx.fillRect(-canopyHalfSize, -canopyHalfSize, canopyHalfSize * 2, canopyHalfSize * 2);
+              
+              // Trunk hitbox visualization
+              const trunkWidth = (8 / TILE_SIZE) * scale * TILE_SIZE;
+              const trunkHeight = (12 / TILE_SIZE) * scale * TILE_SIZE;
+              ctx.strokeRect(-trunkWidth/2, canopyHalfSize, trunkWidth, trunkHeight);
+              ctx.fillRect(-trunkWidth/2, canopyHalfSize, trunkWidth, trunkHeight);
             }
             ctx.restore();
           }
