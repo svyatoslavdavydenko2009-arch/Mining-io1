@@ -367,11 +367,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
+  const [lookDir, setLookDir] = useState({ dx: 1, dy: 0 }); 
+
+  const localPosRef = useRef({ x: user.x, y: user.y });
+  const lookDirRef = useRef({ dx: 1, dy: 0 });
+
+  useEffect(() => {
+    localPosRef.current = localPos;
+  }, [localPos]);
+
+  useEffect(() => {
+    lookDirRef.current = lookDir;
+  }, [lookDir]);
+
   const [velocity, setVelocity] = useState({ x: 0, y: 0 });
   const [isWalking, setIsWalking] = useState(false);
   const walkCycle = useRef(0);
   const lastUpdateRef = useRef(performance.now());
-  const [lookDir, setLookDir] = useState({ dx: 1, dy: 0 }); 
   const lastLookDirRef = useRef({ dx: 1, dy: 0 }); 
   const smoothBodyRotation = useRef(0);
   const smoothLookDir = useRef({ dx: 1, dy: 0 }); 
@@ -727,8 +739,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     setMiningTarget(null);
 
     const processMiningHit = () => {
-      const currentLookDir = { dx: lookDir.dx, dy: lookDir.dy };
-      const currentPos = { x: localPos.x, y: localPos.y };
+      // Use latest current refs for hit calculation to ensure we are using the most up-to-date position
+      const currentLookDir = { dx: lookDirRef.current.dx, dy: lookDirRef.current.dy };
+      const currentPos = { x: localPosRef.current.x, y: localPosRef.current.y };
       
       const currentSwingAngle = (miningAnimation.rotation * Math.PI / 180);
       
@@ -802,6 +815,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     let animStartTime = performance.now();
     hitProcessed.current = false;
     const animateMining = (time: number) => {
+      // Re-read localPos and lookDir inside the animation frame to ensure we use the very latest values
+      // This is critical because the function closure might have stale values if not careful
+      // In this case, they are state variables, but accessed within the RAF loop
+      
       const elapsed = time - animStartTime;
       const totalDuration = 1620; // Increased total duration by 35% (1200 * 1.35)
       const progress = Math.min(elapsed / totalDuration, 1);
@@ -841,6 +858,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       if (progress >= 0.55 && !hitProcessed.current) {
         hitProcessed.current = true;
         hitDisplayStartTime.current = performance.now();
+        // Capture exact state at this frame
         processMiningHit();
       }
       
@@ -938,7 +956,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Update mining look direction in real-time
       if (isMining) {
-        setMiningDirection({ x: lookDir.dx, y: lookDir.dy });
+        setMiningDirection({ x: lookDirRef.current.dx, y: lookDirRef.current.dy });
       }
       
       let targetSide = lookDir.dx < 0 ? 1 : 0;
@@ -970,8 +988,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // Draw mining radius indicator (orange square) based on CURRENT position and direction
       if (isMining) {
-        const indicatorLookDir = { dx: lookDir.dx, dy: lookDir.dy };
-        const indicatorPos = { x: localPos.x, y: localPos.y };
+        const indicatorLookDir = { dx: lookDirRef.current.dx, dy: lookDirRef.current.dy };
+        const indicatorPos = { x: localPosRef.current.x, y: localPosRef.current.y };
         const indicatorSwingAngle = (miningAnimation.rotation * Math.PI / 180);
         
         const bodyRotation = Math.atan2(indicatorLookDir.dy, indicatorLookDir.dx) + Math.PI / 2;
