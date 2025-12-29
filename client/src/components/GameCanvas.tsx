@@ -459,6 +459,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
     if (!resource || isTileMined(tileX, tileY)) return false;
     
     const sizeSeed = pseudoRandom(tileX + 3000, tileY + 3000);
+    const rotation = sizeSeed * Math.PI * 2;
     const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
     
     // Texture offset matching render and movement logic
@@ -479,20 +480,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
     const offsetTipX = tipX + lookDir.dx * forwardOffset;
     const offsetTipY = tipY + lookDir.dy * forwardOffset;
 
-    // Relative position check (NO rotation to match visual)
+    // Relative position check
     const dx_rel = offsetTipX - resourceX;
     const dy_rel = offsetTipY - resourceY;
+    
+    // Rotate for stone hit check
+    const rotatedX = dx_rel * Math.cos(-rotation) - dy_rel * Math.sin(-rotation);
+    const rotatedY = dx_rel * Math.sin(-rotation) + dy_rel * Math.cos(-rotation);
 
     const hitRadiusTiles = 20 / TILE_SIZE;
 
     if (resource === "stone") {
       const collisionRadius = Math.sqrt(0.20 * scale);
-      const distSq = (dx_rel * dx_rel) + (dy_rel * dy_rel);
+      const distSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
       const combinedRadius = collisionRadius + hitRadiusTiles;
       return distSq < (combinedRadius * combinedRadius);
     } else {
       const canopyHalfSize = (0.5 * scale) * 0.7;
-      // Mining hit check for the canopy area
       const closestX = Math.max(-canopyHalfSize, Math.min(dx_rel, canopyHalfSize));
       const closestY = Math.max(-canopyHalfSize, Math.min(dy_rel, canopyHalfSize));
       const distSq = (dx_rel - closestX) ** 2 + (dy_rel - closestY) ** 2;
@@ -526,26 +530,37 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             const offsetY = (pseudoRandom(ntx + 2000, nty + 2000) - 0.5) * 12 / TILE_SIZE;
             
             // Transform player relative position into resource local space (account for texture offset)
-            // NO rotation in collision logic to match visual orientation
             const dx_rel = x - (centerX + offsetX);
             const dy_rel = y - (centerY + offsetY);
             
+            // Stone needs rotation for collision, Tree does NOT (canopy is axis-aligned)
+            const rotation = sizeSeed * Math.PI * 2;
+            const rotatedX = dx_rel * Math.cos(-rotation) - dy_rel * Math.sin(-rotation);
+            const rotatedY = dx_rel * Math.sin(-rotation) + dy_rel * Math.cos(-rotation);
+            
             if (resource === "stone") {
-              const baseDistSq = (dx_rel * dx_rel) + (dy_rel * dy_rel);
-              // Stones are 32px hexagon visuals, COLLISION_DISTANCE_SQ = 0.40 (~0.63 radius)
-              // Shrink it to ~0.45 radius (0.20 distance sq) to match the visual hexagon tighter
+              const baseDistSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
               const scaledCollisionDist = 0.20 * scale; 
               if (baseDistSq < scaledCollisionDist) return true;
             } else if (resource === "wood") {
-              // Tree structure: Canopy (large) and Trunk (small)
-              // Canopy is the main square part
-              const canopyHalfSize = (0.5 * scale) * 0.7; // Tighter canopy
+              const canopyHalfSize = (0.5 * scale) * 0.7; 
               const inCanopy = Math.abs(dx_rel) < canopyHalfSize && Math.abs(dy_rel) < canopyHalfSize;
               
-              // Trunk is a thin rectangle extending downwards in local space
+              // Determine trunk direction (0: right, 1: bottom, 2: left, 3: top)
+              const trunkDir = Math.floor(pseudoRandom(ntx + 4000, nty + 4000) * 4);
               const trunkWidth = (8 / TILE_SIZE) * scale;
               const trunkHeight = (12 / TILE_SIZE) * scale;
-              const inTrunk = Math.abs(dx_rel) < trunkWidth/2 && dy_rel > 0 && dy_rel < canopyHalfSize + trunkHeight;
+              
+              let inTrunk = false;
+              if (trunkDir === 0) { // Right
+                inTrunk = dx_rel > canopyHalfSize && dx_rel < canopyHalfSize + trunkHeight && Math.abs(dy_rel) < trunkWidth/2;
+              } else if (trunkDir === 1) { // Bottom
+                inTrunk = dy_rel > canopyHalfSize && dy_rel < canopyHalfSize + trunkHeight && Math.abs(dx_rel) < trunkWidth/2;
+              } else if (trunkDir === 2) { // Left
+                inTrunk = dx_rel < -canopyHalfSize && dx_rel > -canopyHalfSize - trunkHeight && Math.abs(dy_rel) < trunkWidth/2;
+              } else if (trunkDir === 3) { // Top
+                inTrunk = dy_rel < -canopyHalfSize && dy_rel > -canopyHalfSize - trunkHeight && Math.abs(dx_rel) < trunkWidth/2;
+              }
               
               if (inCanopy || inTrunk) return true;
             }
@@ -1164,14 +1179,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             
             const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
             const scale = resType === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
+            const rotation = sizeSeed * Math.PI * 2;
             
-            // Hitbox must be centered on the texture's rendered center
-            // REMOVED rotation to match visual texture orientation
             ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
 
             if (resType === "stone") {
+              ctx.rotate(rotation);
               const radius = Math.sqrt(0.20 * scale) * TILE_SIZE;
-              // Pentagonal hitbox for stones
               ctx.beginPath();
               for (let i = 0; i < 5; i++) {
                 const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
@@ -1191,11 +1205,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
               ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
               ctx.fillRect(-canopyHalfSize, -canopyHalfSize, canopyHalfSize * 2, canopyHalfSize * 2);
               
-              // Trunk hitbox visualization
+              // Trunk hitbox visualization matching direction
+              const trunkDir = Math.floor(pseudoRandom(wx + 4000, wy + 4000) * 4);
               const trunkWidth = (8 / TILE_SIZE) * scale * TILE_SIZE;
               const trunkHeight = (12 / TILE_SIZE) * scale * TILE_SIZE;
-              ctx.strokeRect(-trunkWidth/2, canopyHalfSize, trunkWidth, trunkHeight);
-              ctx.fillRect(-trunkWidth/2, canopyHalfSize, trunkWidth, trunkHeight);
+              
+              ctx.beginPath();
+              if (trunkDir === 0) ctx.rect(canopyHalfSize, -trunkWidth/2, trunkHeight, trunkWidth);
+              else if (trunkDir === 1) ctx.rect(-trunkWidth/2, canopyHalfSize, trunkWidth, trunkHeight);
+              else if (trunkDir === 2) ctx.rect(-canopyHalfSize - trunkHeight, -trunkWidth/2, trunkHeight, trunkWidth);
+              else if (trunkDir === 3) ctx.rect(-trunkWidth/2, -canopyHalfSize - trunkHeight, trunkWidth, trunkHeight);
+              ctx.stroke();
+              ctx.fill();
             }
             ctx.restore();
           }
