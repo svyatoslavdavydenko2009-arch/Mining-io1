@@ -1563,7 +1563,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       <div className="absolute top-44 left-4 flex flex-col gap-2 items-start pointer-events-none">
         {/* Fullscreen toggle is now handled by the parent Game component's settings menu or hidden */}
         <AnimatePresence>{miningNotifications.map((n) => (
-          <motion.div key={n.id} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 50, opacity: 0 }} className="bg-black/80 border border-secondary px-3 py-1.5 rounded-md flex items-center gap-2 shadow-lg">
+          <motion.div key={n.id} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -50, opacity: 0 }} className="bg-black/80 border border-secondary px-3 py-1.5 rounded-md flex items-center gap-2 shadow-lg">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: RESOURCES[n.resource].color }} />
             <span className="text-white text-xs font-pixel uppercase tracking-wider">Mined {RESOURCES[n.resource].name}</span>
           </motion.div>
