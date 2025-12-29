@@ -1565,8 +1565,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         <AnimatePresence>{miningNotifications.map((n) => (
           <motion.div key={n.id} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -50, opacity: 0 }} className="bg-black/80 border border-secondary px-3 py-1.5 rounded-md flex items-center gap-2 shadow-lg">
             <svg
-              width={50}
-              height={50}
+              width={25}
+              height={25}
               viewBox="0 0 24 24"
               fill={RESOURCES[n.resource].color}
               xmlns="http://www.w3.org/2000/svg"
