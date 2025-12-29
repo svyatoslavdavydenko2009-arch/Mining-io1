@@ -1646,16 +1646,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           // PIXEL-PERFECT MINING RADIUS (16px = hit detection radius)
           const hitRadiusPx = 16;
           
-          // 1. Precise outer ring (white for contrast, pixel-perfect thin line)
-          ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 * opacity})`;
-          ctx.lineWidth = 1;
+          // 1. Orange filled circle background
+          ctx.fillStyle = `rgba(255, 165, 0, ${0.4 * opacity})`;
           ctx.beginPath();
           ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
-          ctx.stroke();
-
-          // 2. Inner glow/indicator (orange to match game theme)
-          ctx.strokeStyle = `rgba(255, 165, 0, ${0.6 * opacity})`;
-          ctx.lineWidth = 3;
+          ctx.fill();
+          
+          // 2. Precise outer ring (white for contrast, pixel-perfect thin line)
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 * opacity})`;
+          ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
           ctx.stroke();
