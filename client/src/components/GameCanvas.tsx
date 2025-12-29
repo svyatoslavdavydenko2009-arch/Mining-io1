@@ -464,6 +464,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     
     // Precise reach calculation matching visual headY (-24px)
     // headY is in pixels, we convert to TILE_SIZE units
+    // The visual rendering uses -24px offset for the head.
     const reach = 24 / TILE_SIZE; 
     const tipX = playerX + Math.cos(totalRotation - Math.PI/2) * reach;
     const tipY = playerY + Math.sin(totalRotation - Math.PI/2) * reach;
@@ -485,14 +486,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const distSq = dx * dx + dy * dy;
     
     // Hit detection radius matching visual hitAreaSize (32px / 2 = 16px radius)
+    // The indicator is 32x32px centered at the tip.
+    // 16px is the radius in pixels.
     const hitRadiusPixels = 16;
     const hitRadiusTiles = hitRadiusPixels / TILE_SIZE;
     
-    // For large resources like trees (wood), they have extended visual/collision geometry.
-    // We already account for this by using a calculated collisionRadius.
-    // The previous loop only checked a small radius around the aim point.
-    // By increasing the loop radius in processMiningHit and keeping this precise check,
-    // we correctly detect hits on extended geometry.
     return distSq < (collisionRadius + hitRadiusTiles) ** 2;
   };
 
@@ -1007,10 +1005,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const screenTipX = cx + (tipX - displayPos.x) * TILE_SIZE;
         const screenTipY = cy + (tipY - displayPos.y) * TILE_SIZE;
 
+        // DRAW HIT DETECTION RADIUS (matching the math in tileCollisionIntersectsMiningRadius)
+        // hitRadiusTiles = 16 / 48 = 0.333 units
+        // Visual indicator should be exactly what the math uses for hit detection
+        const hitRadiusPx = 16; 
+
         ctx.save();
         ctx.strokeStyle = "rgba(255, 165, 0, 0.5)"; // Semi-transparent orange
         ctx.lineWidth = 2;
-        ctx.strokeRect(screenTipX - 16, screenTipY - 16, 32, 32);
+        // Stroke a circle representing the ACTUAL hit radius used in the math
+        ctx.beginPath();
+        ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Also keep a small dot for the precise tip
+        ctx.fillStyle = "rgba(255, 165, 0, 0.8)";
+        ctx.beginPath();
+        ctx.arc(screenTipX, screenTipY, 2, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       }
 
