@@ -1498,13 +1498,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
 
       ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
 
-      // Determine target rotation based on look direction
-      let targetRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
-      
-      // Smooth body rotation - responsive to joystick changes
-      let diff = targetRotation - smoothBodyRotation.current;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-      while (diff > Math.PI) diff -= Math.PI * 2;
       // Improved rotation logic: 
       // 1. Rotation speed set to 0.16 as requested.
       // 2. Only rotate if the joystick is actually being moved (magnitude > 0.15 to avoid idle jitter).
@@ -1535,7 +1528,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         // Further from center = faster rotation (up to 0.16 speed)
         const rotationIntensity = (smoothedMagnitude - 0.15) / (1.0 - 0.15); // Normalize 0.15-1.0 to 0-1
         const finalRotationSpeed = 0.16;
-        smoothBodyRotation.current += smoothedDiff * finalRotationSpeed * Math.max(0.1, rotationIntensity);
+        smoothBodyRotation.current += smoothedDiff * finalRotationSpeed * Math.max(0.1, Math.min(1, rotationIntensity));
       }
       const bodyRotation = smoothBodyRotation.current;
       
@@ -1607,7 +1600,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       const handBob = smoothHandBob.current;
 
       // Draw Pickaxe
-      const pickaxeColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
+      const pickaxeLevel = user?.pickaxeLevel || 1;
+      const pickaxeColor = PICKAXE_COLORS[pickaxeLevel] || "#8B4513";
       ctx.save(); 
       ctx.rotate(miningBaseRot);
       
@@ -1615,10 +1609,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       ctx.rotate(pickaxeHandRot);
       
       // Adjust hand position during mining swing to follow pickaxe rotation
-      const miningOffsetX = -handOffsetSide;
-      const miningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05);
+      const currentMiningOffsetX = -handOffsetSide;
+      const currentMiningOffsetY = -handOffsetFront + handBob + (miningAnimation.rotation * 0.05);
       
-      ctx.translate(miningOffsetX, miningOffsetY); 
+      ctx.translate(currentMiningOffsetX, currentMiningOffsetY); 
       ctx.rotate(-(90 * Math.PI / 180));
       
       const headY = -24; 
@@ -1760,7 +1754,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
           const indicatorPos = { x: localPosRef.current.x, y: localPosRef.current.y };
           const indicatorSwingAngle = (miningAnimation.rotation * Math.PI / 180);
           
-          const currentRotation = smoothBodyRotation.current;
+          // Match the character's visual rotation exactly
+          const currentRotation = bodyRotation;
           const totalRotation = currentRotation + indicatorSwingAngle;
           const reach = 24 / TILE_SIZE;
           const tipX = indicatorPos.x + Math.cos(totalRotation - Math.PI/2) * reach;
@@ -1812,7 +1807,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
     };
     frameId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(frameId);
-  }, [localPos, user.pickaxeLevel, tileHealth, minedTiles, particles, miningAnimation, lookDir]);
+  }, [localPos, user?.pickaxeLevel, tileHealth, minedTiles, particles, miningAnimation, lookDir]);
 
   return (
     <div ref={containerRef} className={`relative bg-black overflow-hidden shadow-2xl transition-all ${isFullscreen ? 'fixed inset-0 w-screen h-screen border-0 rounded-none z-50' : 'w-full h-[60vh] sm:h-[70vh] border-4 border-secondary rounded-lg'}`}>
@@ -1861,7 +1856,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       {/* Mine button on right */}
       <div className="absolute bottom-12 right-12 z-50 pointer-events-auto">
         {(() => {
-          const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
+          const cooldown = MINING_COOLDOWNS[user?.pickaxeLevel || 1] || 1500;
           const timeSinceLastMine = Date.now() - lastMineTimeState;
           const isOnCooldown = timeSinceLastMine < cooldown;
           return (
