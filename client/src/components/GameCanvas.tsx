@@ -739,22 +739,19 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const offsetTileY = Math.round(lookDirY);
       
       // Mining center is one tile ahead
-      const miningCenterX = playerTileX + offsetTileX;
-      const miningCenterY = playerTileY + offsetTileY;
+      // Use the precise swing angle from the current animation state
+      const currentSwingAngle = (miningAnimation.rotation * Math.PI / 180);
       
-      // Check a wider area (3x3) because large tiles' collision can extend beyond the 2x2 mining radius
       const targets: {x: number, y: number, resource: ResourceType}[] = [];
-      for (let dy = -1; dy <= 2; dy++) {
-        for (let dx = -1; dx <= 2; dx++) {
-          const tx = miningCenterX + dx;
-          const ty = miningCenterY + dy;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const tx = Math.round(localPos.x + lookDir.dx) + dx;
+          const ty = Math.round(localPos.y + lookDir.dy) + dy;
           
-          // Check if this tile's collision geometry intersects with the 2x2 mining radius
-          if (tileCollisionIntersectsMiningRadius(tx, ty, miningCenterX, miningCenterY)) {
+          if (tileCollisionIntersectsMiningRadius(tx, ty, localPos.x, localPos.y, lookDir, currentSwingAngle)) {
             const resource = getTileAt(tx, ty);
             if (resource && !isTileMined(tx, ty)) {
               targets.push({ x: tx, y: ty, resource });
-              // Set flag if there's something to hit
               hitStone.current = true;
             }
           }
@@ -1607,29 +1604,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const offsetTileX = Math.round(lookDirX);
           const offsetTileY = Math.round(lookDirY);
           
-          const miningCenterX = playerTileX + offsetTileX;
-          const miningCenterY = playerTileY + offsetTileY;
-          
-          for (let dy = 0; dy <= 1; dy++) {
-            for (let dx = 0; dx <= 1; dx++) {
-              const gridTileX = miningCenterX + dx;
-              const gridTileY = miningCenterY + dy;
-              
-              const gridScreenX = cx + (gridTileX - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
-              const gridScreenY = cy + (gridTileY - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
-              
-              // Draw orange grid square
-              ctx.fillStyle = "#FF8C00"; // Orange color
-              ctx.fillRect(gridScreenX, gridScreenY, TILE_SIZE, TILE_SIZE);
-              
-              // Draw grid outline
-              ctx.strokeStyle = "rgba(255, 140, 0, 0.8)";
-              ctx.lineWidth = 2;
-              ctx.strokeRect(gridScreenX, gridScreenY, TILE_SIZE, TILE_SIZE);
-            }
-          }
-          
-          ctx.globalAlpha = 1;
+          // Using texture-aligned hit detection instead of 2x2 orange grid
           ctx.restore();
         } else {
           // Clear the display timer after duration
