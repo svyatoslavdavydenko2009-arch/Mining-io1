@@ -1543,12 +1543,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
       // NEW: Square Hit Indicator directly in the pickaxe rendering context
       if (isMining && miningAnimation.rotation !== 0) {
-        const squareSize = 20;
+        // TILE_SIZE is 48px. collisionRadius is usually around 0.3-0.5 tiles.
+        // The effective hit radius in pixels is roughly (collisionRadius + 0.05) * TILE_SIZE.
+        // We'll use a size that visually represents this area.
+        const hitAreaSize = 32; // Matches the approximate 0.6-0.7 tile width
         ctx.strokeStyle = "rgba(255, 140, 0, 0.8)";
         ctx.lineWidth = 2;
-        ctx.strokeRect(-squareSize/2, headY - squareSize/2, squareSize, squareSize);
+        ctx.strokeRect(-hitAreaSize/2, headY - hitAreaSize/2, hitAreaSize, hitAreaSize);
         ctx.fillStyle = "rgba(255, 140, 0, 0.2)";
-        ctx.fillRect(-squareSize/2, headY - squareSize/2, squareSize, squareSize);
+        ctx.fillRect(-hitAreaSize/2, headY - hitAreaSize/2, hitAreaSize, hitAreaSize);
       }
       
       ctx.restore();
