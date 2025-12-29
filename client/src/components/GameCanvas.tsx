@@ -439,30 +439,38 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const isTileMined = (x: number, y: number) => minedTiles.has(`${x},${y}`);
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
-  // Check if a specific tile at integer coordinates has collision with player at current position
-  const tileHasCollisionWithPlayer = (tileX: number, tileY: number, playerX: number, playerY: number): boolean => {
+  // Check if a tile's collision geometry intersects with the 3x3 mining radius
+  const tileCollisionIntersectsMiningRadius = (tileX: number, tileY: number, playerTileX: number, playerTileY: number): boolean => {
     const resource = getTileAt(tileX, tileY);
     if (!resource || isTileMined(tileX, tileY)) return false;
     
     if (resource === "stone" || resource === "wood") {
       const sizeSeed = pseudoRandom(tileX + 3000, tileY + 3000);
-      const rotation = sizeSeed * Math.PI * 2;
       const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
       
-      const dx_rel = playerX - tileX;
-      const dy_rel = playerY - tileY;
-      
-      const rotatedX = dx_rel * Math.cos(-rotation) - dy_rel * Math.sin(-rotation);
-      const rotatedY = dx_rel * Math.sin(-rotation) + dy_rel * Math.cos(-rotation);
-      
+      // Calculate collision radius/half-size for the tile
+      let collisionRadius: number;
       if (resource === "stone") {
-        const baseDistSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
-        const scaledCollisionDist = COLLISION_DISTANCE_SQ * scale;
-        return baseDistSq < scaledCollisionDist;
-      } else if (resource === "wood") {
-        const halfSize = (0.5 * scale) * 0.8;
-        return Math.abs(rotatedX) < halfSize && Math.abs(rotatedY) < halfSize;
+        collisionRadius = Math.sqrt(COLLISION_DISTANCE_SQ * scale);
+      } else {
+        collisionRadius = (0.5 * scale) * 0.8;
       }
+      
+      // Mining radius bounds: from (playerTile - 1) to (playerTile + 1), with 0.5 tile padding for edges
+      const miningLeft = playerTileX - 1 - 0.5;
+      const miningRight = playerTileX + 1 + 0.5;
+      const miningTop = playerTileY - 1 - 0.5;
+      const miningBottom = playerTileY + 1 + 0.5;
+      
+      // Tile collision bounds (centered at tileX, tileY)
+      const tileLeft = tileX - 0.5 - collisionRadius;
+      const tileRight = tileX + 0.5 + collisionRadius;
+      const tileTop = tileY - 0.5 - collisionRadius;
+      const tileBottom = tileY + 0.5 + collisionRadius;
+      
+      // AABB intersection test
+      return !(tileRight < miningLeft || tileLeft > miningRight || 
+               tileBottom < miningTop || tileTop > miningBottom);
     }
     return false;
   };
@@ -716,24 +724,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
     const processMiningHit = () => {
       // Get CURRENT player position when hit happens (not when mining started)
-      const playerX = localPos.x;
-      const playerY = localPos.y;
-      const playerTileX = Math.round(playerX);
-      const playerTileY = Math.round(playerY);
+      const playerTileX = Math.round(localPos.x);
+      const playerTileY = Math.round(localPos.y);
       
-      // Find all targets in radius by checking collision with player's actual position
+      // Check a wider area (4x4) because large tiles' collision can extend beyond the 3x3 mining radius
       const targets: {x: number, y: number, resource: ResourceType}[] = [];
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
           const tx = playerTileX + dx;
           const ty = playerTileY + dy;
-          const resource = getTileAt(tx, ty);
           
-          // Damage tiles that have collision with the player in the mining radius
-          if (resource && !isTileMined(tx, ty) && tileHasCollisionWithPlayer(tx, ty, playerX, playerY)) {
-            targets.push({ x: tx, y: ty, resource });
-            // Set flag if there's something to hit
-            hitStone.current = true;
+          // Check if this tile's collision geometry intersects with the 3x3 mining radius
+          if (tileCollisionIntersectsMiningRadius(tx, ty, playerTileX, playerTileY)) {
+            const resource = getTileAt(tx, ty);
+            if (resource && !isTileMined(tx, ty)) {
+              targets.push({ x: tx, y: ty, resource });
+              // Set flag if there's something to hit
+              hitStone.current = true;
+            }
           }
         }
       }
