@@ -492,7 +492,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
 
     if (resource === "stone") {
       const renderRotation = pseudoRandom(tileX + 4000, tileY + 4000) * Math.PI * 2;
-      const combinedRotation = rotation + renderRotation;
+      const combinedRotation = rotation + renderRotation + Math.PI;
       
       const checkX = dx_rel * Math.cos(-combinedRotation) - dy_rel * Math.sin(-combinedRotation);
       const checkY = dx_rel * Math.sin(-combinedRotation) + dy_rel * Math.cos(-combinedRotation);
@@ -546,7 +546,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             
             if (resource === "stone") {
               const renderRotation = pseudoRandom(ntx + 4000, nty + 4000) * Math.PI * 2;
-              const combinedRotation = rotation + renderRotation;
+              const combinedRotation = rotation + renderRotation + Math.PI;
               
               // Local space check against the pentagon
               const checkX = dx_rel * Math.cos(-combinedRotation) - dy_rel * Math.sin(-combinedRotation);
