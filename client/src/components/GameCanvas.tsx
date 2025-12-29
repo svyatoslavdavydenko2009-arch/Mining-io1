@@ -1531,6 +1531,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.restore();
       ctx.restore(); // Restore main player transform
 
+      // Draw mining radius visualization when mining
+      if (isMining) {
+        const playerTileX = Math.round(localPos.x);
+        const playerTileY = Math.round(localPos.y);
+        ctx.strokeStyle = "rgba(255, 150, 0, 0.4)";
+        ctx.lineWidth = 2;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const tileX = playerTileX + dx;
+            const tileY = playerTileY + dy;
+            const sx = cx + (tileX - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
+            const sy = cy + (tileY - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+            ctx.strokeRect(sx, sy, TILE_SIZE, TILE_SIZE);
+          }
+        }
+      }
+
       const grad = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
       particles.forEach(p => { const sx = cx + (p.x - displayPos.x) * TILE_SIZE; const sy = cy + (p.y - displayPos.y) * TILE_SIZE; ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(sx - 2, sy - 2, 4, 4); ctx.globalAlpha = 1; });
       frameId = requestAnimationFrame(render);
