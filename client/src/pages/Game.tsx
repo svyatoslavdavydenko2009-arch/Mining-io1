@@ -3,7 +3,7 @@ import { useGame } from "@/hooks/use-game";
 import { GameCanvas } from "@/components/GameCanvas";
 import { PICKAXES } from "@shared/schema";
 import { Settings, LogOut, X, Backpack, Crosshair } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PixelButton } from "@/components/PixelButton";
 import { InventoryModal } from "@/components/InventoryModal";
 import {
@@ -13,17 +13,36 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Game() {
   const { user, logout } = useAuth();
   const { hitboxEnabled, toggleHitbox } = useGame();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowIntro(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!user) return null;
 
   return (
     <div className="w-screen h-screen overflow-hidden bg-black relative">
+      <AnimatePresence>
+        {showIntro && (
+          <motion.div
+            initial={{ backdropFilter: "blur(20px)", opacity: 1 }}
+            animate={{ backdropFilter: "blur(0px)", opacity: 0 }}
+            exit={{ backdropFilter: "blur(0px)", opacity: 0 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="absolute inset-0 z-[100] pointer-events-none bg-black/20"
+          />
+        )}
+      </AnimatePresence>
+      
       <GameCanvas user={user} isFullscreen={true} onFullscreenChange={() => {}} hitboxEnabled={hitboxEnabled} />
       
       <div className="absolute top-4 right-4 z-[60] flex items-center gap-2">
