@@ -692,8 +692,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Find all targets in radius by checking collision (not just resources)
       const targets: {x: number, y: number, resource: ResourceType}[] = [];
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
           const tx = playerTileX + dx;
           const ty = playerTileY + dy;
           const resource = getTileAt(tx, ty);
@@ -1537,16 +1537,16 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         ctx.rotate(miningBaseRot);
         ctx.rotate((miningAnimation.rotation * Math.PI / 180));
         
-        // Draw pickaxe head with larger scale for visibility (1.8x)
-        const radiusScale = 1.8;
+        // Draw pickaxe head with much larger scale for 5x5 radius (3.2x)
+        const radiusScale = 3.2;
         const radiusHeadY = -24 * radiusScale;
         const pickaxeRadiusColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
         
-        ctx.globalAlpha = 0.35; // Semi-transparent
+        ctx.globalAlpha = 0.3; // Semi-transparent
         
         // Draw mining radius pickaxe head
         ctx.save();
-        ctx.strokeStyle = "rgba(0,0,0,0.6)";
+        ctx.strokeStyle = "rgba(0,0,0,0.5)";
         ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.moveTo(-14 * radiusScale, radiusHeadY + 4 * radiusScale);
