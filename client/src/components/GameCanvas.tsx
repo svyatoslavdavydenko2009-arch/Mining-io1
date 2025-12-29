@@ -690,22 +690,21 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const playerTileX = Math.round(localPos.x);
       const playerTileY = Math.round(localPos.y);
       
-      // Find all resources in radius using current position
+      // Find all targets in radius by checking collision (not just resources)
       const targets: {x: number, y: number, resource: ResourceType}[] = [];
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
           const tx = playerTileX + dx;
           const ty = playerTileY + dy;
           const resource = getTileAt(tx, ty);
+          
+          // Damage any solid tile (resource) that hasn't been mined
           if (resource && !isTileMined(tx, ty)) {
             targets.push({ x: tx, y: ty, resource });
+            // Set flag if there's something to hit
+            hitStone.current = true;
           }
         }
-      }
-      
-      // Set flag if there are stones to hit
-      if (targets.length > 0) {
-        hitStone.current = true;
       }
       
       targets.forEach(t => {
