@@ -1152,6 +1152,25 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
           ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
           ctx.scale(rockScale, rockScale);
           ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
+
+          // Visualize resource hitbox when enabled
+          if (hitboxEnabled) {
+            ctx.save();
+            ctx.strokeStyle = "rgba(255, 165, 0, 0.6)";
+            ctx.lineWidth = 1.5;
+            if (resType === "stone") {
+              // Stone uses circular collision with COLLISION_DISTANCE_SQ
+              const radius = Math.sqrt(COLLISION_DISTANCE_SQ * rockScale) * TILE_SIZE;
+              ctx.beginPath();
+              ctx.arc(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2, radius, 0, Math.PI * 2);
+              ctx.stroke();
+            } else if (resType === "wood") {
+              // Wood uses square collision
+              const halfSize = (0.5 * rockScale) * 0.8 * TILE_SIZE;
+              ctx.strokeRect(dsx + TILE_SIZE / 2 - halfSize, dsy + TILE_SIZE / 2 - halfSize, halfSize * 2, halfSize * 2);
+            }
+            ctx.restore();
+          }
           
           ctx.strokeStyle = "rgba(0,0,0,0.4)";
           ctx.lineWidth = 2;
