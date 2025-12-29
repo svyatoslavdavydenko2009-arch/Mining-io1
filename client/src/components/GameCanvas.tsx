@@ -727,29 +727,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     setMiningTarget(null);
 
     const processMiningHit = () => {
-      // Get CURRENT player position when hit happens (not when mining started)
-      const playerTileX = Math.round(localPos.x);
-      const playerTileY = Math.round(localPos.y);
+      const currentLookDir = { dx: lookDir.dx, dy: lookDir.dy };
+      const currentPos = { x: localPos.x, y: localPos.y };
       
-      // Calculate mining radius offset - one tile ahead in look direction
-      const lookDirX = lookDir.dx;
-      const lookDirY = lookDir.dy;
-      
-      // Normalize and round the direction to get the offset tile
-      const offsetTileX = Math.round(lookDirX);
-      const offsetTileY = Math.round(lookDirY);
-      
-      // Mining center is one tile ahead
-      // Use the precise swing angle from the current animation state
       const currentSwingAngle = (miningAnimation.rotation * Math.PI / 180);
       
       const targets: {x: number, y: number, resource: ResourceType}[] = [];
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
-          const tx = Math.round(localPos.x + lookDir.dx) + dx;
-          const ty = Math.round(localPos.y + lookDir.dy) + dy;
+          const tx = Math.round(currentPos.x + currentLookDir.dx) + dx;
+          const ty = Math.round(currentPos.y + currentLookDir.dy) + dy;
           
-          if (tileCollisionIntersectsMiningRadius(tx, ty, localPos.x, localPos.y, lookDir, currentSwingAngle)) {
+          if (tileCollisionIntersectsMiningRadius(tx, ty, currentPos.x, currentPos.y, currentLookDir, currentSwingAngle)) {
             const resource = getTileAt(tx, ty);
             if (resource && !isTileMined(tx, ty)) {
               targets.push({ x: tx, y: ty, resource });
@@ -947,6 +936,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       smoothLookDir.current.dx += (lookDir.dx - smoothLookDir.current.dx) * easeSpeed;
       smoothLookDir.current.dy += (lookDir.dy - smoothLookDir.current.dy) * easeSpeed;
       
+      // Update mining look direction in real-time
+      if (isMining) {
+        setMiningDirection({ x: lookDir.dx, y: lookDir.dy });
+      }
+      
       let targetSide = lookDir.dx < 0 ? 1 : 0;
       if (Math.abs(lookDir.dy) > Math.abs(lookDir.dx) && lookDir.dy < 0) {
         targetSide = 1 - targetSide;
@@ -973,6 +967,28 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const endX = Math.round(localPos.x) + drawRadius;
       const startY = Math.round(localPos.y) - drawRadius;
       const endY = Math.round(localPos.y) + drawRadius;
+
+      // Draw mining radius indicator (orange square) based on CURRENT position and direction
+      if (isMining) {
+        const indicatorLookDir = { dx: lookDir.dx, dy: lookDir.dy };
+        const indicatorPos = { x: localPos.x, y: localPos.y };
+        const indicatorSwingAngle = (miningAnimation.rotation * Math.PI / 180);
+        
+        const bodyRotation = Math.atan2(indicatorLookDir.dy, indicatorLookDir.dx) + Math.PI / 2;
+        const totalRotation = bodyRotation + indicatorSwingAngle;
+        const reach = 24 / TILE_SIZE; 
+        const tipX = indicatorPos.x + Math.cos(totalRotation - Math.PI/2) * reach;
+        const tipY = indicatorPos.y + Math.sin(totalRotation - Math.PI/2) * reach;
+
+        const screenTipX = cx + (tipX - displayPos.x) * TILE_SIZE;
+        const screenTipY = cy + (tipY - displayPos.y) * TILE_SIZE;
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(255, 165, 0, 0.5)"; // Semi-transparent orange
+        ctx.lineWidth = 2;
+        ctx.strokeRect(screenTipX - 16, screenTipY - 16, 32, 32);
+        ctx.restore();
+      }
 
       // Draw base floor color everywhere first
       ctx.fillStyle = "#3f2817";
