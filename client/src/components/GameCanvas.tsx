@@ -1395,27 +1395,32 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         // Calculate the base position of the hand relative to player center
         const handRot = bodyRotation + swingAngle;
         
-        // The hand is offset in its local rotated space
-        const localHandX = -handOffsetSide;
-        const localHandY = -handOffsetFront + handBob;
+        // Correct world-to-screen conversion for the tip
+        // px/py are already in screen coordinates (from playerPos)
+        // We need to calculate the offset in screen pixels (TILE_SIZE)
         
-        // Rotate local hand offset
-        const worldHandOffsetX = localHandX * Math.cos(handRot) - localHandY * Math.sin(handRot);
-        const worldHandOffsetY = localHandX * Math.sin(handRot) + localHandY * Math.cos(handRot);
+        // headY is -24 (pixels)
+        // Local offset of hand relative to body center in pixels
+        const localHandX_px = -handOffsetSide;
+        const localHandY_px = -handOffsetFront + handBob;
         
-        const handWorldX = px + worldHandOffsetX;
-        const handWorldY = py + worldHandOffsetY;
+        // Rotate local hand offset in pixels
+        const screenHandOffsetX = localHandX_px * Math.cos(handRot) - localHandY_px * Math.sin(handRot);
+        const screenHandOffsetY = localHandX_px * Math.sin(handRot) + localHandY_px * Math.cos(handRot);
+        
+        const handWorldX = px + screenHandOffsetX;
+        const handWorldY = py + screenHandOffsetY;
         
         // The pickaxe is rotated -90 degrees relative to handRot
         const pickaxeRot = handRot - (90 * Math.PI / 180);
         
-        // The tip is at headY offset in the pickaxe's local space
-        const tipWorldX = handWorldX + Math.cos(pickaxeRot - Math.PI/2) * headY;
-        const tipWorldY = handWorldY + Math.sin(pickaxeRot - Math.PI/2) * headY;
+        // The tip is at headY offset in the pickaxe's local space (already in pixels)
+        const tipScreenX = handWorldX + Math.cos(pickaxeRot - Math.PI/2) * headY;
+        const tipScreenY = handWorldY + Math.sin(pickaxeRot - Math.PI/2) * headY;
 
         ctx.save();
         // Draw a square indicator at the tip to show exact hit area
-        ctx.translate(tipWorldX, tipWorldY);
+        ctx.translate(tipScreenX, tipScreenY);
         ctx.rotate(pickaxeRot);
         
         // Square size roughly matching pickaxe head width
