@@ -1564,7 +1564,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         {/* Fullscreen toggle is now handled by the parent Game component's settings menu or hidden */}
         <AnimatePresence>{miningNotifications.map((n) => (
           <motion.div key={n.id} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -50, opacity: 0 }} className="bg-black/80 border border-secondary px-3 py-1.5 rounded-md flex items-center gap-2 shadow-lg">
-            <svg width="38" height="38" viewBox="0 0 38 38" style={{ fill: RESOURCES[n.resource].color }} className="drop-shadow-sm">
+            <svg width="50" height="50" viewBox="0 0 38 38" style={{ fill: RESOURCES[n.resource].color }} className="drop-shadow-sm">
               <defs>
                 <filter id={`stone-texture-${n.id}`}>
                   <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" result="noise" />
