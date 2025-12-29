@@ -567,7 +567,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         lastMoveTimeForInterp.current = now;
         setLookDir({ dx, dy });
         triggerDash(dx, dy);
-        setIsMining(false); setMiningTarget(null); setMiningAnimation({ rotation: 0, offsetX: 0, offsetY: 0 });
+        setIsMining(false); setMiningTarget(null); setMiningAnimation({ rotation: 0, offsetX: 0, offsetY: 0 }); hitDisplayStartTime.current = null;
         return { x: nextX, y: nextY };
       }
       return prev;
@@ -873,6 +873,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         setIsMining(false);
         setMiningDirection(null);
         setMiningAnimation({ rotation: 0, offsetX: 0, offsetY: 0 });
+        hitDisplayStartTime.current = null; // Reset hit display timer
         lastMineTime.current = now;
         setLastMineTimeState(now);
         setCooldownProgress(0);
@@ -990,47 +991,59 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const startY = Math.round(localPos.y) - drawRadius;
       const endY = Math.round(localPos.y) + drawRadius;
 
-      // Draw mining radius indicator (orange square) based on CURRENT position and direction
-      if (isMining) {
-        const indicatorLookDir = { dx: lookDirRef.current.dx, dy: lookDirRef.current.dy };
-        const indicatorPos = { x: localPosRef.current.x, y: localPosRef.current.y };
-        const indicatorSwingAngle = (miningAnimation.rotation * Math.PI / 180);
+      // Draw mining radius indicator only during impact moment (350ms after hit)
+      const HIT_DISPLAY_DURATION = 350;
+      if (hitDisplayStartTime.current !== null) {
+        const hitElapsed = performance.now() - hitDisplayStartTime.current;
         
-        const bodyRotation = Math.atan2(indicatorLookDir.dy, indicatorLookDir.dx) + Math.PI / 2;
-        const totalRotation = bodyRotation + indicatorSwingAngle;
-        const reach = 24 / TILE_SIZE; 
-        const tipX = indicatorPos.x + Math.cos(totalRotation - Math.PI/2) * reach;
-        const tipY = indicatorPos.y + Math.sin(totalRotation - Math.PI/2) * reach;
+        if (hitElapsed < HIT_DISPLAY_DURATION) {
+          const indicatorLookDir = { dx: lookDirRef.current.dx, dy: lookDirRef.current.dy };
+          const indicatorPos = { x: localPosRef.current.x, y: localPosRef.current.y };
+          const indicatorSwingAngle = (miningAnimation.rotation * Math.PI / 180);
+          
+          const bodyRotation = Math.atan2(indicatorLookDir.dy, indicatorLookDir.dx) + Math.PI / 2;
+          const totalRotation = bodyRotation + indicatorSwingAngle;
+          const reach = 24 / TILE_SIZE; 
+          const tipX = indicatorPos.x + Math.cos(totalRotation - Math.PI/2) * reach;
+          const tipY = indicatorPos.y + Math.sin(totalRotation - Math.PI/2) * reach;
 
-        const screenTipX = cx + (tipX - displayPos.x) * TILE_SIZE;
-        const screenTipY = cy + (tipY - displayPos.y) * TILE_SIZE;
+          const screenTipX = cx + (tipX - displayPos.x) * TILE_SIZE;
+          const screenTipY = cy + (tipY - displayPos.y) * TILE_SIZE;
 
-        // PIXEL-PERFECT MINING RADIUS
-        const hitRadiusPx = 16; 
+          // PIXEL-PERFECT MINING RADIUS (16px = hit detection radius)
+          const hitRadiusPx = 16;
+          
+          // Calculate fade-out effect in last 100ms
+          const fadeStartTime = HIT_DISPLAY_DURATION - 100;
+          let opacity = 1;
+          if (hitElapsed > fadeStartTime) {
+            opacity = 1 - ((hitElapsed - fadeStartTime) / 100);
+          }
 
-        ctx.save();
-        
-        // 1. Precise outer ring (white for contrast, pixel-perfect thin line)
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
-        ctx.stroke();
+          ctx.save();
+          
+          // 1. Precise outer ring (white for contrast, pixel-perfect thin line)
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 * opacity})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
+          ctx.stroke();
 
-        // 2. Inner glow/indicator (orange to match game theme, slightly thicker)
-        ctx.strokeStyle = "rgba(255, 165, 0, 0.4)";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // 3. Precise crosshair center point
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.arc(screenTipX, screenTipY, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-        
-        ctx.restore();
+          // 2. Inner glow/indicator (orange to match game theme, slightly thicker)
+          ctx.strokeStyle = `rgba(255, 165, 0, ${0.6 * opacity})`;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // 3. Precise crosshair center point
+          ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+          ctx.beginPath();
+          ctx.arc(screenTipX, screenTipY, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.restore();
+        }
       }
 
       // Draw base floor color everywhere first
