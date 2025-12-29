@@ -451,8 +451,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const isTileMined = (x: number, y: number) => minedTiles.has(`${x},${y}`);
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
-  // Check if a tile's collision geometry intersects with the 2x2 mining radius
-  // miningCenterX/Y is the center of the 2x2 mining area (offset one tile ahead in look direction)
+  // Check if a tile's collision geometry intersects with the mining radius
+  // Checks if either the resource center is within range, OR the resource collision extends into the hit radius
   const tileCollisionIntersectsMiningRadius = (tileX: number, tileY: number, playerX: number, playerY: number, lookDir: {dx: number, dy: number}, swingAngle: number): boolean => {
     const resource = getTileAt(tileX, tileY);
     if (!resource || isTileMined(tileX, tileY)) return false;
@@ -485,13 +485,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const dy = tipY - tileY;
     const distSq = dx * dx + dy * dy;
     
-    // Hit detection radius matching visual hitAreaSize (32px / 2 = 16px radius)
-    // The indicator is 32x32px centered at the tip.
-    // 16px is the radius in pixels.
-    const hitRadiusPixels = 16;
+    // Hit detection radius (20px = 16px * 1.25 for 25% increase)
+    // Matches the visual radius in the rendering code
+    const hitRadiusPixels = 20;
     const hitRadiusTiles = hitRadiusPixels / TILE_SIZE;
     
-    return distSq < (collisionRadius + hitRadiusTiles) ** 2;
+    // Check if the resource's collision sphere intersects with the hit radius sphere
+    // This accounts for resources whose collision geometry extends beyond their tile center
+    const combinedRadius = collisionRadius + hitRadiusTiles;
+    return distSq < (combinedRadius * combinedRadius);
   };
 
   const hasCollision = (x: number, y: number): boolean => {
