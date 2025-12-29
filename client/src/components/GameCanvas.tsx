@@ -991,60 +991,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const startY = Math.round(localPos.y) - drawRadius;
       const endY = Math.round(localPos.y) + drawRadius;
 
-      // Draw mining radius indicator only during impact moment (350ms after hit)
-      const HIT_DISPLAY_DURATION = 350;
-      if (hitDisplayStartTime.current !== null) {
-        const hitElapsed = performance.now() - hitDisplayStartTime.current;
-        
-        if (hitElapsed < HIT_DISPLAY_DURATION) {
-          const indicatorLookDir = { dx: lookDirRef.current.dx, dy: lookDirRef.current.dy };
-          const indicatorPos = { x: localPosRef.current.x, y: localPosRef.current.y };
-          const indicatorSwingAngle = (miningAnimation.rotation * Math.PI / 180);
-          
-          const bodyRotation = Math.atan2(indicatorLookDir.dy, indicatorLookDir.dx) + Math.PI / 2;
-          const totalRotation = bodyRotation + indicatorSwingAngle;
-          const reach = 24 / TILE_SIZE; 
-          const tipX = indicatorPos.x + Math.cos(totalRotation - Math.PI/2) * reach;
-          const tipY = indicatorPos.y + Math.sin(totalRotation - Math.PI/2) * reach;
-
-          const screenTipX = cx + (tipX - displayPos.x) * TILE_SIZE;
-          const screenTipY = cy + (tipY - displayPos.y) * TILE_SIZE;
-
-          // PIXEL-PERFECT MINING RADIUS (16px = hit detection radius)
-          const hitRadiusPx = 16;
-          
-          // Calculate fade-out effect in last 100ms
-          const fadeStartTime = HIT_DISPLAY_DURATION - 100;
-          let opacity = 1;
-          if (hitElapsed > fadeStartTime) {
-            opacity = 1 - ((hitElapsed - fadeStartTime) / 100);
-          }
-
-          ctx.save();
-          
-          // 1. Precise outer ring (white for contrast, pixel-perfect thin line)
-          ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 * opacity})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
-          ctx.stroke();
-
-          // 2. Inner glow/indicator (orange to match game theme, slightly thicker)
-          ctx.strokeStyle = `rgba(255, 165, 0, ${0.6 * opacity})`;
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
-          ctx.stroke();
-          
-          // 3. Precise crosshair center point
-          ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-          ctx.beginPath();
-          ctx.arc(screenTipX, screenTipY, 1.5, 0, Math.PI * 2);
-          ctx.fill();
-          
-          ctx.restore();
-        }
-      }
 
       // Draw base floor color everywhere first
       ctx.fillStyle = "#3f2817";
@@ -1668,29 +1614,58 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.restore();
       ctx.restore(); // Restore main player transform
 
-      // Draw mining radius visualization as orange 2x2 grid only during impact moment
+      // Draw mining radius visualization only during impact moment
       if (hitDisplayStartTime.current !== null) {
         const hitElapsed = performance.now() - hitDisplayStartTime.current;
-        const HIT_DISPLAY_DURATION = 350; // Grid displays for 350ms after impact
+        const HIT_DISPLAY_DURATION = 350;
         
         if (hitElapsed < HIT_DISPLAY_DURATION) {
+          // Calculate pickaxe tip position for hit radius visualization
+          const indicatorLookDir = { dx: lookDirRef.current.dx, dy: lookDirRef.current.dy };
+          const indicatorPos = { x: localPosRef.current.x, y: localPosRef.current.y };
+          const indicatorSwingAngle = (miningAnimation.rotation * Math.PI / 180);
+          
+          const bodyRotation = Math.atan2(indicatorLookDir.dy, indicatorLookDir.dx) + Math.PI / 2;
+          const totalRotation = bodyRotation + indicatorSwingAngle;
+          const reach = 24 / TILE_SIZE;
+          const tipX = indicatorPos.x + Math.cos(totalRotation - Math.PI/2) * reach;
+          const tipY = indicatorPos.y + Math.sin(totalRotation - Math.PI/2) * reach;
+
+          const screenTipX = cx + (tipX - displayPos.x) * TILE_SIZE;
+          const screenTipY = cy + (tipY - displayPos.y) * TILE_SIZE;
+          
+          // Calculate fade-out effect in last 100ms
+          const fadeStartTime = HIT_DISPLAY_DURATION - 100;
+          let opacity = 1;
+          if (hitElapsed > fadeStartTime) {
+            opacity = 1 - ((hitElapsed - fadeStartTime) / 100);
+          }
+
           ctx.save();
           
-          // Fade out effect - grid becomes more transparent as time passes
-          const fadeProgress = hitElapsed / HIT_DISPLAY_DURATION;
-          ctx.globalAlpha = 0.15 * (1 - fadeProgress); // Start at 0.15, fade to 0
+          // PIXEL-PERFECT MINING RADIUS (16px = hit detection radius)
+          const hitRadiusPx = 16;
           
-          // Draw 2x2 grid of mining tiles offset one tile ahead in look direction
-          const playerTileX = Math.round(localPos.x);
-          const playerTileY = Math.round(localPos.y);
+          // 1. Precise outer ring (white for contrast, pixel-perfect thin line)
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 * opacity})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // 2. Inner glow/indicator (orange to match game theme)
+          ctx.strokeStyle = `rgba(255, 165, 0, ${0.6 * opacity})`;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
+          ctx.stroke();
           
-          // Calculate look direction for grid offset
-          const lookDirX = lookDir.dx;
-          const lookDirY = lookDir.dy;
-          const offsetTileX = Math.round(lookDirX);
-          const offsetTileY = Math.round(lookDirY);
+          // 3. Precise crosshair center point
+          ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+          ctx.beginPath();
+          ctx.arc(screenTipX, screenTipY, 1.5, 0, Math.PI * 2);
+          ctx.fill();
           
-          // Using texture-aligned hit detection instead of 2x2 orange grid
           ctx.restore();
         } else {
           // Clear the display timer after duration
