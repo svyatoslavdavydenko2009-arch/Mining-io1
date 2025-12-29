@@ -439,7 +439,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const isTileMined = (x: number, y: number) => minedTiles.has(`${x},${y}`);
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
-  // Check if a tile's collision geometry intersects with the 3x3 mining radius
+  // Check if a tile's collision geometry intersects with the 2x2 mining radius
   const tileCollisionIntersectsMiningRadius = (tileX: number, tileY: number, playerTileX: number, playerTileY: number): boolean => {
     const resource = getTileAt(tileX, tileY);
     if (!resource || isTileMined(tileX, tileY)) return false;
@@ -456,10 +456,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         collisionRadius = (0.5 * scale) * 0.8;
       }
       
-      // Mining radius bounds: from (playerTile - 1) to (playerTile + 1), with 0.5 tile padding for edges
-      const miningLeft = playerTileX - 1 - 0.5;
+      // Mining radius bounds: 2x2 grid from (playerTile, playerTile) to (playerTile+1, playerTile+1), with 0.5 tile padding for edges
+      const miningLeft = playerTileX - 0.5;
       const miningRight = playerTileX + 1 + 0.5;
-      const miningTop = playerTileY - 1 - 0.5;
+      const miningTop = playerTileY - 0.5;
       const miningBottom = playerTileY + 1 + 0.5;
       
       // Tile collision bounds (centered at tileX, tileY)
@@ -727,14 +727,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const playerTileX = Math.round(localPos.x);
       const playerTileY = Math.round(localPos.y);
       
-      // Check a wider area (4x4) because large tiles' collision can extend beyond the 3x3 mining radius
+      // Check a wider area (3x3) because large tiles' collision can extend beyond the 2x2 mining radius
       const targets: {x: number, y: number, resource: ResourceType}[] = [];
-      for (let dy = -2; dy <= 2; dy++) {
-        for (let dx = -2; dx <= 2; dx++) {
+      for (let dy = -1; dy <= 2; dy++) {
+        for (let dx = -1; dx <= 2; dx++) {
           const tx = playerTileX + dx;
           const ty = playerTileY + dy;
           
-          // Check if this tile's collision geometry intersects with the 3x3 mining radius
+          // Check if this tile's collision geometry intersects with the 2x2 mining radius
           if (tileCollisionIntersectsMiningRadius(tx, ty, playerTileX, playerTileY)) {
             const resource = getTileAt(tx, ty);
             if (resource && !isTileMined(tx, ty)) {
@@ -1570,7 +1570,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.restore();
       ctx.restore(); // Restore main player transform
 
-      // Draw mining radius visualization as orange 3x3 grid only during impact moment
+      // Draw mining radius visualization as orange 2x2 grid only during impact moment
       if (hitDisplayStartTime.current !== null) {
         const hitElapsed = performance.now() - hitDisplayStartTime.current;
         const HIT_DISPLAY_DURATION = 350; // Grid displays for 350ms after impact
@@ -1582,12 +1582,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const fadeProgress = hitElapsed / HIT_DISPLAY_DURATION;
           ctx.globalAlpha = 0.15 * (1 - fadeProgress); // Start at 0.15, fade to 0
           
-          // Draw 3x3 grid of mining tiles
+          // Draw 2x2 grid of mining tiles
           const playerTileX = Math.round(localPos.x);
           const playerTileY = Math.round(localPos.y);
           
-          for (let dy = -1; dy <= 1; dy++) {
-            for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = 0; dy <= 1; dy++) {
+            for (let dx = 0; dx <= 1; dx++) {
               const gridTileX = playerTileX + dx;
               const gridTileY = playerTileY + dy;
               
