@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useGame } from "@/hooks/use-game";
 import { GameCanvas } from "@/components/GameCanvas";
 import { PICKAXES } from "@shared/schema";
-import { Settings, LogOut, X, Backpack } from "lucide-react";
+import { Settings, LogOut, X, Backpack, Crosshair } from "lucide-react";
 import { useState } from "react";
 import { PixelButton } from "@/components/PixelButton";
 import { InventoryModal } from "@/components/InventoryModal";
@@ -12,9 +12,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 
 export default function Game() {
   const { user, logout } = useAuth();
+  const { hitboxEnabled, toggleHitbox } = useGame();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [inventoryOpen, setInventoryOpen] = useState(false);
 
@@ -22,7 +24,7 @@ export default function Game() {
 
   return (
     <div className="w-screen h-screen overflow-hidden bg-black relative">
-      <GameCanvas user={user} isFullscreen={true} onFullscreenChange={() => {}} />
+      <GameCanvas user={user} isFullscreen={true} onFullscreenChange={() => {}} hitboxEnabled={hitboxEnabled} />
       
       <div className="absolute top-4 right-4 z-[60] flex items-center gap-2">
         <button 
@@ -42,10 +44,23 @@ export default function Game() {
               <Settings size={24} className={settingsOpen ? "animate-spin-slow" : ""} />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-black/90 border-2 border-secondary p-2 min-w-[160px] backdrop-blur-md">
+          <DropdownMenuContent align="end" className="bg-black/90 border-2 border-secondary p-2 min-w-[200px] backdrop-blur-md">
             <div className="px-2 py-1.5 mb-2 border-b border-secondary/50">
               <p className="text-[10px] font-pixel text-muted-foreground uppercase">Settings</p>
             </div>
+            
+            <div className="flex items-center justify-between gap-2 px-2 py-2 mb-2 hover:bg-secondary/10 rounded-sm transition-colors">
+              <div className="flex items-center gap-2">
+                <Crosshair size={16} className="text-muted-foreground" />
+                <span className="text-xs font-pixel text-white">HITBOX</span>
+              </div>
+              <Switch 
+                checked={hitboxEnabled} 
+                onCheckedChange={toggleHitbox}
+                className="scale-75 data-[state=checked]:bg-primary"
+              />
+            </div>
+
             <DropdownMenuItem 
               data-testid="button-logout"
               onClick={() => logout.mutate()}

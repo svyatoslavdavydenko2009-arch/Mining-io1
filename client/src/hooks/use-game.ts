@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 import type { ResourceType } from "@shared/schema";
@@ -79,9 +80,24 @@ export function useGame() {
     },
   });
 
+  const [hitboxEnabled, setHitboxEnabled] = useState(() => {
+    const saved = localStorage.getItem("hitboxEnabled");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  const toggleHitbox = () => {
+    setHitboxEnabled((prev: boolean) => {
+      const next = !prev;
+      localStorage.setItem("hitboxEnabled", JSON.stringify(next));
+      return next;
+    });
+  };
+
   return {
     move: moveMutation,
     mine: mineMutation,
     craft: craftMutation,
+    hitboxEnabled,
+    toggleHitbox,
   };
 }

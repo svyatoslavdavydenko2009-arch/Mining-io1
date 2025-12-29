@@ -361,9 +361,10 @@ interface GameCanvasProps {
   user: User;
   isFullscreen?: boolean;
   onFullscreenChange?: (fullscreen: boolean) => void;
+  hitboxEnabled?: boolean;
 }
 
-export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: GameCanvasProps) {
+export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hitboxEnabled = true }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
@@ -502,6 +503,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   };
 
   const hasCollision = (x: number, y: number): boolean => {
+    if (!hitboxEnabled) return false;
     // Stone, wood, and boulder collision detection
     // We check a 4x4 grid around the precise position for better coverage of large boulders
     const tx = Math.round(x);
@@ -1610,7 +1612,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.restore(); // Restore main player transform
 
       // Draw mining radius visualization only during impact moment
-      if (hitDisplayStartTime.current !== null) {
+      if (hitboxEnabled && hitDisplayStartTime.current !== null) {
         const hitElapsed = performance.now() - hitDisplayStartTime.current;
         const HIT_DISPLAY_DURATION = 350;
         
