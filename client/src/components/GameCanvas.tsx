@@ -1711,20 +1711,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         
         if (hitElapsed < HIT_DISPLAY_DURATION) {
           // Calculate pickaxe tip position for hit radius visualization
-          const indicatorLookDir = { dx: lookDirRef.current.dx, dy: lookDirRef.current.dy };
+          // Using smoothBodyRotation.current to stay synchronized with the character's visual rotation
           const indicatorPos = { x: localPosRef.current.x, y: localPosRef.current.y };
           const indicatorSwingAngle = (miningAnimation.rotation * Math.PI / 180);
           
-          const bodyRotation = Math.atan2(indicatorLookDir.dy, indicatorLookDir.dx) + Math.PI / 2;
-          const totalRotation = bodyRotation + indicatorSwingAngle;
+          const currentRotation = smoothBodyRotation.current;
+          const totalRotation = currentRotation + indicatorSwingAngle;
           const reach = 24 / TILE_SIZE;
           const tipX = indicatorPos.x + Math.cos(totalRotation - Math.PI/2) * reach;
           const tipY = indicatorPos.y + Math.sin(totalRotation - Math.PI/2) * reach;
 
-          // Offset the hit radius forward in the look direction
-          const forwardOffset = 0.3; // Move forward by this tile amount
-          const offsetTipX = tipX + indicatorLookDir.dx * forwardOffset;
-          const offsetTipY = tipY + indicatorLookDir.dy * forwardOffset;
+          // Offset the hit radius forward in the look direction derived from current rotation
+          const forwardOffset = 0.3;
+          const offsetTipX = tipX + Math.cos(currentRotation - Math.PI/2) * forwardOffset;
+          const offsetTipY = tipY + Math.sin(currentRotation - Math.PI/2) * forwardOffset;
 
           const screenTipX = cx + (offsetTipX - displayPos.x) * TILE_SIZE;
           const screenTipY = cy + (offsetTipY - displayPos.y) * TILE_SIZE;
