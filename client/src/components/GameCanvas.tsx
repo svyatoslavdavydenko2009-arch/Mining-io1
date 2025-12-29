@@ -1381,40 +1381,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Always use body rotation to allow character to turn during mining
       let miningBaseRot = bodyRotation;
       
-      // Visual hit detection feedback
-      if (isMining && miningAnimation.rotation !== 0) {
-        ctx.save();
-        // Use the EXACT same screen coordinates as the player drawing
-        const px_draw = cx + (playerPos.x - displayPos.x) * TILE_SIZE;
-        const py_draw = cy + (playerPos.y - displayPos.y) * TILE_SIZE;
-        
-        ctx.translate(px_draw, py_draw);
-        
-        const bodyRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
-        ctx.rotate(bodyRotation);
-        
-        const swingAngle = (miningAnimation.rotation * Math.PI / 180);
-        ctx.rotate(swingAngle);
-        
-        const handOffsetSide = 22;
-        const handOffsetFront = 10;
-        const handBob = smoothHandBob.current;
-        const headY = -24;
-        
-        ctx.translate(-handOffsetSide, -handOffsetFront + handBob);
-        ctx.rotate(-(90 * Math.PI / 180));
-        ctx.translate(0, headY);
-
-        const squareSize = 20;
-        ctx.strokeStyle = "rgba(255, 140, 0, 0.8)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-squareSize/2, -squareSize/2, squareSize, squareSize);
-        ctx.fillStyle = "rgba(255, 140, 0, 0.2)";
-        ctx.fillRect(-squareSize/2, -squareSize/2, squareSize, squareSize);
-        
-        ctx.restore();
-      }
-
       // Draw Body and Hands
       ctx.save();
       // Use the calculated rotation (which now tracks lookDir even while mining)
@@ -1574,6 +1540,16 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.strokeStyle = "rgba(0,0,0,0.25)";
       ctx.lineWidth = 1.5;
       ctx.stroke();
+
+      // NEW: Square Hit Indicator directly in the pickaxe rendering context
+      if (isMining && miningAnimation.rotation !== 0) {
+        const squareSize = 20;
+        ctx.strokeStyle = "rgba(255, 140, 0, 0.8)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-squareSize/2, headY - squareSize/2, squareSize, squareSize);
+        ctx.fillStyle = "rgba(255, 140, 0, 0.2)";
+        ctx.fillRect(-squareSize/2, headY - squareSize/2, squareSize, squareSize);
+      }
       
       ctx.restore();
       ctx.restore();
