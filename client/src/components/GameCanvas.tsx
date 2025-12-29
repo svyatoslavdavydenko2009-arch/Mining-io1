@@ -1560,18 +1560,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // NEW: Square Hit Indicator directly in the pickaxe rendering context
-      if (isMining && miningAnimation.rotation !== 0) {
-        // TILE_SIZE is 48px. collisionRadius is usually around 0.3-0.5 tiles.
-        // The effective hit radius in pixels is roughly (collisionRadius + 0.05) * TILE_SIZE.
-        // We'll use a size that visually represents this area.
-        const hitAreaSize = 32; // Matches the approximate 0.6-0.7 tile width
-        ctx.strokeStyle = "rgba(255, 140, 0, 0.8)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-hitAreaSize/2, headY - hitAreaSize/2, hitAreaSize, hitAreaSize);
-        ctx.fillStyle = "rgba(255, 140, 0, 0.2)";
-        ctx.fillRect(-hitAreaSize/2, headY - hitAreaSize/2, hitAreaSize, hitAreaSize);
-      }
       
       ctx.restore();
       ctx.restore();
@@ -1652,18 +1640,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
           ctx.fill();
           
-          // 2. Precise outer ring (white for contrast, pixel-perfect thin line)
-          ctx.strokeStyle = `rgba(255, 255, 255, ${0.9 * opacity})`;
-          ctx.lineWidth = 1;
+          // 2. Dark orange outer ring (darker than the fill)
+          ctx.strokeStyle = `rgba(200, 130, 0, ${0.9 * opacity})`;
+          ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
           ctx.stroke();
-          
-          // 3. Precise crosshair center point
-          ctx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-          ctx.beginPath();
-          ctx.arc(screenTipX, screenTipY, 1.5, 0, Math.PI * 2);
-          ctx.fill();
           
           ctx.restore();
         } else {
