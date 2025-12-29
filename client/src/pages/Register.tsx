@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { PixelInput } from "@/components/PixelInput";
 import { PixelButton } from "@/components/PixelButton";
 import { PixelCard } from "@/components/PixelCard";
@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 
 export default function Register() {
   const { register, user } = useAuth();
+  const [, setLocation] = useLocation();
   if (user) return null;
 
   const [username, setUsername] = useState("");
@@ -16,7 +17,11 @@ export default function Register() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    register.mutate({ username, password });
+    register.mutate({ username, password }, {
+      onSuccess: () => {
+        setLocation("/");
+      }
+    });
   };
 
   return (
