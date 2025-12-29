@@ -1530,21 +1530,43 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.restore();
       ctx.restore(); // Restore main player transform
 
-      // Draw mining radius visualization when mining
+      // Draw mining radius visualization as pickaxe texture when mining
       if (isMining) {
-        const playerTileX = Math.round(localPos.x);
-        const playerTileY = Math.round(localPos.y);
-        ctx.strokeStyle = "rgba(255, 150, 0, 0.4)";
-        ctx.lineWidth = 2;
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            const tileX = playerTileX + dx;
-            const tileY = playerTileY + dy;
-            const sx = cx + (tileX - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
-            const sy = cy + (tileY - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
-            ctx.strokeRect(sx, sy, TILE_SIZE, TILE_SIZE);
-          }
-        }
+        ctx.save();
+        ctx.translate(px + pSize / 2, py + pSize / 2);
+        ctx.rotate(miningBaseRot);
+        ctx.rotate((miningAnimation.rotation * Math.PI / 180));
+        
+        // Draw pickaxe head with larger scale for visibility (1.8x)
+        const radiusScale = 1.8;
+        const radiusHeadY = -24 * radiusScale;
+        const pickaxeRadiusColor = PICKAXE_COLORS[user.pickaxeLevel] || "#8B4513";
+        
+        ctx.globalAlpha = 0.35; // Semi-transparent
+        
+        // Draw mining radius pickaxe head
+        ctx.save();
+        ctx.strokeStyle = "rgba(0,0,0,0.6)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-14 * radiusScale, radiusHeadY + 4 * radiusScale);
+        ctx.quadraticCurveTo(0, radiusHeadY - 8 * radiusScale, 14 * radiusScale, radiusHeadY + 4 * radiusScale);
+        ctx.lineTo(10 * radiusScale, radiusHeadY + 6 * radiusScale);
+        ctx.quadraticCurveTo(0, radiusHeadY - 2 * radiusScale, -10 * radiusScale, radiusHeadY + 6 * radiusScale);
+        ctx.closePath();
+        ctx.stroke();
+        
+        const radiusHeadGrad = ctx.createLinearGradient(-14 * radiusScale, 0, 14 * radiusScale, 0);
+        radiusHeadGrad.addColorStop(0, "rgba(0,0,0,0.15)");
+        radiusHeadGrad.addColorStop(0.5, pickaxeRadiusColor);
+        radiusHeadGrad.addColorStop(1, "rgba(0,0,0,0.15)");
+        
+        ctx.fillStyle = radiusHeadGrad;
+        ctx.fill();
+        
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        ctx.restore();
       }
 
       const grad = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
