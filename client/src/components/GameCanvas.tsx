@@ -1207,9 +1207,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
               ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
               ctx.fill();
             } else if (resType === "wood") {
-              const canopySize = (TILE_SIZE - 12) * scale;
+              const baseCanopySize = (TILE_SIZE - 12);
+              const canopySize = baseCanopySize;
               const canopyHalfSize = canopySize / 2;
+              
               // Canopy hitbox matches visual roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 8)
+              // We remove 'scale' here because the context is already scaled by 'rockScale'
               ctx.strokeRect(-canopyHalfSize, -canopyHalfSize, canopySize, canopySize);
               ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
               ctx.fillRect(-canopyHalfSize, -canopyHalfSize, canopySize, canopySize);
