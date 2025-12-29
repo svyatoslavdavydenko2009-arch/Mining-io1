@@ -450,10 +450,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const bodyRotation = Math.atan2(lookDir.dy, lookDir.dx) + Math.PI / 2;
     const totalRotation = bodyRotation + swingAngle;
     
-    // Pickaxe head is roughly 24-32 pixels from the hand, and hand is offset from body
-    // In TILE_SIZE units, player radius is ~0.33 (16/48)
-    // We estimate tip reach to be about 0.8 - 1.2 tiles from player center
-    const reach = 0.85; 
+    // Precise reach calculation matching visual headY (-24px)
+    // headY is in pixels, we convert to TILE_SIZE units
+    const reach = 24 / TILE_SIZE; 
     const tipX = playerX + Math.cos(totalRotation - Math.PI/2) * reach;
     const tipY = playerY + Math.sin(totalRotation - Math.PI/2) * reach;
 
@@ -473,9 +472,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const dy = tipY - tileY;
     const distSq = dx * dx + dy * dy;
     
-    // Tighter collision for exact texture feel
-    const hitRadius = collisionRadius + 0.05; 
-    return distSq < hitRadius * hitRadius;
+    // Hit detection radius matching visual hitAreaSize (32px / 2 = 16px radius)
+    const hitRadiusPixels = 16;
+    const hitRadiusTiles = hitRadiusPixels / TILE_SIZE;
+    
+    return distSq < (collisionRadius + hitRadiusTiles) ** 2;
   };
 
   const hasCollision = (x: number, y: number): boolean => {
