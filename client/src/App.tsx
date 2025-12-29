@@ -37,6 +37,13 @@ function Router() {
         {user ? <Game /> : <Login />}
       </Route>
       <Route path="/register" component={Register} />
+      {/* Remove explicit /login and /game routes to prevent 404s */}
+      <Route path="/login">
+        <Redirect to="/" />
+      </Route>
+      <Route path="/game">
+        <Redirect to="/" />
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
