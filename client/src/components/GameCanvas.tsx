@@ -1482,8 +1482,16 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       let diff = targetRotation - smoothBodyRotation.current;
       while (diff < -Math.PI) diff += Math.PI * 2;
       while (diff > Math.PI) diff -= Math.PI * 2;
-      // Increased rotation speed from 0.14 to 0.28 for much snappier feel
-      smoothBodyRotation.current += diff * 0.28;
+      // Improved rotation logic: 
+      // 1. Rotation speed set to 0.16 as requested.
+      // 2. Only rotate if the joystick is actually being moved (magnitude > 0.15).
+      // 3. This prevents sharp turns when just tapping the joystick.
+      const joystickMagnitude = Math.sqrt(joystickDirRef.current.dx ** 2 + joystickDirRef.current.dy ** 2);
+      const isMovingJoystick = joystickMagnitude > 0.15;
+      
+      if (isMovingJoystick) {
+        smoothBodyRotation.current += diff * 0.16;
+      }
       const bodyRotation = smoothBodyRotation.current;
       
       // Mining swing animation: we calculate it once to use for both pickaxe and hand
