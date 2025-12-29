@@ -1162,18 +1162,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             const rotation = sizeSeed * Math.PI * 2;
             const scale = resType === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
             
+            // Resource local space translation for hitbox
             ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
             ctx.rotate(rotation);
-            ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
 
             if (resType === "stone") {
               const radius = Math.sqrt(COLLISION_DISTANCE_SQ * scale) * TILE_SIZE;
               ctx.beginPath();
-              ctx.arc(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2, radius, 0, Math.PI * 2);
+              // In local space after translate/rotate, center is (0,0)
+              ctx.arc(0, 0, radius, 0, Math.PI * 2);
               ctx.stroke();
             } else if (resType === "wood") {
               const halfSize = (0.5 * scale) * 0.8 * TILE_SIZE;
-              ctx.strokeRect(dsx + TILE_SIZE / 2 - halfSize, dsy + TILE_SIZE / 2 - halfSize, halfSize * 2, halfSize * 2);
+              // In local space after translate/rotate, center is (0,0)
+              ctx.strokeRect(-halfSize, -halfSize, halfSize * 2, halfSize * 2);
             }
             ctx.restore();
           }
