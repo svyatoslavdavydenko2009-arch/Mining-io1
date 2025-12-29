@@ -547,11 +547,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
               const inCanopy = Math.abs(dx_rel) < canopyHalfSize && Math.abs(dy_rel) < canopyHalfSize;
               
               // Determine trunk direction (0: right, 1: bottom, 2: left, 3: top)
+              // Seed for direction must match the one used in renderTree (4000)
               const trunkDir = Math.floor(pseudoRandom(ntx + 4000, nty + 4000) * 4);
               const trunkWidth = (8 / TILE_SIZE) * scale;
               const trunkHeight = (12 / TILE_SIZE) * scale;
               
               let inTrunk = false;
+              // Direction mapping:
+              // 0: Right (+x)
+              // 1: Bottom (+y)
+              // 2: Left (-x)
+              // 3: Top (-y)
               if (trunkDir === 0) { // Right
                 inTrunk = dx_rel > canopyHalfSize && dx_rel < canopyHalfSize + trunkHeight && Math.abs(dy_rel) < trunkWidth/2;
               } else if (trunkDir === 1) { // Bottom
