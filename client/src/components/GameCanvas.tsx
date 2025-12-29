@@ -1517,9 +1517,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         lastSmoothedJoystickDir.current = { dx: joystickDirRef.current.dx, dy: joystickDirRef.current.dy };
       }
       
-      const lerpFactor = 0.15; // Slow down the input changes
-      lastSmoothedJoystickDir.current.dx += (joystickDirRef.current.dx - lastSmoothedJoystickDir.current.dx) * lerpFactor;
-      lastSmoothedJoystickDir.current.dy += (joystickDirRef.current.dy - lastSmoothedJoystickDir.current.dy) * lerpFactor;
+      const lerpFactorInput = 0.15; // Slow down the input changes
+      lastSmoothedJoystickDir.current.dx += (joystickDirRef.current.dx - lastSmoothedJoystickDir.current.dx) * lerpFactorInput;
+      lastSmoothedJoystickDir.current.dy += (joystickDirRef.current.dy - lastSmoothedJoystickDir.current.dy) * lerpFactorInput;
       
       const smoothedMagnitude = Math.sqrt(lastSmoothedJoystickDir.current.dx ** 2 + lastSmoothedJoystickDir.current.dy ** 2);
       const isMovingJoystick = smoothedMagnitude > 0.15;
@@ -1533,8 +1533,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         // Apply rotation based on distance from center: 
         // Closer to center = slower/finer rotation
         // Further from center = faster rotation (up to 0.16 speed)
-        const rotationIntensity = smoothedMagnitude; // 0.15 to 1.0
-        smoothBodyRotation.current += smoothedDiff * 0.16 * rotationIntensity;
+        const rotationIntensity = (smoothedMagnitude - 0.15) / (1.0 - 0.15); // Normalize 0.15-1.0 to 0-1
+        const finalRotationSpeed = 0.16;
+        smoothBodyRotation.current += smoothedDiff * finalRotationSpeed * Math.max(0.1, rotationIntensity);
       }
       const bodyRotation = smoothBodyRotation.current;
       
