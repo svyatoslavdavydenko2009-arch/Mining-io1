@@ -1408,6 +1408,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const py = cy + (playerPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const pSize = TILE_SIZE - 16;
+
+      // Visualize player collision circle when HITBOX is enabled
+      if (hitboxEnabled) {
+        ctx.save();
+        ctx.strokeStyle = "rgba(255, 165, 0, 0.8)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // PLAYER_SIZE is 32, so radius is 16
+        ctx.arc(cx, cy, 16, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Faint fill for the player hitbox
+        ctx.fillStyle = "rgba(255, 165, 0, 0.1)";
+        ctx.fill();
+        ctx.restore();
+      }
+
       ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
 
       // Determine target rotation based on look direction
