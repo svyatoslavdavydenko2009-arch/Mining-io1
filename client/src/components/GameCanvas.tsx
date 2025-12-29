@@ -412,6 +412,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const shakingTilesStartTime = useRef<Record<string, number>>({}); // Track shake start times
   const tilesDisappearingStartTime = useRef<Record<string, number>>({}); // Track disappear start times
   const tilesDisappearingType = useRef<Record<string, ResourceType>>({}); // Store resource type when disappearing
+  const hitDisplayStartTime = useRef<number | null>(null); // Track when hit damage is applied for grid display
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -799,6 +800,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Sync damage application with the hit moment (0.55 progress)
       if (progress >= 0.55 && !hitProcessed.current) {
         hitProcessed.current = true;
+        hitDisplayStartTime.current = performance.now();
         processMiningHit();
       }
       
@@ -1530,36 +1532,47 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       ctx.restore();
       ctx.restore(); // Restore main player transform
 
-      // Draw mining radius visualization as orange 3x3 grid when mining
-      if (isMining) {
-        ctx.save();
-        ctx.globalAlpha = 0.5; // Semi-transparent
+      // Draw mining radius visualization as orange 3x3 grid only during impact moment
+      if (hitDisplayStartTime.current !== null) {
+        const hitElapsed = performance.now() - hitDisplayStartTime.current;
+        const HIT_DISPLAY_DURATION = 350; // Grid displays for 350ms after impact
         
-        // Draw 3x3 grid of mining tiles
-        const playerTileX = Math.round(localPos.x);
-        const playerTileY = Math.round(localPos.y);
-        
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            const gridTileX = playerTileX + dx;
-            const gridTileY = playerTileY + dy;
-            
-            const gridScreenX = cx + (gridTileX - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
-            const gridScreenY = cy + (gridTileY - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
-            
-            // Draw orange grid square
-            ctx.fillStyle = "#FF8C00"; // Orange color
-            ctx.fillRect(gridScreenX, gridScreenY, TILE_SIZE, TILE_SIZE);
-            
-            // Draw grid outline
-            ctx.strokeStyle = "rgba(255, 140, 0, 0.8)";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(gridScreenX, gridScreenY, TILE_SIZE, TILE_SIZE);
+        if (hitElapsed < HIT_DISPLAY_DURATION) {
+          ctx.save();
+          
+          // Fade out effect - grid becomes more transparent as time passes
+          const fadeProgress = hitElapsed / HIT_DISPLAY_DURATION;
+          ctx.globalAlpha = 0.15 * (1 - fadeProgress); // Start at 0.15, fade to 0
+          
+          // Draw 3x3 grid of mining tiles
+          const playerTileX = Math.round(localPos.x);
+          const playerTileY = Math.round(localPos.y);
+          
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              const gridTileX = playerTileX + dx;
+              const gridTileY = playerTileY + dy;
+              
+              const gridScreenX = cx + (gridTileX - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
+              const gridScreenY = cy + (gridTileY - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+              
+              // Draw orange grid square
+              ctx.fillStyle = "#FF8C00"; // Orange color
+              ctx.fillRect(gridScreenX, gridScreenY, TILE_SIZE, TILE_SIZE);
+              
+              // Draw grid outline
+              ctx.strokeStyle = "rgba(255, 140, 0, 0.8)";
+              ctx.lineWidth = 2;
+              ctx.strokeRect(gridScreenX, gridScreenY, TILE_SIZE, TILE_SIZE);
+            }
           }
+          
+          ctx.globalAlpha = 1;
+          ctx.restore();
+        } else {
+          // Clear the display timer after duration
+          hitDisplayStartTime.current = null;
         }
-        
-        ctx.globalAlpha = 1;
-        ctx.restore();
       }
 
       const grad = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
