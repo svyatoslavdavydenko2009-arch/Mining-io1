@@ -458,48 +458,49 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
     const resource = getTileAt(tileX, tileY);
     if (!resource || isTileMined(tileX, tileY)) return false;
     
+    const sizeSeed = pseudoRandom(tileX + 3000, tileY + 3000);
+    const rotation = sizeSeed * Math.PI * 2;
+    const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
+    
+    // Texture offset matching render and movement logic
+    const offsetX = (pseudoRandom(tileX + 1000, tileY + 1000) - 0.5) * 12 / TILE_SIZE;
+    const offsetY = (pseudoRandom(tileX + 2000, tileY + 2000) - 0.5) * 12 / TILE_SIZE;
+    
+    const resourceX = tileX + offsetX;
+    const resourceY = tileY + offsetY;
+
     // Calculate the pickaxe tip position in world coordinates
-    // Pickaxe is offset from player, rotated by body rotation + swing animation
     const bodyRotation = Math.atan2(lookDir.dy, lookDir.dx) + Math.PI / 2;
     const totalRotation = bodyRotation + swingAngle;
-    
-    // Precise reach calculation matching visual headY (-24px)
-    // headY is in pixels, we convert to TILE_SIZE units
-    // The visual rendering uses -24px offset for the head.
     const reach = 24 / TILE_SIZE; 
     const tipX = playerX + Math.cos(totalRotation - Math.PI/2) * reach;
     const tipY = playerY + Math.sin(totalRotation - Math.PI/2) * reach;
     
-    // Apply the same forward offset as the visual radius to match the displayed hit area
     const forwardOffset = 0.3;
     const offsetTipX = tipX + lookDir.dx * forwardOffset;
     const offsetTipY = tipY + lookDir.dy * forwardOffset;
 
-    const sizeSeed = pseudoRandom(tileX + 3000, tileY + 3000);
-    const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
-    
-    // Collision radius of the resource
-    let collisionRadius: number;
+    // Local space check for mining hit
+    const dx_rel = offsetTipX - resourceX;
+    const dy_rel = offsetTipY - resourceY;
+    const rotatedX = dx_rel * Math.cos(-rotation) - dy_rel * Math.sin(-rotation);
+    const rotatedY = dx_rel * Math.sin(-rotation) + dy_rel * Math.cos(-rotation);
+
+    const hitRadiusTiles = 20 / TILE_SIZE;
+
     if (resource === "stone") {
-      collisionRadius = Math.sqrt(COLLISION_DISTANCE_SQ * scale);
+      const collisionRadius = Math.sqrt(COLLISION_DISTANCE_SQ * scale);
+      const distSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
+      const combinedRadius = collisionRadius + hitRadiusTiles;
+      return distSq < (combinedRadius * combinedRadius);
     } else {
-      collisionRadius = (0.5 * scale) * 0.8;
+      const halfSize = (0.5 * scale) * 0.8;
+      // Approximate rectangle-circle intersection or just check bounds + radius
+      const closestX = Math.max(-halfSize, Math.min(rotatedX, halfSize));
+      const closestY = Math.max(-halfSize, Math.min(rotatedY, halfSize));
+      const distSq = (rotatedX - closestX) ** 2 + (rotatedY - closestY) ** 2;
+      return distSq < (hitRadiusTiles * hitRadiusTiles);
     }
-    
-    // Distance check from offset pickaxe tip to resource center
-    const dx = offsetTipX - tileX;
-    const dy = offsetTipY - tileY;
-    const distSq = dx * dx + dy * dy;
-    
-    // Hit detection radius (20px = 16px * 1.25 for 25% increase)
-    // Matches the visual radius in the rendering code
-    const hitRadiusPixels = 20;
-    const hitRadiusTiles = hitRadiusPixels / TILE_SIZE;
-    
-    // Check if the resource's collision sphere intersects with the hit radius sphere
-    // This accounts for resources whose collision geometry extends beyond their tile center
-    const combinedRadius = collisionRadius + hitRadiusTiles;
-    return distSq < (combinedRadius * combinedRadius);
   };
 
   const hasCollision = (x: number, y: number): boolean => {
@@ -524,25 +525,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             const rotation = sizeSeed * Math.PI * 2;
             const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
             
-            // Transform player relative position into resource local space (account for rotation)
-            const dx_rel = x - centerX;
-            const dy_rel = y - centerY;
+            // Texture offset matching the render logic (converted to tile units)
+            const offsetX = (pseudoRandom(ntx + 1000, nty + 1000) - 0.5) * 12 / TILE_SIZE;
+            const offsetY = (pseudoRandom(ntx + 2000, nty + 2000) - 0.5) * 12 / TILE_SIZE;
+            
+            // Transform player relative position into resource local space (account for rotation and texture offset)
+            const dx_rel = x - (centerX + offsetX);
+            const dy_rel = y - (centerY + offsetY);
             
             // Rotate the point BACKWARDS to check against the base collision shape
-            // (Standard hexagon collision is roughly circular, but we can make it elliptical or more precise)
             const rotatedX = dx_rel * Math.cos(-rotation) - dy_rel * Math.sin(-rotation);
             const rotatedY = dx_rel * Math.sin(-rotation) + dy_rel * Math.cos(-rotation);
             
-            // Resources are generally wider than they are tall (visual perspective)
-            // We scale the collision distance based on the visual scale
             if (resource === "stone") {
               const baseDistSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
               const scaledCollisionDist = COLLISION_DISTANCE_SQ * scale;
               if (baseDistSq < scaledCollisionDist) return true;
             } else if (resource === "wood") {
-              // Wood (trees) are square with rounded corners
-              // We use an AABB check in local rotated space
-              const halfSize = (0.5 * scale) * 0.8; // Adjust multiplier for tightness
+              const halfSize = (0.5 * scale) * 0.8; 
               if (Math.abs(rotatedX) < halfSize && Math.abs(rotatedY) < halfSize) return true;
             }
           }
@@ -1155,27 +1155,29 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
           // Visualize resource hitbox when enabled
           if (hitboxEnabled) {
             ctx.save();
-            ctx.strokeStyle = "rgba(255, 165, 0, 0.6)";
-            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = "rgba(255, 165, 0, 0.8)";
+            ctx.lineWidth = 2;
             
             const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
             const rotation = sizeSeed * Math.PI * 2;
             const scale = resType === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
             
-            // Resource local space translation for hitbox
+            // Hitbox must be centered on the texture's rendered center
             ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
             ctx.rotate(rotation);
 
             if (resType === "stone") {
               const radius = Math.sqrt(COLLISION_DISTANCE_SQ * scale) * TILE_SIZE;
               ctx.beginPath();
-              // In local space after translate/rotate, center is (0,0)
               ctx.arc(0, 0, radius, 0, Math.PI * 2);
               ctx.stroke();
+              ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
+              ctx.fill();
             } else if (resType === "wood") {
               const halfSize = (0.5 * scale) * 0.8 * TILE_SIZE;
-              // In local space after translate/rotate, center is (0,0)
               ctx.strokeRect(-halfSize, -halfSize, halfSize * 2, halfSize * 2);
+              ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
+              ctx.fillRect(-halfSize, -halfSize, halfSize * 2, halfSize * 2);
             }
             ctx.restore();
           }
