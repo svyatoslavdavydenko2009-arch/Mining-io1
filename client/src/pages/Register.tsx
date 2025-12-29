@@ -8,9 +8,11 @@ import { Pickaxe } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Register() {
+  const { register, user } = useAuth();
+  if (user) return null;
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { register } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +71,7 @@ export default function Register() {
 
             <div className="text-center text-sm text-muted-foreground mt-4 font-body">
               Already have a permit?{" "}
-              <Link href="/login" className="text-primary hover:text-primary/80 hover:underline">
+              <Link href="/" className="text-primary hover:text-primary/80 hover:underline">
                 Login here
               </Link>
             </div>

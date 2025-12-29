@@ -8,9 +8,11 @@ import { Loader2, Pickaxe } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Login() {
+  const { login, user } = useAuth();
+  if (user) return null;
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

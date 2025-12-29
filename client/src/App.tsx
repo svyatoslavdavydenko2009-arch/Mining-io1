@@ -29,16 +29,14 @@ function PrivateRoute({ component: Component }: { component: React.ComponentType
 }
 
 function Router() {
+  const { user } = useAuth();
+
   return (
     <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route path="/game">
-        <PrivateRoute component={Game} />
-      </Route>
       <Route path="/">
-        <PrivateRoute component={Game} />
+        {user ? <Game /> : <Login />}
       </Route>
+      <Route path="/register" component={Register} />
       <Route component={NotFound} />
     </Switch>
   );
