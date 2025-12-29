@@ -1217,6 +1217,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
               const trunkHeight = (12 / TILE_SIZE) * scale * TILE_SIZE;
               
               ctx.beginPath();
+              // Direction mapping: 0: Right, 1: Bottom, 2: Left, 3: Top
               if (trunkDir === 0) ctx.rect(canopyHalfSize, -trunkWidth/2, trunkHeight, trunkWidth);
               else if (trunkDir === 1) ctx.rect(-trunkWidth/2, canopyHalfSize, trunkWidth, trunkHeight);
               else if (trunkDir === 2) ctx.rect(-canopyHalfSize - trunkHeight, -trunkWidth/2, trunkHeight, trunkWidth);
