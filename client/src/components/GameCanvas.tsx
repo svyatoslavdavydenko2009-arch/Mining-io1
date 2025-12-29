@@ -502,9 +502,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
     const combinedRadius = radius * scale + hitRadiusTiles;
     return distSq < (combinedRadius * combinedRadius);
     } else {
-      const canopyHalfSize = (0.5 * scale) * 0.7;
-      const closestX = Math.max(-canopyHalfSize, Math.min(dx_rel, canopyHalfSize));
-      const closestY = Math.max(-canopyHalfSize, Math.min(dy_rel, canopyHalfSize));
+      const canopySize = (TILE_SIZE - 12) * scale;
+      const canopyHalfSizeTiles = (canopySize / 2) / TILE_SIZE;
+      const closestX = Math.max(-canopyHalfSizeTiles, Math.min(dx_rel, canopyHalfSizeTiles));
+      const closestY = Math.max(-canopyHalfSizeTiles, Math.min(dy_rel, canopyHalfSizeTiles));
       const distSq = (dx_rel - closestX) ** 2 + (dy_rel - closestY) ** 2;
       return distSq < (hitRadiusTiles * hitRadiusTiles);
     }
@@ -559,8 +560,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
               // Use full radius scaled by the resource scale to match texture size
               if (distSq < (radius * scale) ** 2) return true;
             } else if (resource === "wood") {
-              const canopyHalfSize = (0.5 * scale) * 0.7; 
-              const inCanopy = Math.abs(dx_rel) < canopyHalfSize && Math.abs(dy_rel) < canopyHalfSize;
+              const canopySize = (TILE_SIZE - 12) * scale;
+              const canopyHalfSizeTiles = (canopySize / 2) / TILE_SIZE;
+              const inCanopy = Math.abs(dx_rel) < canopyHalfSizeTiles && Math.abs(dy_rel) < canopyHalfSizeTiles;
               
               if (inCanopy) return true;
             }
@@ -1205,11 +1207,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
               ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
               ctx.fill();
             } else if (resType === "wood") {
-              const canopyHalfSize = (0.5 * scale) * 0.7 * TILE_SIZE;
-              // Canopy hitbox
-              ctx.strokeRect(-canopyHalfSize, -canopyHalfSize, canopyHalfSize * 2, canopyHalfSize * 2);
+              const canopySize = (TILE_SIZE - 12) * scale;
+              const canopyHalfSize = canopySize / 2;
+              // Canopy hitbox matches visual roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 8)
+              ctx.strokeRect(-canopyHalfSize, -canopyHalfSize, canopySize, canopySize);
               ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
-              ctx.fillRect(-canopyHalfSize, -canopyHalfSize, canopyHalfSize * 2, canopyHalfSize * 2);
+              ctx.fillRect(-canopyHalfSize, -canopyHalfSize, canopySize, canopySize);
             }
             ctx.restore();
           }
