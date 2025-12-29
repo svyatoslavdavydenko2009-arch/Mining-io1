@@ -440,7 +440,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
   // Check if a tile's collision geometry intersects with the 2x2 mining radius
-  const tileCollisionIntersectsMiningRadius = (tileX: number, tileY: number, playerTileX: number, playerTileY: number): boolean => {
+  // miningCenterX/Y is the center of the 2x2 mining area (offset one tile ahead in look direction)
+  const tileCollisionIntersectsMiningRadius = (tileX: number, tileY: number, miningCenterX: number, miningCenterY: number): boolean => {
     const resource = getTileAt(tileX, tileY);
     if (!resource || isTileMined(tileX, tileY)) return false;
     
@@ -456,11 +457,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         collisionRadius = (0.5 * scale) * 0.8;
       }
       
-      // Mining radius bounds: 2x2 grid from (playerTile, playerTile) to (playerTile+1, playerTile+1), with 0.5 tile padding for edges
-      const miningLeft = playerTileX - 0.5;
-      const miningRight = playerTileX + 1 + 0.5;
-      const miningTop = playerTileY - 0.5;
-      const miningBottom = playerTileY + 1 + 0.5;
+      // Mining radius bounds: 2x2 grid from (miningCenter, miningCenter) to (miningCenter+1, miningCenter+1), with 0.5 tile padding for edges
+      const miningLeft = miningCenterX - 0.5;
+      const miningRight = miningCenterX + 1 + 0.5;
+      const miningTop = miningCenterY - 0.5;
+      const miningBottom = miningCenterY + 1 + 0.5;
       
       // Tile collision bounds (centered at tileX, tileY)
       const tileLeft = tileX - 0.5 - collisionRadius;
@@ -727,15 +728,27 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const playerTileX = Math.round(localPos.x);
       const playerTileY = Math.round(localPos.y);
       
+      // Calculate mining radius offset - one tile ahead in look direction
+      const lookDirX = lookDir.dx;
+      const lookDirY = lookDir.dy;
+      
+      // Normalize and round the direction to get the offset tile
+      const offsetTileX = Math.round(lookDirX);
+      const offsetTileY = Math.round(lookDirY);
+      
+      // Mining center is one tile ahead
+      const miningCenterX = playerTileX + offsetTileX;
+      const miningCenterY = playerTileY + offsetTileY;
+      
       // Check a wider area (3x3) because large tiles' collision can extend beyond the 2x2 mining radius
       const targets: {x: number, y: number, resource: ResourceType}[] = [];
       for (let dy = -1; dy <= 2; dy++) {
         for (let dx = -1; dx <= 2; dx++) {
-          const tx = playerTileX + dx;
-          const ty = playerTileY + dy;
+          const tx = miningCenterX + dx;
+          const ty = miningCenterY + dy;
           
           // Check if this tile's collision geometry intersects with the 2x2 mining radius
-          if (tileCollisionIntersectsMiningRadius(tx, ty, playerTileX, playerTileY)) {
+          if (tileCollisionIntersectsMiningRadius(tx, ty, miningCenterX, miningCenterY)) {
             const resource = getTileAt(tx, ty);
             if (resource && !isTileMined(tx, ty)) {
               targets.push({ x: tx, y: ty, resource });
@@ -1582,14 +1595,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const fadeProgress = hitElapsed / HIT_DISPLAY_DURATION;
           ctx.globalAlpha = 0.15 * (1 - fadeProgress); // Start at 0.15, fade to 0
           
-          // Draw 2x2 grid of mining tiles
+          // Draw 2x2 grid of mining tiles offset one tile ahead in look direction
           const playerTileX = Math.round(localPos.x);
           const playerTileY = Math.round(localPos.y);
           
+          // Calculate look direction for grid offset
+          const lookDirX = lookDir.dx;
+          const lookDirY = lookDir.dy;
+          const offsetTileX = Math.round(lookDirX);
+          const offsetTileY = Math.round(lookDirY);
+          
+          const miningCenterX = playerTileX + offsetTileX;
+          const miningCenterY = playerTileY + offsetTileY;
+          
           for (let dy = 0; dy <= 1; dy++) {
             for (let dx = 0; dx <= 1; dx++) {
-              const gridTileX = playerTileX + dx;
-              const gridTileY = playerTileY + dy;
+              const gridTileX = miningCenterX + dx;
+              const gridTileY = miningCenterY + dy;
               
               const gridScreenX = cx + (gridTileX - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
               const gridScreenY = cy + (gridTileY - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
