@@ -468,6 +468,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const reach = 24 / TILE_SIZE; 
     const tipX = playerX + Math.cos(totalRotation - Math.PI/2) * reach;
     const tipY = playerY + Math.sin(totalRotation - Math.PI/2) * reach;
+    
+    // Apply the same forward offset as the visual radius to match the displayed hit area
+    const forwardOffset = 0.3;
+    const offsetTipX = tipX + lookDir.dx * forwardOffset;
+    const offsetTipY = tipY + lookDir.dy * forwardOffset;
 
     const sizeSeed = pseudoRandom(tileX + 3000, tileY + 3000);
     const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
@@ -480,9 +485,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       collisionRadius = (0.5 * scale) * 0.8;
     }
     
-    // Distance check from pickaxe tip to resource center
-    const dx = tipX - tileX;
-    const dy = tipY - tileY;
+    // Distance check from offset pickaxe tip to resource center
+    const dx = offsetTipX - tileX;
+    const dy = offsetTipY - tileY;
     const distSq = dx * dx + dy * dy;
     
     // Hit detection radius (20px = 16px * 1.25 for 25% increase)
