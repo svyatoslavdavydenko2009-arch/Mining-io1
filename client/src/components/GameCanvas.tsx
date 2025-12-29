@@ -1484,13 +1484,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       while (diff > Math.PI) diff -= Math.PI * 2;
       // Improved rotation logic: 
       // 1. Rotation speed set to 0.16 as requested.
-      // 2. Only rotate if the joystick is actually being moved (magnitude > 0.15).
-      // 3. This prevents sharp turns when just tapping the joystick.
+      // 2. Only rotate if the joystick is actually being moved (magnitude > 0.3 for stronger soft start).
+      // 3. Added easing to the rotation delta for a smoother start/stop.
       const joystickMagnitude = Math.sqrt(joystickDirRef.current.dx ** 2 + joystickDirRef.current.dy ** 2);
-      const isMovingJoystick = joystickMagnitude > 0.15;
+      const isMovingJoystick = joystickMagnitude > 0.3;
       
       if (isMovingJoystick) {
-        smoothBodyRotation.current += diff * 0.16;
+        // Apply easing factor based on joystick magnitude for smoother transition
+        const easingFactor = Math.min((joystickMagnitude - 0.3) * 2, 1);
+        smoothBodyRotation.current += diff * 0.16 * easingFactor;
       }
       const bodyRotation = smoothBodyRotation.current;
       
