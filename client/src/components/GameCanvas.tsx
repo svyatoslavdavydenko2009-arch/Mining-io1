@@ -1005,25 +1005,32 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const screenTipX = cx + (tipX - displayPos.x) * TILE_SIZE;
         const screenTipY = cy + (tipY - displayPos.y) * TILE_SIZE;
 
-        // INDICATOR: ARC CIRCLE + CROSSHAIR
+        // INDICATOR: ARC CIRCLE + CROSSHAIR (V5-NEON)
         const hitRadiusPx = 16; 
 
         ctx.save();
-        ctx.strokeStyle = "rgba(255, 200, 0, 1)"; // Bright yellow-orange
-        ctx.lineWidth = 4; 
+        ctx.strokeStyle = "#00ff00"; // NEON GREEN
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
         
-        // Draw the circle
+        // Circular radius
         ctx.beginPath();
         ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
         ctx.stroke();
         
-        // Draw crosshair
+        // Large crosshair
         ctx.beginPath();
-        ctx.moveTo(screenTipX - 10, screenTipY);
-        ctx.lineTo(screenTipX + 10, screenTipY);
-        ctx.moveTo(screenTipX, screenTipY - 10);
-        ctx.lineTo(screenTipX, screenTipY + 10);
+        ctx.moveTo(screenTipX - 12, screenTipY);
+        ctx.lineTo(screenTipX + 12, screenTipY);
+        ctx.moveTo(screenTipX, screenTipY - 12);
+        ctx.lineTo(screenTipX, screenTipY + 12);
         ctx.stroke();
+        
+        // Small inner dot for center
+        ctx.fillStyle = "#00ff00";
+        ctx.beginPath();
+        ctx.arc(screenTipX, screenTipY, 2, 0, Math.PI * 2);
+        ctx.fill();
         
         ctx.restore();
       }
