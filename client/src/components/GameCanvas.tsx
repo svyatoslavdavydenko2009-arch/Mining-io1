@@ -1560,7 +1560,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           <motion.div className="h-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]" initial={{ width: "0%" }} animate={{ width: `${cooldownProgress * 100}%` }} transition={{ duration: 0.1 }} />
         </motion.div>
       )}</AnimatePresence>
-      <div className="absolute top-4 right-4 flex flex-col gap-2 items-end pointer-events-none">
+      <div className="absolute bottom-12 right-4 flex flex-col gap-2 items-end pointer-events-none">
         {/* Fullscreen toggle is now handled by the parent Game component's settings menu or hidden */}
         <AnimatePresence>{miningNotifications.map((n) => (
           <motion.div key={n.id} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 50, opacity: 0 }} className="bg-black/80 border border-secondary px-3 py-1.5 rounded-md flex items-center gap-2 shadow-lg">
