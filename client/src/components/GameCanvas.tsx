@@ -1374,11 +1374,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         const [wxStr, wyStr] = key.split(',');
         const wx = parseInt(wxStr);
         const wy = parseInt(wyStr);
-        const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
-        const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+        const sx = cx + (wx - displayPos.x) * TILE_SIZE_SCALED - TILE_SIZE_SCALED / 2;
+        const sy = cy + (wy - displayPos.y) * TILE_SIZE_SCALED - TILE_SIZE_SCALED / 2;
         
         // Skip if off screen
-        if (sx + TILE_SIZE < 0 || sx > rect.width || sy + TILE_SIZE < 0 || sy > rect.height) return;
+        if (sx + TILE_SIZE_SCALED < 0 || sx > rect.width || sy + TILE_SIZE_SCALED < 0 || sy > rect.height) return;
         
         // Calculate elapsed time and alpha
         const elapsed = nowTime - startTime;
@@ -1420,19 +1420,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         const dsy = sy + offsetY;
         
         ctx.save();
-        ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
-        ctx.scale(finalScale, finalScale);
-        ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
+        ctx.translate(dsx + TILE_SIZE_SCALED / 2, dsy + TILE_SIZE_SCALED / 2);
+        ctx.scale(finalScale * cameraZoom, finalScale * cameraZoom);
+        ctx.translate(-(dsx + TILE_SIZE_SCALED / 2), -(dsy + TILE_SIZE_SCALED / 2));
         
         ctx.fillStyle = `rgba(68,68,68,${alpha})`;
         ctx.strokeStyle = `rgba(0,0,0,${0.4 * alpha})`;
         ctx.lineWidth = 2;
         
         if (resType === "stone") {
-          ctx.beginPath();
-          const centerX = dsx + TILE_SIZE / 2;
-          const centerY = dsy + TILE_SIZE / 2;
-          const radius = (TILE_SIZE - 8) / 2;
+          const centerX = dsx + TILE_SIZE_SCALED / 2;
+          const centerY = dsy + TILE_SIZE_SCALED / 2;
+          const radius = ((TILE_SIZE - 8) / 2) * cameraZoom;
           const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
           for (let i = 0; i < 5; i++) {
             const angle = (i * 2 * Math.PI / 5) - Math.PI / 2 + randomRotation;
@@ -1449,12 +1448,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
           ctx.strokeStyle = `rgba(0,0,0,${0.4 * alpha})`;
           ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 8);
+          ctx.roundRect(dsx + (6 * cameraZoom), dsy + (6 * cameraZoom), TILE_SIZE_SCALED - (12 * cameraZoom), TILE_SIZE_SCALED - (12 * cameraZoom), 8 * cameraZoom);
           ctx.fill();
           ctx.stroke();
         } else {
           ctx.beginPath();
-          ctx.roundRect(dsx + 4, dsy + 4, TILE_SIZE - 8, TILE_SIZE - 8, 4);
+          ctx.roundRect(dsx + (4 * cameraZoom), dsy + (4 * cameraZoom), TILE_SIZE_SCALED - (8 * cameraZoom), TILE_SIZE_SCALED - (8 * cameraZoom), 4 * cameraZoom);
           ctx.fill();
           ctx.stroke();
         }
