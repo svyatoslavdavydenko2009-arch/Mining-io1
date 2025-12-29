@@ -1482,7 +1482,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       let diff = targetRotation - smoothBodyRotation.current;
       while (diff < -Math.PI) diff += Math.PI * 2;
       while (diff > Math.PI) diff -= Math.PI * 2;
-      smoothBodyRotation.current += diff * 0.14;
+      // Increased rotation speed from 0.14 to 0.28 for much snappier feel
+      smoothBodyRotation.current += diff * 0.28;
       const bodyRotation = smoothBodyRotation.current;
       
       // Mining swing animation: we calculate it once to use for both pickaxe and hand
