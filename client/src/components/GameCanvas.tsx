@@ -1384,23 +1384,51 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Visual hit detection feedback
       if (isMining && miningAnimation.rotation !== 0) {
         const bodyRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
-        const totalRotation = bodyRotation + (miningAnimation.rotation * Math.PI / 180);
-        const reach = 0.85; 
-        const tipX = px + Math.cos(totalRotation - Math.PI/2) * reach * TILE_SIZE;
-        const tipY = py + Math.sin(totalRotation - Math.PI/2) * reach * TILE_SIZE;
+        const swingAngle = (miningAnimation.rotation * Math.PI / 180);
+        
+        // Hand and pickaxe offsets matching the draw logic
+        const handOffsetSide = 22;
+        const handOffsetFront = 10;
+        const handBob = smoothHandBob.current;
+        const headY = -24;
+        
+        // Calculate the base position of the hand relative to player center
+        // handRot is miningBaseRot + pickaxeHandRot
+        const handRot = bodyRotation + swingAngle;
+        
+        // The hand is offset by (-handOffsetSide, -handOffsetFront + handBob) in its local rotated space
+        const localHandX = -handOffsetSide;
+        const localHandY = -handOffsetFront + handBob;
+        
+        // Rotate local hand offset by handRot
+        const worldHandOffsetX = localHandX * Math.cos(handRot) - localHandY * Math.sin(handRot);
+        const worldHandOffsetY = localHandX * Math.sin(handRot) + localHandY * Math.cos(handRot);
+        
+        const handWorldX = px + worldHandOffsetX;
+        const handWorldY = py + worldHandOffsetY;
+        
+        // The pickaxe is rotated -90 degrees relative to handRot
+        const pickaxeRot = handRot - (90 * Math.PI / 180);
+        
+        // The tip is at headY offset in the pickaxe's local space
+        const tipWorldX = handWorldX + Math.cos(pickaxeRot - Math.PI/2) * headY;
+        const tipWorldY = handWorldY + Math.sin(pickaxeRot - Math.PI/2) * headY;
 
-        // Draw a subtle "arc" or "swing" path
         ctx.save();
+        // Draw a subtle "arc" or "swing" path at the tip's radius
+        const reach = Math.sqrt((tipWorldX - px)**2 + (tipWorldY - py)**2);
+        const tipAngle = Math.atan2(tipWorldY - py, tipWorldX - px);
+        
         ctx.beginPath();
-        ctx.arc(px, py, reach * TILE_SIZE, totalRotation - Math.PI/2 - 0.2, totalRotation - Math.PI/2 + 0.2);
+        ctx.arc(px, py, reach, tipAngle - 0.2, tipAngle + 0.2);
         ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
         ctx.lineWidth = 4;
         ctx.lineCap = "round";
         ctx.stroke();
 
-        // Draw the hit point indicator
+        // Draw the hit point indicator exactly at the calculated tip position
         ctx.beginPath();
-        ctx.arc(tipX, tipY, 4, 0, Math.PI * 2);
+        ctx.arc(tipWorldX, tipWorldY, 4, 0, Math.PI * 2);
         ctx.fillStyle = "#fff";
         ctx.shadowBlur = 10;
         ctx.shadowColor = "#fff";
