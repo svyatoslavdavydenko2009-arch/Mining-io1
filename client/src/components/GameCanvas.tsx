@@ -546,25 +546,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
               const canopyHalfSize = (0.5 * scale) * 0.7; 
               const inCanopy = Math.abs(dx_rel) < canopyHalfSize && Math.abs(dy_rel) < canopyHalfSize;
               
-              // Determine trunk direction (0: right, 1: bottom, 2: left, 3: top)
-              // Seed for direction must match the one used in renderTree (4000)
-              const trunkDir = Math.floor(pseudoRandom(ntx + 4000, nty + 4000) * 4);
-              const trunkWidth = (8 / TILE_SIZE) * scale;
-              const trunkHeight = (12 / TILE_SIZE) * scale;
-              
-              let inTrunk = false;
-              // Direction mapping matching visual renderTree (D: 0:Right, 1:Bottom, 2:Left, 3:Top)
-              if (trunkDir === 0) { // Right (Texture shows on right)
-                inTrunk = dx_rel > canopyHalfSize && dx_rel < canopyHalfSize + trunkHeight && Math.abs(dy_rel) < trunkWidth/2;
-              } else if (trunkDir === 1) { // Bottom (Texture shows on bottom)
-                inTrunk = dy_rel > canopyHalfSize && dy_rel < canopyHalfSize + trunkHeight && Math.abs(dx_rel) < trunkWidth/2;
-              } else if (trunkDir === 2) { // Left (Texture shows on left)
-                inTrunk = dx_rel < -canopyHalfSize && dx_rel > -canopyHalfSize - trunkHeight && Math.abs(dy_rel) < trunkWidth/2;
-              } else if (trunkDir === 3) { // Top (Texture shows on top)
-                inTrunk = dy_rel < -canopyHalfSize && dy_rel > -canopyHalfSize - trunkHeight && Math.abs(dx_rel) < trunkWidth/2;
-              }
-              
-              if (inCanopy || inTrunk) return true;
+              if (inCanopy) return true;
             }
           }
         }
@@ -1206,21 +1188,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
               ctx.strokeRect(-canopyHalfSize, -canopyHalfSize, canopyHalfSize * 2, canopyHalfSize * 2);
               ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
               ctx.fillRect(-canopyHalfSize, -canopyHalfSize, canopyHalfSize * 2, canopyHalfSize * 2);
-              
-              // Trunk hitbox visualization matching direction
-              // Texture shows on Right (0), Bottom (1), Left (2), Top (3)
-              const trunkDir = Math.floor(pseudoRandom(wx + 4000, wy + 4000) * 4);
-              const trunkWidth = (8 / TILE_SIZE) * scale * TILE_SIZE;
-              const trunkHeight = (12 / TILE_SIZE) * scale * TILE_SIZE;
-              
-              ctx.beginPath();
-              // FIX: Ensure visual hitbox matches physical direction mapping
-              if (trunkDir === 0) ctx.rect(canopyHalfSize, -trunkWidth/2, trunkHeight, trunkWidth); // Right
-              else if (trunkDir === 1) ctx.rect(-trunkWidth/2, canopyHalfSize, trunkWidth, trunkHeight); // Bottom
-              else if (trunkDir === 2) ctx.rect(-canopyHalfSize - trunkHeight, -trunkWidth/2, trunkHeight, trunkWidth); // Left
-              else if (trunkDir === 3) ctx.rect(-trunkWidth/2, -canopyHalfSize - trunkHeight, trunkWidth, trunkHeight); // Top
-              ctx.stroke();
-              ctx.fill();
             }
             ctx.restore();
           }
