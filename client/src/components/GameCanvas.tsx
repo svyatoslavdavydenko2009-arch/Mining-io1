@@ -1383,9 +1383,19 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Visual hit detection feedback
       if (isMining && miningAnimation.rotation !== 0) {
+        // Calculate screen coordinates for player center
+        const rect = canvasRef.current?.getBoundingClientRect() || { width: 800, height: 600 };
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        
+        // Use displayPos for consistent screen positioning
+        const displayPos = smoothedPos.current;
+        const px_screen = cx + (playerPos.x - displayPos.x) * TILE_SIZE;
+        const py_screen = cy + (playerPos.y - displayPos.y) * TILE_SIZE;
+
         ctx.save();
         // Translate to player center in screen coordinates
-        ctx.translate(px, py);
+        ctx.translate(px_screen, py_screen);
         
         // Body rotation matching the character
         const bodyRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
