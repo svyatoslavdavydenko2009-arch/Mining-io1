@@ -492,7 +492,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
 
     if (resource === "stone") {
       const renderRotation = pseudoRandom(tileX + 4000, tileY + 4000) * Math.PI * 2;
-      const combinedRotation = rotation + renderRotation + Math.PI;
+      const combinedRotation = renderRotation;
       
       const checkX = dx_rel * Math.cos(-combinedRotation) - dy_rel * Math.sin(-combinedRotation);
       const checkY = dx_rel * Math.sin(-combinedRotation) + dy_rel * Math.cos(-combinedRotation);
@@ -546,7 +546,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             
             if (resource === "stone") {
               const renderRotation = pseudoRandom(ntx + 4000, nty + 4000) * Math.PI * 2;
-              const combinedRotation = rotation + renderRotation + Math.PI;
+              const combinedRotation = renderRotation;
               
               // Local space check against the pentagon
               const checkX = dx_rel * Math.cos(-combinedRotation) - dy_rel * Math.sin(-combinedRotation);
@@ -1184,17 +1184,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
 
             if (resType === "stone") {
-              ctx.rotate(rotation);
+              // Rotation for hitbox must match rendering logic exactly (4000)
+              const renderRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
+              ctx.rotate(renderRotation);
               // Visual stone uses radius = (TILE_SIZE - 8) / 2 = 20px
               // Hitbox should match this radius exactly.
               // Radius in world coordinates = 20 / 48 = 0.416
               // Distance squared = 0.416 * 0.416 = 0.173
               const visualRadius = (TILE_SIZE - 8) / 2;
               ctx.beginPath();
-              // Seed for visual rotation must match rendering logic (4000)
-              const renderRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
               for (let i = 0; i < 5; i++) {
-                const angle = (i * 2 * Math.PI / 5) - Math.PI / 2 + renderRotation;
+                const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
                 const vx = visualRadius * Math.cos(angle);
                 const vy = visualRadius * Math.sin(angle);
                 if (i === 0) ctx.moveTo(vx, vy);
