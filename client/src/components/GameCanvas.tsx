@@ -488,6 +488,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const hitRadiusPixels = 16;
     const hitRadiusTiles = hitRadiusPixels / TILE_SIZE;
     
+    // For large resources like trees (wood), they have extended visual/collision geometry.
+    // We already account for this by using a calculated collisionRadius.
+    // The previous loop only checked a small radius around the aim point.
+    // By increasing the loop radius in processMiningHit and keeping this precise check,
+    // we correctly detect hits on extended geometry.
     return distSq < (collisionRadius + hitRadiusTiles) ** 2;
   };
 
@@ -746,8 +751,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       const currentSwingAngle = (miningAnimation.rotation * Math.PI / 180);
       
       const targets: {x: number, y: number, resource: ResourceType}[] = [];
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
+      // Increased search radius to 3x3 to catch extended collision geometry from neighboring tiles
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
           const tx = Math.round(currentPos.x + currentLookDir.dx) + dx;
           const ty = Math.round(currentPos.y + currentLookDir.dy) + dy;
           
