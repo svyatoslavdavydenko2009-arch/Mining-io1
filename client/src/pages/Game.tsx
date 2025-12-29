@@ -44,15 +44,27 @@ export default function Game() {
               <Settings size={24} className={settingsOpen ? "animate-spin-slow" : ""} />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-black/90 border-2 border-secondary p-2 min-w-[200px] backdrop-blur-md">
-            <div className="px-2 py-1.5 mb-2 border-b border-secondary/50">
-              <p className="text-[10px] font-pixel text-muted-foreground uppercase">Settings</p>
+          <DropdownMenuContent 
+            align="end" 
+            className="border-2 border-secondary p-2 min-w-[200px] overflow-hidden"
+            style={{
+              backgroundColor: '#3f2817',
+              background: `
+                linear-gradient(135deg, rgba(80, 50, 30, 0.4) 0%, transparent 50%),
+                linear-gradient(225deg, rgba(60, 40, 25, 0.3) 0%, transparent 50%),
+                #3f2817
+              `,
+              backgroundAttachment: 'fixed'
+            }}
+          >
+            <div className="px-2 py-1.5 mb-2 border-b border-secondary/30">
+              <p className="text-[12px] font-pixel text-white/90 uppercase font-bold">Settings</p>
             </div>
             
-            <div className="flex items-center justify-between gap-2 px-2 py-2 mb-2 hover:bg-secondary/10 rounded-sm transition-colors">
+            <div className="flex items-center justify-between gap-2 px-2 py-2 mb-2 hover:bg-white/5 rounded-sm transition-colors">
               <div className="flex items-center gap-2">
-                <Crosshair size={16} className="text-muted-foreground" />
-                <span className="text-xs font-pixel text-white">HITBOX</span>
+                <Crosshair size={16} className="text-white/60" />
+                <span className="text-xs font-pixel text-white font-bold">HITBOX</span>
               </div>
               <Switch 
                 checked={hitboxEnabled} 
@@ -64,7 +76,7 @@ export default function Game() {
             <DropdownMenuItem 
               data-testid="button-logout"
               onClick={() => logout.mutate()}
-              className="flex items-center gap-2 text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer font-sans text-xs py-2"
+              className="flex items-center gap-2 text-red-400 focus:text-red-300 focus:bg-red-500/20 cursor-pointer font-sans text-sm py-2 font-black tracking-wide"
             >
               <LogOut size={16} />
               EXIT TO MENU
