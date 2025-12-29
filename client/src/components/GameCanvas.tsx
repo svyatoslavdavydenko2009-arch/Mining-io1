@@ -387,6 +387,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
   const lastUpdateRef = useRef(performance.now());
   const lastLookDirRef = useRef({ dx: 1, dy: 0 }); 
   const smoothBodyRotation = useRef(0);
+  const lastSmoothedJoystickDir = useRef<{ dx: number, dy: number } | null>(null);
+
   const smoothLookDir = useRef({ dx: 1, dy: 0 }); 
   const smoothPickaxeSide = useRef(0); 
   const lastPickaxeSide = useRef(0);
@@ -1484,15 +1486,31 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       while (diff > Math.PI) diff -= Math.PI * 2;
       // Improved rotation logic: 
       // 1. Rotation speed set to 0.16 as requested.
-      // 2. Only rotate if the joystick is actually being moved (magnitude > 0.3 for stronger soft start).
-      // 3. Added easing to the rotation delta for a smoother start/stop.
-      const joystickMagnitude = Math.sqrt(joystickDirRef.current.dx ** 2 + joystickDirRef.current.dy ** 2);
-      const isMovingJoystick = joystickMagnitude > 0.3;
+      // 2. Only rotate if the joystick is actually being moved (magnitude > 0.4 for very strong soft start).
+      // 3. Implemented a smoothed joystick direction to prevent jitter and sudden jerks.
+      const rawJoystickMagnitude = Math.sqrt(joystickDirRef.current.dx ** 2 + joystickDirRef.current.dy ** 2);
+      
+      // Smoothing the actual input direction to prevent sudden jumps
+      if (!lastSmoothedJoystickDir.current) {
+        lastSmoothedJoystickDir.current = { dx: joystickDirRef.current.dx, dy: joystickDirRef.current.dy };
+      }
+      
+      const lerpFactor = 0.15; // Slow down the input changes
+      lastSmoothedJoystickDir.current.dx += (joystickDirRef.current.dx - lastSmoothedJoystickDir.current.dx) * lerpFactor;
+      lastSmoothedJoystickDir.current.dy += (joystickDirRef.current.dy - lastSmoothedJoystickDir.current.dy) * lerpFactor;
+      
+      const smoothedMagnitude = Math.sqrt(lastSmoothedJoystickDir.current.dx ** 2 + lastSmoothedJoystickDir.current.dy ** 2);
+      const isMovingJoystick = smoothedMagnitude > 0.4;
       
       if (isMovingJoystick) {
+        const smoothedTargetRotation = Math.atan2(lastSmoothedJoystickDir.current.dy, lastSmoothedJoystickDir.current.dx) + Math.PI / 2;
+        let smoothedDiff = smoothedTargetRotation - smoothBodyRotation.current;
+        while (smoothedDiff < -Math.PI) smoothedDiff += Math.PI * 2;
+        while (smoothedDiff > Math.PI) smoothedDiff -= Math.PI * 2;
+
         // Apply easing factor based on joystick magnitude for smoother transition
-        const easingFactor = Math.min((joystickMagnitude - 0.3) * 2, 1);
-        smoothBodyRotation.current += diff * 0.16 * easingFactor;
+        const easingFactor = Math.min((smoothedMagnitude - 0.4) * 2.5, 1);
+        smoothBodyRotation.current += smoothedDiff * 0.16 * easingFactor;
       }
       const bodyRotation = smoothBodyRotation.current;
       
