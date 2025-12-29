@@ -1005,31 +1005,29 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const screenTipX = cx + (tipX - displayPos.x) * TILE_SIZE;
         const screenTipY = cy + (tipY - displayPos.y) * TILE_SIZE;
 
-        // INDICATOR: ARC CIRCLE + CROSSHAIR (V5-NEON)
+        // PIXEL-PERFECT MINING RADIUS
         const hitRadiusPx = 16; 
 
         ctx.save();
-        ctx.strokeStyle = "#00ff00"; // NEON GREEN
-        ctx.lineWidth = 4;
-        ctx.lineCap = "round";
         
-        // Circular radius
+        // 1. Precise outer ring (white for contrast, pixel-perfect thin line)
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 2. Inner glow/indicator (orange to match game theme, slightly thicker)
+        ctx.strokeStyle = "rgba(255, 165, 0, 0.4)";
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
         ctx.stroke();
         
-        // Large crosshair
+        // 3. Precise crosshair center point
+        ctx.fillStyle = "#ffffff";
         ctx.beginPath();
-        ctx.moveTo(screenTipX - 12, screenTipY);
-        ctx.lineTo(screenTipX + 12, screenTipY);
-        ctx.moveTo(screenTipX, screenTipY - 12);
-        ctx.lineTo(screenTipX, screenTipY + 12);
-        ctx.stroke();
-        
-        // Small inner dot for center
-        ctx.fillStyle = "#00ff00";
-        ctx.beginPath();
-        ctx.arc(screenTipX, screenTipY, 2, 0, Math.PI * 2);
+        ctx.arc(screenTipX, screenTipY, 1.5, 0, Math.PI * 2);
         ctx.fill();
         
         ctx.restore();
