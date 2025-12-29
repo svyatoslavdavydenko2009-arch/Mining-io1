@@ -441,39 +441,41 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
   // Check if a tile's collision geometry intersects with the 2x2 mining radius
   // miningCenterX/Y is the center of the 2x2 mining area (offset one tile ahead in look direction)
-  const tileCollisionIntersectsMiningRadius = (tileX: number, tileY: number, miningCenterX: number, miningCenterY: number): boolean => {
+  const tileCollisionIntersectsMiningRadius = (tileX: number, tileY: number, playerX: number, playerY: number, lookDir: {dx: number, dy: number}, swingAngle: number): boolean => {
     const resource = getTileAt(tileX, tileY);
     if (!resource || isTileMined(tileX, tileY)) return false;
     
-    if (resource === "stone" || resource === "wood") {
-      const sizeSeed = pseudoRandom(tileX + 3000, tileY + 3000);
-      const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
-      
-      // Calculate collision radius/half-size for the tile
-      let collisionRadius: number;
-      if (resource === "stone") {
-        collisionRadius = Math.sqrt(COLLISION_DISTANCE_SQ * scale);
-      } else {
-        collisionRadius = (0.5 * scale) * 0.8;
-      }
-      
-      // Mining radius bounds: 2x2 grid from (miningCenter, miningCenter) to (miningCenter+1, miningCenter+1), with 0.5 tile padding for edges
-      const miningLeft = miningCenterX - 0.5;
-      const miningRight = miningCenterX + 1 + 0.5;
-      const miningTop = miningCenterY - 0.5;
-      const miningBottom = miningCenterY + 1 + 0.5;
-      
-      // Tile collision bounds (centered at tileX, tileY)
-      const tileLeft = tileX - 0.5 - collisionRadius;
-      const tileRight = tileX + 0.5 + collisionRadius;
-      const tileTop = tileY - 0.5 - collisionRadius;
-      const tileBottom = tileY + 0.5 + collisionRadius;
-      
-      // AABB intersection test
-      return !(tileRight < miningLeft || tileLeft > miningRight || 
-               tileBottom < miningTop || tileTop > miningBottom);
+    // Calculate the pickaxe tip position in world coordinates
+    // Pickaxe is offset from player, rotated by body rotation + swing animation
+    const bodyRotation = Math.atan2(lookDir.dy, lookDir.dx) + Math.PI / 2;
+    const totalRotation = bodyRotation + swingAngle;
+    
+    // Pickaxe head is roughly 24-32 pixels from the hand, and hand is offset from body
+    // In TILE_SIZE units, player radius is ~0.33 (16/48)
+    // We estimate tip reach to be about 0.8 - 1.2 tiles from player center
+    const reach = 0.85; 
+    const tipX = playerX + Math.cos(totalRotation - Math.PI/2) * reach;
+    const tipY = playerY + Math.sin(totalRotation - Math.PI/2) * reach;
+
+    const sizeSeed = pseudoRandom(tileX + 3000, tileY + 3000);
+    const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
+    
+    // Collision radius of the resource
+    let collisionRadius: number;
+    if (resource === "stone") {
+      collisionRadius = Math.sqrt(COLLISION_DISTANCE_SQ * scale);
+    } else {
+      collisionRadius = (0.5 * scale) * 0.8;
     }
-    return false;
+    
+    // Distance check from pickaxe tip to resource center
+    const dx = tipX - tileX;
+    const dy = tipY - tileY;
+    const distSq = dx * dx + dy * dy;
+    
+    // Tighter collision for "texture-only" feel
+    const hitRadius = collisionRadius + 0.15; 
+    return distSq < hitRadius * hitRadius;
   };
 
   const hasCollision = (x: number, y: number): boolean => {
