@@ -6,6 +6,7 @@ import { PixelButton } from "@/components/PixelButton";
 import { PixelCard } from "@/components/PixelCard";
 import { Pickaxe } from "lucide-react";
 import { motion } from "framer-motion";
+import { GameCanvas } from "@/components/GameCanvas";
 
 export default function Register() {
   const { register, user } = useAuth();
@@ -25,8 +26,11 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[url('https://pixabay.com/get/g7e68689086f867013bf0af1485b26d6b78f64bbd68f579aa0006dae8082c8cfba54cce5f0abdd3c09088f95065712f4b134bcdf06c929a68146d7b771468bd5e_1280.jpg')] bg-cover bg-center">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 z-0 blur-md scale-105">
+        <GameCanvas isBackgroundOnly={true} />
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
       
       <motion.div 
         initial={{ y: 20, opacity: 0 }}

@@ -6,6 +6,7 @@ import { PixelButton } from "@/components/PixelButton";
 import { PixelCard } from "@/components/PixelCard";
 import { Loader2, Pickaxe } from "lucide-react";
 import { motion } from "framer-motion";
+import { GameCanvas } from "@/components/GameCanvas";
 
 export default function Login() {
   const { login, user } = useAuth();
@@ -25,9 +26,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1920&q=80')] bg-cover bg-center">
-      {/* Overlay to darken background */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 z-0 blur-md scale-105">
+        <GameCanvas isBackgroundOnly={true} />
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
       
       <motion.div 
         initial={{ y: 20, opacity: 0 }}

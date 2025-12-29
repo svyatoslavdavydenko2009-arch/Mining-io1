@@ -358,19 +358,25 @@ const MINING_COOLDOWNS: Record<number, number> = {
 };
 
 interface GameCanvasProps {
-  user: User;
+  user?: User;
   isFullscreen?: boolean;
   onFullscreenChange?: (fullscreen: boolean) => void;
   hitboxEnabled?: boolean;
+  isBackgroundOnly?: boolean;
 }
 
-export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hitboxEnabled = true }: GameCanvasProps) {
+export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hitboxEnabled = true, isBackgroundOnly = false }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [localPos, setLocalPos] = useState({ x: user.x, y: user.y });
+  
+  // Create mock user data for background mode if no user provided
+  const initialX = user?.x ?? 100;
+  const initialY = user?.y ?? 100;
+
+  const [localPos, setLocalPos] = useState({ x: initialX, y: initialY });
   const [lookDir, setLookDir] = useState({ dx: 1, dy: 0 }); 
 
-  const localPosRef = useRef({ x: user.x, y: user.y });
+  const localPosRef = useRef({ x: initialX, y: initialY });
   const lookDirRef = useRef({ dx: 1, dy: 0 });
 
   useEffect(() => {
@@ -393,15 +399,17 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
   const smoothPickaxeSide = useRef(0); 
   const lastPickaxeSide = useRef(0);
   const dashScale = useRef({ x: 1, y: 1 });
-  const displayPlayerPos = useRef({ x: user.x, y: user.y });
-  const smoothedPos = useRef({ x: user.x, y: user.y }); 
+  const displayPlayerPos = useRef({ x: initialX, y: initialY });
+  const smoothedPos = useRef({ x: initialX, y: initialY }); 
   const hitProcessed = useRef(false);
   const hitStone = useRef(false);
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
   const lastMoveTime = useRef(Date.now());
   const lastMineTime = useRef(Date.now());
   const lastMoveTimeForInterp = useRef(Date.now()); 
-  const { move, mine } = useGame();
+  const gameHook = useGame();
+  const move = gameHook?.move;
+  const mine = gameHook?.mine;
   const { toast } = useToast();
   const [miningTarget, setMiningTarget] = useState<{x: number, y: number} | null>(null);
   const [tileHealth, setTileHealth] = useState<Record<string, number>>({});
@@ -982,7 +990,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       smoothedPos.current.y += (localPos.y - smoothedPos.current.y) * 0.2;
       displayPlayerPos.current.x += (localPos.x - displayPlayerPos.current.x) * 0.2;
       displayPlayerPos.current.y += (localPos.y - displayPlayerPos.current.y) * 0.2;
-      
+
       // Smooth look direction - responsive to joystick input
       // Use different easing: faster response to input, slower return to idle
       const isInputActive = Math.abs(lookDir.dx) > 0.01 || Math.abs(lookDir.dy) > 0.01;
@@ -1007,7 +1015,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       dashScale.current.x += (1 - dashScale.current.x) * 0.15;
       dashScale.current.y += (1 - dashScale.current.y) * 0.15;
 
-      const displayPos = smoothedPos.current; const playerPos = displayPlayerPos.current;
+      let displayPos = { x: smoothedPos.current.x, y: smoothedPos.current.y };
+      
+      // In background mode, slowly drift the display position
+      if (isBackgroundOnly) {
+        const time = performance.now() * 0.0005;
+        const driftX = Math.sin(time) * 2;
+        const driftY = Math.cos(time * 0.8) * 2;
+        displayPos = {
+          x: (initialX || localPos.x) + driftX,
+          y: (initialY || localPos.y) + driftY
+        };
+      }
+      
+      const playerPos = displayPlayerPos.current;
       const cx = rect.width / 2; const cy = rect.height / 2;
       
       ctx.fillStyle = "#1e150f"; ctx.fillRect(0, 0, rect.width, rect.height);
