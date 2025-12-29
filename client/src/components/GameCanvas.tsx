@@ -398,6 +398,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
   const hitProcessed = useRef(false);
   const hitStone = useRef(false);
   const [lastServerUpdate, setLastServerUpdate] = useState(Date.now());
+  const introAnimationStartTime = useRef(performance.now());
+  const [introFinished, setIntroFinished] = useState(false);
   const lastMoveTime = useRef(Date.now());
   const lastMineTime = useRef(Date.now());
   const lastMoveTimeForInterp = useRef(Date.now()); 
@@ -1008,7 +1010,26 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       dashScale.current.y += (1 - dashScale.current.y) * 0.15;
 
       const displayPos = smoothedPos.current; const playerPos = displayPlayerPos.current;
-      const cx = rect.width / 2; const cy = rect.height / 2;
+      
+      // Cinematic Intro Camera Effect
+      const introElapsed = performance.now() - introAnimationStartTime.current;
+      const INTRO_DURATION = 2500; 
+      let cameraZoom = 1;
+      let cameraOffset = { x: 0, y: 0 };
+      
+      if (introElapsed < INTRO_DURATION) {
+        const t = introElapsed / INTRO_DURATION;
+        const ease = 1 - Math.pow(1 - t, 5);
+        cameraZoom = 0.4 + (0.6 * ease);
+        cameraOffset.y = (1 - ease) * 150;
+      } else if (!introFinished) {
+        setIntroFinished(true);
+      }
+
+      const cx = rect.width / 2; const cy = rect.height / 2 + cameraOffset.y;
+      
+      // Scale TILE_SIZE by camera zoom for intro
+      const TILE_SIZE_SCALED = TILE_SIZE * cameraZoom;
       
       ctx.fillStyle = "#1e150f"; ctx.fillRect(0, 0, rect.width, rect.height);
 
@@ -1029,12 +1050,11 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
 
       for (let wy = startY; wy <= endY; wy++) {
         for (let wx = startX; wx <= endX; wx++) {
-          const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
-          const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
-          
+          const sx = cx + (wx - displayPos.x) * TILE_SIZE_SCALED - TILE_SIZE_SCALED / 2;
+          const sy = cy + (wy - displayPos.y) * TILE_SIZE_SCALED - TILE_SIZE_SCALED / 2;
           // Skip if off screen (with padding for large trees/branches)
-          const PADDING = TILE_SIZE * 2.5; 
-          if (sx + TILE_SIZE + PADDING < 0 || sx - PADDING > rect.width || sy + TILE_SIZE + PADDING < 0 || sy - PADDING > rect.height) continue;
+          const PADDING = TILE_SIZE_SCALED * 2.5; 
+          if (sx + TILE_SIZE_SCALED + PADDING < 0 || sx - PADDING > rect.width || sy + TILE_SIZE_SCALED + PADDING < 0 || sy - PADDING > rect.height) continue;
           
           const color = getFloorColor(wx, wy);
           if (!biomeTiles[color]) biomeTiles[color] = [];
@@ -1092,15 +1112,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       // Sort resources by Y coordinate to ensure correct overlapping (top to bottom)
       resourcesToRender.sort((a, b) => a.wy - b.wy);
 
-      // First draw all grounds
-      // Draw a larger area of ground tiles to ensure coverage
       for (let wy = startY - 5; wy <= endY + 5; wy++) {
         for (let wx = startX - 5; wx <= endX + 5; wx++) {
-          const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
-          const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
-          if (sx + TILE_SIZE + 48 >= 0 && sx - 48 <= rect.width && sy + TILE_SIZE + 48 >= 0 && sy - 48 <= rect.height) {
+          const sx = cx + (wx - displayPos.x) * TILE_SIZE_SCALED - TILE_SIZE_SCALED / 2;
+          const sy = cy + (wy - displayPos.y) * TILE_SIZE_SCALED - TILE_SIZE_SCALED / 2;
+          if (sx + TILE_SIZE_SCALED + 48 >= 0 && sx - 48 <= rect.width && sy + TILE_SIZE_SCALED + 48 >= 0 && sy - 48 <= rect.height) {
             ctx.fillStyle = getFloorColor(wx, wy);
-            ctx.fillRect(sx - 1, sy - 1, TILE_SIZE + 2, TILE_SIZE + 2);
+            ctx.fillRect(sx - 1, sy - 1, TILE_SIZE_SCALED + 2, TILE_SIZE_SCALED + 2);
           }
         }
       }
@@ -1108,8 +1126,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       // Draw footsteps with biome-aware coloring
       ctx.save();
       footsteps.forEach((f, index) => {
-        const screenX = cx + (f.x - displayPos.x) * TILE_SIZE;
-        const screenY = cy + (f.y - displayPos.y) * TILE_SIZE;
+        const screenX = cx + (f.x - displayPos.x) * TILE_SIZE_SCALED;
+        const screenY = cy + (f.y - displayPos.y) * TILE_SIZE_SCALED;
         
         // Determine biome at footstep location for color
         const isRocky = isRockyBiome(Math.round(f.x), Math.round(f.y));
@@ -1143,10 +1161,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       });
       ctx.restore();
 
-          // Now draw resources in sorted order
       resourcesToRender.forEach(({ wx, wy, resType, type }) => {
-        const sx = cx + (wx - displayPos.x) * TILE_SIZE - TILE_SIZE / 2;
-        const sy = cy + (wy - displayPos.y) * TILE_SIZE - TILE_SIZE / 2;
+        const sx = cx + (wx - displayPos.x) * TILE_SIZE_SCALED - TILE_SIZE_SCALED / 2;
+        const sy = cy + (wy - displayPos.y) * TILE_SIZE_SCALED - TILE_SIZE_SCALED / 2;
         const tileKey = `${wx},${wy}`;
 
         if (type === 'resource' && resType) {
@@ -1171,9 +1188,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
           const dsy = sy + (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12 + shake.y;
 
           ctx.save();
-          ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
-          ctx.scale(rockScale, rockScale);
-          ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
+          ctx.translate(dsx + TILE_SIZE_SCALED / 2, dsy + TILE_SIZE_SCALED / 2);
+          ctx.scale(rockScale * cameraZoom, rockScale * cameraZoom);
+          ctx.translate(-(dsx + TILE_SIZE_SCALED / 2), -(dsy + TILE_SIZE_SCALED / 2));
 
           // Visualize resource hitbox when enabled
           if (hitboxEnabled) {
@@ -1187,38 +1204,28 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             
             ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
 
-            if (resType === "stone") {
-              // Rotation for hitbox must match rendering logic exactly (4000)
-              const renderRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
-              ctx.rotate(renderRotation);
-              // Visual stone uses radius = (TILE_SIZE - 8) / 2 = 20px
-              // Hitbox should match this radius exactly.
-              // Radius in world coordinates = 20 / 48 = 0.416
-              // Distance squared = 0.416 * 0.416 = 0.173
-              const visualRadius = (TILE_SIZE - 8) / 2;
-              ctx.beginPath();
-              for (let i = 0; i < 5; i++) {
-                const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
-                const vx = visualRadius * Math.cos(angle);
-                const vy = visualRadius * Math.sin(angle);
-                if (i === 0) ctx.moveTo(vx, vy);
-                else ctx.lineTo(vx, vy);
-              }
-              ctx.closePath();
-              ctx.stroke();
-              ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
-              ctx.fill();
-            } else if (resType === "wood") {
-              const baseCanopySize = (TILE_SIZE - 12);
-              const canopySize = baseCanopySize;
-              const canopyHalfSize = canopySize / 2;
-              
-              // Canopy hitbox matches visual roundRect(dsx + 6, dsy + 6, TILE_SIZE - 12, TILE_SIZE - 12, 8)
-              // We remove 'scale' here because the context is already scaled by 'rockScale'
-              ctx.strokeRect(-canopyHalfSize, -canopyHalfSize, canopySize, canopySize);
-              ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
-              ctx.fillRect(-canopyHalfSize, -canopyHalfSize, canopySize, canopySize);
+            const visualRadius = ((TILE_SIZE - 8) / 2) * cameraZoom;
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+              const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+              const vx = visualRadius * Math.cos(angle);
+              const vy = visualRadius * Math.sin(angle);
+              if (i === 0) ctx.moveTo(vx, vy);
+              else ctx.lineTo(vx, vy);
             }
+            ctx.closePath();
+            ctx.stroke();
+            ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
+            ctx.fill();
+          } else if (resType === "wood") {
+            const baseCanopySize = (TILE_SIZE - 12) * cameraZoom;
+            const canopySize = baseCanopySize;
+            const canopyHalfSize = canopySize / 2;
+            
+            ctx.strokeRect(-canopyHalfSize, -canopyHalfSize, canopySize, canopySize);
+            ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
+            ctx.fillRect(-canopyHalfSize, -canopyHalfSize, canopySize, canopySize);
+          }
             ctx.restore();
           }
           
@@ -1455,9 +1462,9 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         ctx.restore();
       });
 
-      const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
-      const py = cy + (playerPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
-      const pSize = TILE_SIZE - 16;
+      const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE_SCALED - TILE_SIZE_SCALED / 2 + (8 * cameraZoom);
+      const py = cy + (playerPos.y - displayPos.y) * TILE_SIZE_SCALED - TILE_SIZE_SCALED / 2 + (8 * cameraZoom);
+      const pSize = (TILE_SIZE - 16) * cameraZoom;
 
       // Visualize player collision circle when HITBOX is enabled
       if (hitboxEnabled) {
