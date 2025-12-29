@@ -682,37 +682,27 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     // Set initial mining direction but it will now update dynamically
     setMiningDirection({ x: lookDir.dx, y: lookDir.dy });
     
-    // Use rounded player position for all calculations
-    const playerTileX = Math.round(localPos.x);
-    const playerTileY = Math.round(localPos.y);
-    
-    // Find all resources in radius
-    const targets: {x: number, y: number, resource: ResourceType}[] = [];
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const tx = playerTileX + dx;
-        const ty = playerTileY + dy;
-        const resource = getTileAt(tx, ty);
-        if (resource && !isTileMined(tx, ty)) {
-          targets.push({ x: tx, y: ty, resource });
-        }
-      }
-    }
-
-    if (targets.length === 0) {
-      // If no resource, don't change lookDir, just swing
-      setIsMining(true);
-      setMiningTarget(null);
-    } else {
-      // Don't change lookDir when mining, stay in movement direction
-      // If we want to swing at something specific, we could, but let's prioritize movement direction as requested
-      setIsMining(true);
-      // We can still set the target for visual particles, but we don't need to rotate to it
-      const mainTarget = targets.find(t => t.x === targetX && t.y === targetY) || targets[0];
-      setMiningTarget({ x: mainTarget.x, y: mainTarget.y });
-    }
+    setIsMining(true);
+    setMiningTarget(null);
 
     const processMiningHit = () => {
+      // Get CURRENT player position when hit happens (not when mining started)
+      const playerTileX = Math.round(localPos.x);
+      const playerTileY = Math.round(localPos.y);
+      
+      // Find all resources in radius using current position
+      const targets: {x: number, y: number, resource: ResourceType}[] = [];
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const tx = playerTileX + dx;
+          const ty = playerTileY + dy;
+          const resource = getTileAt(tx, ty);
+          if (resource && !isTileMined(tx, ty)) {
+            targets.push({ x: tx, y: ty, resource });
+          }
+        }
+      }
+      
       // Set flag if there are stones to hit
       if (targets.length > 0) {
         hitStone.current = true;
