@@ -1564,14 +1564,22 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         {/* Fullscreen toggle is now handled by the parent Game component's settings menu or hidden */}
         <AnimatePresence>{miningNotifications.map((n) => (
           <motion.div key={n.id} initial={{ x: 50, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -50, opacity: 0 }} className="bg-black/80 border border-secondary px-3 py-1.5 rounded-md flex items-center gap-2 shadow-lg">
-            <svg width="50" height="50" viewBox="0 0 38 38" style={{ fill: RESOURCES[n.resource].color }} className="drop-shadow-sm">
-              <defs>
-                <filter id={`stone-texture-${n.id}`}>
-                  <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" result="noise" />
-                  <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G" />
-                </filter>
-              </defs>
-              <polygon points="19,5 27,15 26,29 12,29 11,15" stroke="#1a1a1a" strokeWidth="2" filter={`url(#stone-texture-${n.id})`} />
+            <svg
+              width={50}
+              height={50}
+              viewBox="0 0 24 24"
+              fill={RESOURCES[n.resource].color}
+              xmlns="http://www.w3.org/2000/svg"
+              style={{
+                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.5))'
+              }}
+            >
+              <polygon
+                points="12,2 22,10 18,22 6,22 2,10"
+                fill={RESOURCES[n.resource].color}
+                stroke="rgba(0,0,0,0.4)"
+                strokeWidth="1.5"
+              />
             </svg>
             <span className="text-white text-xs font-pixel uppercase tracking-wider">Mined {RESOURCES[n.resource].name}</span>
           </motion.div>
