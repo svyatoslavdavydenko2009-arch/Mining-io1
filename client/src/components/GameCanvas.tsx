@@ -499,8 +499,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       
       const radius = 20 / TILE_SIZE;
       const distSq = (checkX * checkX) + (checkY * checkY);
-      const combinedRadius = (radius * 0.9) + hitRadiusTiles;
-      return distSq < (combinedRadius * combinedRadius);
+    const combinedRadius = radius * scale + hitRadiusTiles;
+    return distSq < (combinedRadius * combinedRadius);
     } else {
       const canopyHalfSize = (0.5 * scale) * 0.7;
       const closestX = Math.max(-canopyHalfSize, Math.min(dx_rel, canopyHalfSize));
@@ -556,8 +556,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
               // Stone radius is 20/48 = 0.416
               const radius = 20 / TILE_SIZE;
               const distSq = (checkX * checkX) + (checkY * checkY);
-              // Shrink collision slightly to feel better (0.9 factor)
-              if (distSq < (radius * 0.9) ** 2) return true;
+              // Use full radius scaled by the resource scale to match texture size
+              if (distSq < (radius * scale) ** 2) return true;
             } else if (resource === "wood") {
               const canopyHalfSize = (0.5 * scale) * 0.7; 
               const inCanopy = Math.abs(dx_rel) < canopyHalfSize && Math.abs(dy_rel) < canopyHalfSize;
