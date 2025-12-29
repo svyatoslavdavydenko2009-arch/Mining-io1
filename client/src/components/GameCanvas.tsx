@@ -459,7 +459,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
     if (!resource || isTileMined(tileX, tileY)) return false;
     
     const sizeSeed = pseudoRandom(tileX + 3000, tileY + 3000);
-    const rotation = sizeSeed * Math.PI * 2;
     const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
     
     // Texture offset matching render and movement logic
@@ -480,25 +479,23 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
     const offsetTipX = tipX + lookDir.dx * forwardOffset;
     const offsetTipY = tipY + lookDir.dy * forwardOffset;
 
-    // Local space check for mining hit
+    // Relative position check (NO rotation to match visual)
     const dx_rel = offsetTipX - resourceX;
     const dy_rel = offsetTipY - resourceY;
-    const rotatedX = dx_rel * Math.cos(-rotation) - dy_rel * Math.sin(-rotation);
-    const rotatedY = dx_rel * Math.sin(-rotation) + dy_rel * Math.cos(-rotation);
 
     const hitRadiusTiles = 20 / TILE_SIZE;
 
     if (resource === "stone") {
       const collisionRadius = Math.sqrt(0.20 * scale);
-      const distSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
+      const distSq = (dx_rel * dx_rel) + (dy_rel * dy_rel);
       const combinedRadius = collisionRadius + hitRadiusTiles;
       return distSq < (combinedRadius * combinedRadius);
     } else {
       const canopyHalfSize = (0.5 * scale) * 0.7;
       // Mining hit check for the canopy area
-      const closestX = Math.max(-canopyHalfSize, Math.min(rotatedX, canopyHalfSize));
-      const closestY = Math.max(-canopyHalfSize, Math.min(rotatedY, canopyHalfSize));
-      const distSq = (rotatedX - closestX) ** 2 + (rotatedY - closestY) ** 2;
+      const closestX = Math.max(-canopyHalfSize, Math.min(dx_rel, canopyHalfSize));
+      const closestY = Math.max(-canopyHalfSize, Math.min(dy_rel, canopyHalfSize));
+      const distSq = (dx_rel - closestX) ** 2 + (dy_rel - closestY) ** 2;
       return distSq < (hitRadiusTiles * hitRadiusTiles);
     }
   };
@@ -522,23 +519,19 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
           // Check resource tiles
           if (resource === "stone" || resource === "wood") {
             const sizeSeed = pseudoRandom(ntx + 3000, nty + 3000);
-            const rotation = sizeSeed * Math.PI * 2;
             const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
             
             // Texture offset matching the render logic (converted to tile units)
             const offsetX = (pseudoRandom(ntx + 1000, nty + 1000) - 0.5) * 12 / TILE_SIZE;
             const offsetY = (pseudoRandom(ntx + 2000, nty + 2000) - 0.5) * 12 / TILE_SIZE;
             
-            // Transform player relative position into resource local space (account for rotation and texture offset)
+            // Transform player relative position into resource local space (account for texture offset)
+            // NO rotation in collision logic to match visual orientation
             const dx_rel = x - (centerX + offsetX);
             const dy_rel = y - (centerY + offsetY);
             
-            // Rotate the point BACKWARDS to check against the base collision shape
-            const rotatedX = dx_rel * Math.cos(-rotation) - dy_rel * Math.sin(-rotation);
-            const rotatedY = dx_rel * Math.sin(-rotation) + dy_rel * Math.cos(-rotation);
-            
             if (resource === "stone") {
-              const baseDistSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
+              const baseDistSq = (dx_rel * dx_rel) + (dy_rel * dy_rel);
               // Stones are 32px hexagon visuals, COLLISION_DISTANCE_SQ = 0.40 (~0.63 radius)
               // Shrink it to ~0.45 radius (0.20 distance sq) to match the visual hexagon tighter
               const scaledCollisionDist = 0.20 * scale; 
@@ -547,14 +540,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
               // Tree structure: Canopy (large) and Trunk (small)
               // Canopy is the main square part
               const canopyHalfSize = (0.5 * scale) * 0.7; // Tighter canopy
-              const inCanopy = Math.abs(rotatedX) < canopyHalfSize && Math.abs(rotatedY) < canopyHalfSize;
+              const inCanopy = Math.abs(dx_rel) < canopyHalfSize && Math.abs(dy_rel) < canopyHalfSize;
               
               // Trunk is a thin rectangle extending downwards in local space
-              // Based on render: ctx.fillRect(dsx + 16, dsy + TILE_SIZE - 6, 8, 6);
-              // In local space (centered), this is roughly at y = +halfSize, width = 8/48 (0.16)
               const trunkWidth = (8 / TILE_SIZE) * scale;
               const trunkHeight = (12 / TILE_SIZE) * scale;
-              const inTrunk = Math.abs(rotatedX) < trunkWidth/2 && rotatedY > 0 && rotatedY < canopyHalfSize + trunkHeight;
+              const inTrunk = Math.abs(dx_rel) < trunkWidth/2 && dy_rel > 0 && dy_rel < canopyHalfSize + trunkHeight;
               
               if (inCanopy || inTrunk) return true;
             }
@@ -1172,17 +1163,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             ctx.lineWidth = 2;
             
             const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
-            const rotation = sizeSeed * Math.PI * 2;
             const scale = resType === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
             
             // Hitbox must be centered on the texture's rendered center
+            // REMOVED rotation to match visual texture orientation
             ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
-            ctx.rotate(rotation);
 
             if (resType === "stone") {
               const radius = Math.sqrt(0.20 * scale) * TILE_SIZE;
+              // Pentagonal hitbox for stones
               ctx.beginPath();
-              ctx.arc(0, 0, radius, 0, Math.PI * 2);
+              for (let i = 0; i < 5; i++) {
+                const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+                const vx = radius * Math.cos(angle);
+                const vy = radius * Math.sin(angle);
+                if (i === 0) ctx.moveTo(vx, vy);
+                else ctx.lineTo(vx, vy);
+              }
+              ctx.closePath();
               ctx.stroke();
               ctx.fillStyle = "rgba(255, 165, 0, 0.15)";
               ctx.fill();
