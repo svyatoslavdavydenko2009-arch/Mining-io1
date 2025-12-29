@@ -518,10 +518,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     });
   };
 
-  useEffect(() => {
-    const dist = Math.abs(user.x - localPos.x) + Math.abs(user.y - localPos.y);
-    if (dist > 5) setLocalPos({ x: user.x, y: user.y });
-  }, [user.x, user.y]);
+  // Removed automatic teleport on large distance - causes false teleportation during normal movement/mining
 
   useEffect(() => {
     // Sync displayPlayerPos when mining starts to prevent jerking
