@@ -1383,50 +1383,32 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Visual hit detection feedback
       if (isMining && miningAnimation.rotation !== 0) {
-        // Calculate screen coordinates for player center
-        const rect = canvasRef.current?.getBoundingClientRect() || { width: 800, height: 600 };
-        const cx = rect.width / 2;
-        const cy = rect.height / 2;
-        
-        // Use displayPos for consistent screen positioning
-        const displayPos = smoothedPos.current;
-        const px_screen = cx + (playerPos.x - displayPos.x) * TILE_SIZE;
-        const py_screen = cy + (playerPos.y - displayPos.y) * TILE_SIZE;
-
         ctx.save();
-        // Translate to player center in screen coordinates
-        ctx.translate(px_screen, py_screen);
+        // Use the EXACT same screen coordinates as the player drawing
+        const px_draw = cx + (playerPos.x - displayPos.x) * TILE_SIZE;
+        const py_draw = cy + (playerPos.y - displayPos.y) * TILE_SIZE;
         
-        // Body rotation matching the character
+        ctx.translate(px_draw, py_draw);
+        
         const bodyRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
         ctx.rotate(bodyRotation);
         
-        // Animation swing rotation
         const swingAngle = (miningAnimation.rotation * Math.PI / 180);
         ctx.rotate(swingAngle);
         
-        // Hand and pickaxe offsets matching the DRAW logic exactly
         const handOffsetSide = 22;
         const handOffsetFront = 10;
         const handBob = smoothHandBob.current;
         const headY = -24;
         
-        // In the local rotated space, move to where the hand is
         ctx.translate(-handOffsetSide, -handOffsetFront + handBob);
-        
-        // Pickaxe local rotation (-90 degrees)
         ctx.rotate(-(90 * Math.PI / 180));
-        
-        // Move to the tip of the pickaxe
         ctx.translate(0, headY);
 
-        // Square size roughly matching pickaxe head width
         const squareSize = 20;
         ctx.strokeStyle = "rgba(255, 140, 0, 0.8)";
         ctx.lineWidth = 2;
         ctx.strokeRect(-squareSize/2, -squareSize/2, squareSize, squareSize);
-        
-        // Semi-transparent fill
         ctx.fillStyle = "rgba(255, 140, 0, 0.2)";
         ctx.fillRect(-squareSize/2, -squareSize/2, squareSize, squareSize);
         
