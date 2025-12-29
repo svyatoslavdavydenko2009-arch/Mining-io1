@@ -1005,25 +1005,24 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const screenTipX = cx + (tipX - displayPos.x) * TILE_SIZE;
         const screenTipY = cy + (tipY - displayPos.y) * TILE_SIZE;
 
-        // DRAW HIT DETECTION RADIUS (matching the math in tileCollisionIntersectsMiningRadius)
-        // hitRadiusTiles = 16 / 48 = 0.333 units
-        // Visual indicator should be exactly what the math uses for hit detection
+        // INDICATOR: ARC CIRCLE + CROSSHAIR
         const hitRadiusPx = 16; 
 
         ctx.save();
-        ctx.strokeStyle = "rgba(255, 165, 0, 0.9)"; // High visibility orange
-        ctx.lineWidth = 3; 
+        ctx.strokeStyle = "rgba(255, 200, 0, 1)"; // Bright yellow-orange
+        ctx.lineWidth = 4; 
         
+        // Draw the circle
         ctx.beginPath();
         ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
         ctx.stroke();
         
-        // Solid crosshair for center point
+        // Draw crosshair
         ctx.beginPath();
-        ctx.moveTo(screenTipX - 6, screenTipY);
-        ctx.lineTo(screenTipX + 6, screenTipY);
-        ctx.moveTo(screenTipX, screenTipY - 6);
-        ctx.lineTo(screenTipX, screenTipY + 6);
+        ctx.moveTo(screenTipX - 10, screenTipY);
+        ctx.lineTo(screenTipX + 10, screenTipY);
+        ctx.moveTo(screenTipX, screenTipY - 10);
+        ctx.lineTo(screenTipX, screenTipY + 10);
         ctx.stroke();
         
         ctx.restore();
