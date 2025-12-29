@@ -439,6 +439,34 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
   const isTileMined = (x: number, y: number) => minedTiles.has(`${x},${y}`);
   const getTileHealth = (x: number, y: number) => tileHealth[`${x},${y}`] || 0;
 
+  // Check if a specific tile at integer coordinates has collision with player at current position
+  const tileHasCollisionWithPlayer = (tileX: number, tileY: number, playerX: number, playerY: number): boolean => {
+    const resource = getTileAt(tileX, tileY);
+    if (!resource || isTileMined(tileX, tileY)) return false;
+    
+    if (resource === "stone" || resource === "wood") {
+      const sizeSeed = pseudoRandom(tileX + 3000, tileY + 3000);
+      const rotation = sizeSeed * Math.PI * 2;
+      const scale = resource === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
+      
+      const dx_rel = playerX - tileX;
+      const dy_rel = playerY - tileY;
+      
+      const rotatedX = dx_rel * Math.cos(-rotation) - dy_rel * Math.sin(-rotation);
+      const rotatedY = dx_rel * Math.sin(-rotation) + dy_rel * Math.cos(-rotation);
+      
+      if (resource === "stone") {
+        const baseDistSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
+        const scaledCollisionDist = COLLISION_DISTANCE_SQ * scale;
+        return baseDistSq < scaledCollisionDist;
+      } else if (resource === "wood") {
+        const halfSize = (0.5 * scale) * 0.8;
+        return Math.abs(rotatedX) < halfSize && Math.abs(rotatedY) < halfSize;
+      }
+    }
+    return false;
+  };
+
   const hasCollision = (x: number, y: number): boolean => {
     // Stone, wood, and boulder collision detection
     // We check a 4x4 grid around the precise position for better coverage of large boulders
@@ -688,10 +716,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
     const processMiningHit = () => {
       // Get CURRENT player position when hit happens (not when mining started)
-      const playerTileX = Math.round(localPos.x);
-      const playerTileY = Math.round(localPos.y);
+      const playerX = localPos.x;
+      const playerY = localPos.y;
+      const playerTileX = Math.round(playerX);
+      const playerTileY = Math.round(playerY);
       
-      // Find all targets in radius by checking collision (not just resources)
+      // Find all targets in radius by checking collision with player's actual position
       const targets: {x: number, y: number, resource: ResourceType}[] = [];
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
@@ -699,8 +729,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const ty = playerTileY + dy;
           const resource = getTileAt(tx, ty);
           
-          // Damage any solid tile (resource) that hasn't been mined
-          if (resource && !isTileMined(tx, ty)) {
+          // Damage tiles that have collision with the player in the mining radius
+          if (resource && !isTileMined(tx, ty) && tileHasCollisionWithPlayer(tx, ty, playerX, playerY)) {
             targets.push({ x: tx, y: ty, resource });
             // Set flag if there's something to hit
             hitStone.current = true;
