@@ -1381,6 +1381,33 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       // Always use body rotation to allow character to turn during mining
       let miningBaseRot = bodyRotation;
       
+      // Visual hit detection feedback
+      if (isMining && miningAnimation.rotation !== 0) {
+        const bodyRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
+        const totalRotation = bodyRotation + (miningAnimation.rotation * Math.PI / 180);
+        const reach = 0.85; 
+        const tipX = px + Math.cos(totalRotation - Math.PI/2) * reach * TILE_SIZE;
+        const tipY = py + Math.sin(totalRotation - Math.PI/2) * reach * TILE_SIZE;
+
+        // Draw a subtle "arc" or "swing" path
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(px, py, reach * TILE_SIZE, totalRotation - Math.PI/2 - 0.2, totalRotation - Math.PI/2 + 0.2);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.stroke();
+
+        // Draw the hit point indicator
+        ctx.beginPath();
+        ctx.arc(tipX, tipY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff";
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = "#fff";
+        ctx.fill();
+        ctx.restore();
+      }
+
       // Draw Body and Hands
       ctx.save();
       // Use the calculated rotation (which now tracks lookDir even while mining)
