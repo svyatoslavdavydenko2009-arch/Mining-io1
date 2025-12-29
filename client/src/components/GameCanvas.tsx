@@ -503,7 +503,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
   };
 
   const hasCollision = (x: number, y: number): boolean => {
-    if (!hitboxEnabled) return false;
     // Stone, wood, and boulder collision detection
     // We check a 4x4 grid around the precise position for better coverage of large boulders
     const tx = Math.round(x);
@@ -1158,15 +1157,22 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             ctx.save();
             ctx.strokeStyle = "rgba(255, 165, 0, 0.6)";
             ctx.lineWidth = 1.5;
+            
+            const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
+            const rotation = sizeSeed * Math.PI * 2;
+            const scale = resType === "stone" ? 0.7 + sizeSeed * 1.5 : 1.1 + sizeSeed * 1.5;
+            
+            ctx.translate(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2);
+            ctx.rotate(rotation);
+            ctx.translate(-(dsx + TILE_SIZE / 2), -(dsy + TILE_SIZE / 2));
+
             if (resType === "stone") {
-              // Stone uses circular collision with COLLISION_DISTANCE_SQ
-              const radius = Math.sqrt(COLLISION_DISTANCE_SQ * rockScale) * TILE_SIZE;
+              const radius = Math.sqrt(COLLISION_DISTANCE_SQ * scale) * TILE_SIZE;
               ctx.beginPath();
               ctx.arc(dsx + TILE_SIZE / 2, dsy + TILE_SIZE / 2, radius, 0, Math.PI * 2);
               ctx.stroke();
             } else if (resType === "wood") {
-              // Wood uses square collision
-              const halfSize = (0.5 * rockScale) * 0.8 * TILE_SIZE;
+              const halfSize = (0.5 * scale) * 0.8 * TILE_SIZE;
               ctx.strokeRect(dsx + TILE_SIZE / 2 - halfSize, dsy + TILE_SIZE / 2 - halfSize, halfSize * 2, halfSize * 2);
             }
             ctx.restore();
