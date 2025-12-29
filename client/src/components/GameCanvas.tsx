@@ -1383,46 +1383,33 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
       
       // Visual hit detection feedback
       if (isMining && miningAnimation.rotation !== 0) {
-        const bodyRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
-        const swingAngle = (miningAnimation.rotation * Math.PI / 180);
+        ctx.save();
+        // Translate to player center in screen coordinates
+        ctx.translate(px, py);
         
-        // Hand and pickaxe offsets matching the draw logic
+        // Body rotation matching the character
+        const bodyRotation = Math.atan2(smoothLookDir.current.dy, smoothLookDir.current.dx) + Math.PI / 2;
+        ctx.rotate(bodyRotation);
+        
+        // Animation swing rotation
+        const swingAngle = (miningAnimation.rotation * Math.PI / 180);
+        ctx.rotate(swingAngle);
+        
+        // Hand and pickaxe offsets matching the DRAW logic exactly
         const handOffsetSide = 22;
         const handOffsetFront = 10;
         const handBob = smoothHandBob.current;
         const headY = -24;
         
-        // Calculate the base position of the hand relative to player center
-        const handRot = bodyRotation + swingAngle;
+        // In the local rotated space, move to where the hand is
+        ctx.translate(-handOffsetSide, -handOffsetFront + handBob);
         
-        // Correct world-to-screen conversion for the tip
-        // px/py are already in screen coordinates (from playerPos)
-        // We need to calculate the offset in screen pixels (TILE_SIZE)
+        // Pickaxe local rotation (-90 degrees)
+        ctx.rotate(-(90 * Math.PI / 180));
         
-        // headY is -24 (pixels)
-        // Local offset of hand relative to body center in pixels
-        const localHandX_px = -handOffsetSide;
-        const localHandY_px = -handOffsetFront + handBob;
-        
-        // Rotate local hand offset in pixels
-        const screenHandOffsetX = localHandX_px * Math.cos(handRot) - localHandY_px * Math.sin(handRot);
-        const screenHandOffsetY = localHandX_px * Math.sin(handRot) + localHandY_px * Math.cos(handRot);
-        
-        const handWorldX = px + screenHandOffsetX;
-        const handWorldY = py + screenHandOffsetY;
-        
-        // The pickaxe is rotated -90 degrees relative to handRot
-        const pickaxeRot = handRot - (90 * Math.PI / 180);
-        
-        // The tip is at headY offset in the pickaxe's local space (already in pixels)
-        const tipScreenX = handWorldX + Math.cos(pickaxeRot - Math.PI/2) * headY;
-        const tipScreenY = handWorldY + Math.sin(pickaxeRot - Math.PI/2) * headY;
+        // Move to the tip of the pickaxe
+        ctx.translate(0, headY);
 
-        ctx.save();
-        // Draw a square indicator at the tip to show exact hit area
-        ctx.translate(tipScreenX, tipScreenY);
-        ctx.rotate(pickaxeRot);
-        
         // Square size roughly matching pickaxe head width
         const squareSize = 20;
         ctx.strokeStyle = "rgba(255, 140, 0, 0.8)";
