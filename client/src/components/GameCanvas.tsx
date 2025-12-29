@@ -491,9 +491,15 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
     const hitRadiusTiles = 20 / TILE_SIZE;
 
     if (resource === "stone") {
-      const collisionRadius = Math.sqrt(0.20 * scale);
-      const distSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
-      const combinedRadius = collisionRadius + hitRadiusTiles;
+      const renderRotation = pseudoRandom(tileX + 4000, tileY + 4000) * Math.PI * 2;
+      const combinedRotation = rotation + renderRotation;
+      
+      const checkX = dx_rel * Math.cos(-combinedRotation) - dy_rel * Math.sin(-combinedRotation);
+      const checkY = dx_rel * Math.sin(-combinedRotation) + dy_rel * Math.cos(-combinedRotation);
+      
+      const radius = 20 / TILE_SIZE;
+      const distSq = (checkX * checkX) + (checkY * checkY);
+      const combinedRadius = (radius * 0.9) + hitRadiusTiles;
       return distSq < (combinedRadius * combinedRadius);
     } else {
       const canopyHalfSize = (0.5 * scale) * 0.7;
@@ -539,9 +545,19 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
             const rotatedY = dx_rel * Math.sin(-rotation) + dy_rel * Math.cos(-rotation);
             
             if (resource === "stone") {
-              const baseDistSq = (rotatedX * rotatedX) + (rotatedY * rotatedY);
-              const scaledCollisionDist = 0.20 * scale; 
-              if (baseDistSq < scaledCollisionDist) return true;
+              const renderRotation = pseudoRandom(ntx + 4000, nty + 4000) * Math.PI * 2;
+              const combinedRotation = rotation + renderRotation;
+              
+              // Local space check against the pentagon
+              const checkX = dx_rel * Math.cos(-combinedRotation) - dy_rel * Math.sin(-combinedRotation);
+              const checkY = dx_rel * Math.sin(-combinedRotation) + dy_rel * Math.cos(-combinedRotation);
+              
+              // Polygon collision check (simplified for pentagon)
+              // Stone radius is 20/48 = 0.416
+              const radius = 20 / TILE_SIZE;
+              const distSq = (checkX * checkX) + (checkY * checkY);
+              // Shrink collision slightly to feel better (0.9 factor)
+              if (distSq < (radius * 0.9) ** 2) return true;
             } else if (resource === "wood") {
               const canopyHalfSize = (0.5 * scale) * 0.7; 
               const inCanopy = Math.abs(dx_rel) < canopyHalfSize && Math.abs(dy_rel) < canopyHalfSize;
@@ -1169,12 +1185,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
 
             if (resType === "stone") {
               ctx.rotate(rotation);
-              const radius = Math.sqrt(0.20 * scale) * TILE_SIZE;
+              // Visual stone uses radius = (TILE_SIZE - 8) / 2 = 20px
+              // Hitbox should match this radius exactly.
+              // Radius in world coordinates = 20 / 48 = 0.416
+              // Distance squared = 0.416 * 0.416 = 0.173
+              const visualRadius = (TILE_SIZE - 8) / 2;
               ctx.beginPath();
+              // Seed for visual rotation must match rendering logic (4000)
+              const renderRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
               for (let i = 0; i < 5; i++) {
-                const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
-                const vx = radius * Math.cos(angle);
-                const vy = radius * Math.sin(angle);
+                const angle = (i * 2 * Math.PI / 5) - Math.PI / 2 + renderRotation;
+                const vx = visualRadius * Math.cos(angle);
+                const vy = visualRadius * Math.sin(angle);
                 if (i === 0) ctx.moveTo(vx, vy);
                 else ctx.lineTo(vx, vy);
               }
