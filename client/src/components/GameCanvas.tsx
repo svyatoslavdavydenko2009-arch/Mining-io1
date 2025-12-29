@@ -1011,18 +1011,21 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const hitRadiusPx = 16; 
 
         ctx.save();
-        ctx.strokeStyle = "rgba(255, 165, 0, 0.5)"; // Semi-transparent orange
-        ctx.lineWidth = 2;
-        // Stroke a circle representing the ACTUAL hit radius used in the math
+        ctx.strokeStyle = "rgba(255, 165, 0, 0.9)"; // High visibility orange
+        ctx.lineWidth = 3; 
+        
         ctx.beginPath();
         ctx.arc(screenTipX, screenTipY, hitRadiusPx, 0, Math.PI * 2);
         ctx.stroke();
         
-        // Also keep a small dot for the precise tip
-        ctx.fillStyle = "rgba(255, 165, 0, 0.8)";
+        // Solid crosshair for center point
         ctx.beginPath();
-        ctx.arc(screenTipX, screenTipY, 2, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(screenTipX - 6, screenTipY);
+        ctx.lineTo(screenTipX + 6, screenTipY);
+        ctx.moveTo(screenTipX, screenTipY - 6);
+        ctx.lineTo(screenTipX, screenTipY + 6);
+        ctx.stroke();
+        
         ctx.restore();
       }
 
