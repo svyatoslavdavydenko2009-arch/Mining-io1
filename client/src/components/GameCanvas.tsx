@@ -1619,8 +1619,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
           const tipX = indicatorPos.x + Math.cos(totalRotation - Math.PI/2) * reach;
           const tipY = indicatorPos.y + Math.sin(totalRotation - Math.PI/2) * reach;
 
-          const screenTipX = cx + (tipX - displayPos.x) * TILE_SIZE;
-          const screenTipY = cy + (tipY - displayPos.y) * TILE_SIZE;
+          // Offset the hit radius forward in the look direction
+          const forwardOffset = 0.3; // Move forward by this tile amount
+          const offsetTipX = tipX + indicatorLookDir.dx * forwardOffset;
+          const offsetTipY = tipY + indicatorLookDir.dy * forwardOffset;
+
+          const screenTipX = cx + (offsetTipX - displayPos.x) * TILE_SIZE;
+          const screenTipY = cy + (offsetTipY - displayPos.y) * TILE_SIZE;
           
           // Calculate fade-out effect in last 100ms
           const fadeStartTime = HIT_DISPLAY_DURATION - 100;
@@ -1631,8 +1636,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
 
           ctx.save();
           
-          // PIXEL-PERFECT MINING RADIUS (16px = hit detection radius)
-          const hitRadiusPx = 16;
+          // PIXEL-PERFECT MINING RADIUS (20px = 16px * 1.25 for 25% increase)
+          const hitRadiusPx = 20;
           
           // 1. Orange filled circle background
           ctx.fillStyle = `rgba(255, 165, 0, ${0.4 * opacity})`;
