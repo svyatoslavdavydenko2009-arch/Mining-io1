@@ -473,8 +473,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
     const dy = tipY - tileY;
     const distSq = dx * dx + dy * dy;
     
-    // Tighter collision for "texture-only" feel
-    const hitRadius = collisionRadius + 0.15; 
+    // Tighter collision for exact texture feel
+    const hitRadius = collisionRadius + 0.05; 
     return distSq < hitRadius * hitRadius;
   };
 
@@ -1393,14 +1393,13 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const headY = -24;
         
         // Calculate the base position of the hand relative to player center
-        // handRot is miningBaseRot + pickaxeHandRot
         const handRot = bodyRotation + swingAngle;
         
-        // The hand is offset by (-handOffsetSide, -handOffsetFront + handBob) in its local rotated space
+        // The hand is offset in its local rotated space
         const localHandX = -handOffsetSide;
         const localHandY = -handOffsetFront + handBob;
         
-        // Rotate local hand offset by handRot
+        // Rotate local hand offset
         const worldHandOffsetX = localHandX * Math.cos(handRot) - localHandY * Math.sin(handRot);
         const worldHandOffsetY = localHandX * Math.sin(handRot) + localHandY * Math.cos(handRot);
         
@@ -1415,24 +1414,20 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange }: G
         const tipWorldY = handWorldY + Math.sin(pickaxeRot - Math.PI/2) * headY;
 
         ctx.save();
-        // Draw a subtle "arc" or "swing" path at the tip's radius
-        const reach = Math.sqrt((tipWorldX - px)**2 + (tipWorldY - py)**2);
-        const tipAngle = Math.atan2(tipWorldY - py, tipWorldX - px);
+        // Draw a square indicator at the tip to show exact hit area
+        ctx.translate(tipWorldX, tipWorldY);
+        ctx.rotate(pickaxeRot);
         
-        ctx.beginPath();
-        ctx.arc(px, py, reach, tipAngle - 0.2, tipAngle + 0.2);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-        ctx.lineWidth = 4;
-        ctx.lineCap = "round";
-        ctx.stroke();
-
-        // Draw the hit point indicator exactly at the calculated tip position
-        ctx.beginPath();
-        ctx.arc(tipWorldX, tipWorldY, 4, 0, Math.PI * 2);
-        ctx.fillStyle = "#fff";
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = "#fff";
-        ctx.fill();
+        // Square size roughly matching pickaxe head width
+        const squareSize = 20;
+        ctx.strokeStyle = "rgba(255, 140, 0, 0.8)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-squareSize/2, -squareSize/2, squareSize, squareSize);
+        
+        // Semi-transparent fill
+        ctx.fillStyle = "rgba(255, 140, 0, 0.2)";
+        ctx.fillRect(-squareSize/2, -squareSize/2, squareSize, squareSize);
+        
         ctx.restore();
       }
 
