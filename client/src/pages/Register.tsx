@@ -68,7 +68,7 @@ export default function Register() {
               </div>
             )}
 
-            <div className="pt-2">
+            <div className="pt-2 opacity-0 hover:opacity-100 transition-opacity duration-300">
               <PixelButton
                 type="submit"
                 className="w-full"
@@ -78,7 +78,7 @@ export default function Register() {
               </PixelButton>
             </div>
 
-            <div className="text-center text-sm text-muted-foreground mt-4 font-body">
+            <div className="text-center text-sm text-muted-foreground mt-4 font-body opacity-0 hover:opacity-100 transition-opacity duration-300">
               Already have a permit?{" "}
               <Link href="/" className="text-primary hover:text-primary/80 hover:underline">
                 Login here
