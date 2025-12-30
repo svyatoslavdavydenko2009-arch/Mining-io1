@@ -1478,7 +1478,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       const pSize = TILE_SIZE - 16;
 
       // Visualize player collision circle when HITBOX is enabled
-      if (hitboxEnabled) {
+      if (hitboxEnabled && !isBackgroundOnly) {
         ctx.save();
         ctx.strokeStyle = "rgba(255, 165, 0, 0.8)";
         ctx.lineWidth = 2;
@@ -1493,7 +1493,10 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         ctx.restore();
       }
 
-      ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
+      if (!isBackgroundOnly) {
+        ctx.save(); ctx.translate(px + pSize / 2, py + pSize / 2); ctx.scale(dashScale.current.x, dashScale.current.y);
+        
+        // ... rotation and drawing logic ...
 
       // Improved rotation logic: 
       // 1. Rotation speed set to 0.16 as requested.
@@ -1893,63 +1896,65 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         </div>
       )}
       {/* Mini-map */}
-      <div className="absolute top-4 left-4 w-32 h-32 bg-black/60 border-2 border-secondary rounded-lg overflow-hidden pointer-events-none shadow-xl">
-        <canvas 
-          id="minimap-canvas"
-          width={256}
-          height={256}
-          className="w-full h-full opacity-90"
-          ref={(el) => {
-            if (!el) return;
-            const mctx = el.getContext("2d");
-            if (!mctx) return;
-            
-            mctx.clearRect(0, 0, 256, 256);
-            
-            const range = 26; // Increased range to ensure corners are fully covered
-            const mTileSize = 256 / (20 * 2); // Keep tile size consistent for 20x20 view but draw more tiles
-            
-            // Calculate smooth offsets for sub-tile movement
-            const offsetX = (localPos.x % 1) * mTileSize;
-            const offsetY = (localPos.y % 1) * mTileSize;
-            
-            // Draw tiles with smooth interpolation
-            for (let my = -range; my <= range; my++) {
-              for (let mx = -range; mx <= range; mx++) {
-                const wx = Math.floor(localPos.x) + mx;
-                const wy = Math.floor(localPos.y) + my;
-                mctx.fillStyle = getFloorColor(wx, wy);
-                // Draw tiles offset by the fractional position of the player
-                mctx.fillRect(128 + mx * mTileSize - offsetX, 128 + my * mTileSize - offsetY, mTileSize + 1, mTileSize + 1);
+      {!isBackgroundOnly && (
+        <div className="absolute top-4 left-4 w-32 h-32 bg-black/60 border-2 border-secondary rounded-lg overflow-hidden pointer-events-none shadow-xl">
+          <canvas 
+            id="minimap-canvas"
+            width={256}
+            height={256}
+            className="w-full h-full opacity-90"
+            ref={(el) => {
+              if (!el) return;
+              const mctx = el.getContext("2d");
+              if (!mctx) return;
+              
+              mctx.clearRect(0, 0, 256, 256);
+              
+              const range = 26; // Increased range to ensure corners are fully covered
+              const mTileSize = 256 / (20 * 2); // Keep tile size consistent for 20x20 view but draw more tiles
+              
+              // Calculate smooth offsets for sub-tile movement
+              const offsetX = (localPos.x % 1) * mTileSize;
+              const offsetY = (localPos.y % 1) * mTileSize;
+              
+              // Draw tiles with smooth interpolation
+              for (let my = -range; my <= range; my++) {
+                for (let mx = -range; mx <= range; mx++) {
+                  const wx = Math.floor(localPos.x) + mx;
+                  const wy = Math.floor(localPos.y) + my;
+                  mctx.fillStyle = getFloorColor(wx, wy);
+                  // Draw tiles offset by the fractional position of the player
+                  mctx.fillRect(128 + mx * mTileSize - offsetX, 128 + my * mTileSize - offsetY, mTileSize + 1, mTileSize + 1);
+                }
               }
-            }
-            
-            // Draw high-quality player marker
-            mctx.save();
-            mctx.shadowBlur = 6;
-            mctx.shadowColor = "rgba(0,0,0,0.6)";
-            
-            // Outer stroke for definition
-            mctx.strokeStyle = "rgba(0,0,0,0.8)";
-            mctx.lineWidth = 3;
-            mctx.fillStyle = "#fbbf24";
-            
-            mctx.beginPath();
-            mctx.arc(128, 128, 7, 0, Math.PI * 2);
-            mctx.fill();
-            mctx.stroke();
-            
-            // Inner highlight for depth
-            mctx.shadowBlur = 0;
-            mctx.strokeStyle = "rgba(255,255,255,0.4)";
-            mctx.lineWidth = 2;
-            mctx.beginPath();
-            mctx.arc(128, 128, 4, 0, Math.PI * 2);
-            mctx.stroke();
-            mctx.restore();
-          }}
-        />
-      </div>
+              
+              // Draw high-quality player marker
+              mctx.save();
+              mctx.shadowBlur = 6;
+              mctx.shadowColor = "rgba(0,0,0,0.6)";
+              
+              // Outer stroke for definition
+              mctx.strokeStyle = "rgba(0,0,0,0.8)";
+              mctx.lineWidth = 3;
+              mctx.fillStyle = "#fbbf24";
+              
+              mctx.beginPath();
+              mctx.arc(128, 128, 7, 0, Math.PI * 2);
+              mctx.fill();
+              mctx.stroke();
+              
+              // Inner highlight for depth
+              mctx.shadowBlur = 0;
+              mctx.strokeStyle = "rgba(255,255,255,0.4)";
+              mctx.lineWidth = 2;
+              mctx.beginPath();
+              mctx.arc(128, 128, 4, 0, Math.PI * 2);
+              mctx.stroke();
+              mctx.restore();
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
