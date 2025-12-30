@@ -49,7 +49,6 @@ export default function Login() {
           <h1 className="text-4xl md:text-5xl mb-2">
             <span className="text-yellow-400">MINING</span> <span className="text-red-600">io</span>
           </h1>
-          <p className="text-muted-foreground font-pixel text-xs">Dig Deep. Craft High.</p>
         </div>
 
         <PixelCard title="LOGIN" className="shadow-2xl shadow-primary/20">
