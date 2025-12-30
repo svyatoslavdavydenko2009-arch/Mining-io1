@@ -1840,54 +1840,58 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         ))}</AnimatePresence>
       </div>
       {/* Joystick on left */}
-      <div className="absolute bottom-12 left-12 z-50 pointer-events-auto">
-        <Joystick 
-          onMove={(dx, dy) => { 
-            joystickDirRef.current = { dx, dy }; 
-          }} 
-          onEnd={() => { 
-            joystickDirRef.current = { dx: 0, dy: 0 }; 
-          }} 
-        />
-      </div>
+      {!isBackgroundOnly && (
+        <div className="absolute bottom-12 left-12 z-50 pointer-events-auto">
+          <Joystick 
+            onMove={(dx, dy) => { 
+              joystickDirRef.current = { dx, dy }; 
+            }} 
+            onEnd={() => { 
+              joystickDirRef.current = { dx: 0, dy: 0 }; 
+            }} 
+          />
+        </div>
+      )}
       {/* Mine button on right */}
-      <div className="absolute bottom-12 right-12 z-50 pointer-events-auto">
-        {(() => {
-          const cooldown = MINING_COOLDOWNS[user?.pickaxeLevel || 1] || 1500;
-          const timeSinceLastMine = Date.now() - lastMineTimeState;
-          const isOnCooldown = timeSinceLastMine < cooldown;
-          return (
-            <button
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-              }}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-              }}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                handleMineButtonClick();
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                handleMineButtonClick();
-              }}
-              disabled={isMining || isOnCooldown}
-              className="w-24 h-24 bg-[#fbbf24] rounded-full border-4 border-[#b45309] shadow-[0_0_12px_rgba(0,0,0,0.5),inset_-3px_-3px_0_rgba(0,0,0,0.2)] flex items-center justify-center transition-all active:scale-90 disabled:opacity-50 disabled:grayscale pointer-events-auto"
-            >
-              <div className="absolute inset-0 rounded-full border-2 border-white/10 pointer-events-none" />
-              <div className="w-14 h-14 flex items-center justify-center relative">
-                {/* Background circle inside button to mimic joystick knob look */}
-                <div className="absolute inset-0 border-4 border-[#b45309]/40 rounded-full" />
-                <Pickaxe className="w-10 h-10 text-white drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.5)]" />
-              </div>
-            </button>
-          );
-        })()}
-      </div>
+      {!isBackgroundOnly && (
+        <div className="absolute bottom-12 right-12 z-50 pointer-events-auto">
+          {(() => {
+            const cooldown = MINING_COOLDOWNS[user?.pickaxeLevel || 1] || 1500;
+            const timeSinceLastMine = Date.now() - lastMineTimeState;
+            const isOnCooldown = timeSinceLastMine < cooldown;
+            return (
+              <button
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleMineButtonClick();
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleMineButtonClick();
+                }}
+                disabled={isMining || isOnCooldown}
+                className="w-24 h-24 bg-[#fbbf24] rounded-full border-4 border-[#b45309] shadow-[0_0_12px_rgba(0,0,0,0.5),inset_-3px_-3px_0_rgba(0,0,0,0.2)] flex items-center justify-center transition-all active:scale-90 disabled:opacity-50 disabled:grayscale pointer-events-auto"
+              >
+                <div className="absolute inset-0 rounded-full border-2 border-white/10 pointer-events-none" />
+                <div className="w-14 h-14 flex items-center justify-center relative">
+                  {/* Background circle inside button to mimic joystick knob look */}
+                  <div className="absolute inset-0 border-4 border-[#b45309]/40 rounded-full" />
+                  <Pickaxe className="w-10 h-10 text-white drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.5)]" />
+                </div>
+              </button>
+            );
+          })()}
+        </div>
+      )}
       {/* Mini-map */}
       <div className="absolute top-4 left-4 w-32 h-32 bg-black/60 border-2 border-secondary rounded-lg overflow-hidden pointer-events-none shadow-xl">
         <canvas 

@@ -27,8 +27,8 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 z-0 blur-md scale-105">
-        <GameCanvas isBackgroundOnly={true} />
+      <div className="absolute inset-0 z-0 scale-110">
+        <GameCanvas isBackgroundOnly={true} isFullscreen={true} />
         <div className="absolute inset-0 bg-black/40" />
       </div>
       
