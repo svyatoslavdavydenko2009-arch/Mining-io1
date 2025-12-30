@@ -27,8 +27,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 z-0 blur-md scale-105">
-        <GameCanvas isBackgroundOnly={true} />
+      <div className="absolute inset-0 z-0 scale-110">
+        <GameCanvas isBackgroundOnly={true} isFullscreen={true} />
         <div className="absolute inset-0 bg-black/40" />
       </div>
       
@@ -39,13 +39,6 @@ export default function Login() {
         className="z-10 w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <motion.div
-            animate={{ rotate: [0, -10, 10, 0] }}
-            transition={{ repeat: Infinity, duration: 2, repeatDelay: 3 }}
-            className="inline-block mb-4"
-          >
-            <Pickaxe className="w-16 h-16 text-primary" />
-          </motion.div>
           <h1 className="text-4xl md:text-5xl mb-2">
             <span className="text-yellow-400">MINING</span> <span className="text-red-600">io</span>
           </h1>

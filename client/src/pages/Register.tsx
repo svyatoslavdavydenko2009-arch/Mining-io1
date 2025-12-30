@@ -39,7 +39,6 @@ export default function Register() {
         className="z-10 w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <Pickaxe className="w-12 h-12 text-primary mx-auto mb-4" />
           <h1 className="text-3xl md:text-4xl">
             <span className="text-yellow-400">MINING</span> <span className="text-red-600">io</span>
           </h1>
