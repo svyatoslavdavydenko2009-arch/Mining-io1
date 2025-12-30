@@ -40,7 +40,9 @@ export default function Register() {
       >
         <div className="text-center mb-8">
           <Pickaxe className="w-12 h-12 text-primary mx-auto mb-4" />
-          <h1 className="text-3xl md:text-4xl text-primary">JOIN THE GUILD</h1>
+          <h1 className="text-3xl md:text-4xl">
+            <span className="text-yellow-400">MINING</span> <span className="text-red-600">io</span>
+          </h1>
         </div>
 
         <PixelCard title="REGISTER" className="shadow-2xl shadow-primary/20">
