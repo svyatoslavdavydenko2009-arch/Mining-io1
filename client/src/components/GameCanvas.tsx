@@ -327,7 +327,11 @@ function getTileAt(x: number, y: number): ResourceType | null {
 }
 
 interface GameCanvasProps {
-  user: User;
+  user?: User;
+  isFullscreen?: boolean;
+  onFullscreenChange?: (fullscreen: boolean) => void;
+  hitboxEnabled?: boolean;
+  isBackgroundOnly?: boolean;
 }
 
 interface Particle {
@@ -356,14 +360,6 @@ const MINING_COOLDOWNS: Record<number, number> = {
   5: 800,
   6: 750,
 };
-
-interface GameCanvasProps {
-  user?: User;
-  isFullscreen?: boolean;
-  onFullscreenChange?: (fullscreen: boolean) => void;
-  hitboxEnabled?: boolean;
-  isBackgroundOnly?: boolean;
-}
 
 export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hitboxEnabled = true, isBackgroundOnly = false }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -423,7 +419,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
   const [cooldownProgress, setCooldownProgress] = useState(1);
   const [lastMineTimeState, setLastMineTimeState] = useState(0);
   const [footsteps, setFootsteps] = useState<{id: number, x: number, y: number, life: number, brightness: number}[]>([]);
-  const lastFootstepPos = useRef({ x: user.x, y: user.y });
+  const lastFootstepPos = useRef({ x: initialX, y: initialY });
   const lastStepRef = useRef(0);
   const lastStepIndex = useRef(-1);
   const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -749,12 +745,12 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
     const moveThreshold = 0.5;
     const timeThreshold = 250;
     
-    if (now - lastServerUpdate > timeThreshold && 
+    if (user && now - lastServerUpdate > timeThreshold && 
         (Math.abs(localPos.x - user.x) > moveThreshold || Math.abs(localPos.y - user.y) > moveThreshold)) {
       move.mutate({ x: Math.round(localPos.x), y: Math.round(localPos.y) });
       setLastServerUpdate(now);
     }
-  }, [localPos, user.x, user.y, move]);
+  }, [localPos, user?.x, user?.y, move]);
 
   const createParticles = (x: number, y: number, color: string) => {
     const newParticles: Particle[] = [];
@@ -771,7 +767,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
   };
 
   const performMining = (targetX: number, targetY: number) => {
-    const cooldown = MINING_COOLDOWNS[user.pickaxeLevel] || 1500;
+    const pickaxeLevel = user?.pickaxeLevel || 1;
+    const cooldown = MINING_COOLDOWNS[pickaxeLevel] || 1500;
     if (isMining || Date.now() - lastMineTime.current < cooldown) return;
     
     // Set initial mining direction but it will now update dynamically
@@ -838,7 +835,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         
         if (newHealth <= 0) {
           const resDef = RESOURCES[t.resource];
-          if (user.pickaxeLevel >= resDef.minPickaxeLevel) {
+          if (pickaxeLevel >= resDef.minPickaxeLevel) {
             // Start simple fade animation - track start time and resource type
             tilesDisappearingStartTime.current[key] = performance.now();
             tilesDisappearingType.current[key] = t.resource;
