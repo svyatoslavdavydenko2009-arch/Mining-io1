@@ -82,7 +82,7 @@ export function useGame() {
 
   const [hitboxEnabled, setHitboxEnabled] = useState(() => {
     const saved = localStorage.getItem("hitboxEnabled");
-    return saved !== null ? JSON.parse(saved) : true;
+    return saved !== null ? JSON.parse(saved) : false;
   });
 
   const toggleHitbox = () => {

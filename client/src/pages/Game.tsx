@@ -67,6 +67,7 @@ export default function Game() {
             align="end" 
             className="border-2 border-secondary p-2 min-w-[200px] overflow-hidden"
             style={{
+              position: 'fixed',
               backgroundColor: '#3f2817',
               background: `
                 linear-gradient(135deg, rgba(80, 50, 30, 0.4) 0%, transparent 50%),
