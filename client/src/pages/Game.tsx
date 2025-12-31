@@ -23,6 +23,32 @@ export default function Game() {
   const [showIntro, setShowIntro] = useState(true);
 
   useEffect(() => {
+    // Prevent scroll and prevent mobile keyboard from pushing content
+    const preventDefault = (e: Event) => {
+      if ((e.target as HTMLElement).tagName !== 'INPUT' && 
+          (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('touchmove', preventDefault, { passive: false });
+    
+    // Lock scroll position
+    const lockScroll = () => {
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+    };
+    
+    lockScroll();
+    window.addEventListener('scroll', lockScroll);
+    
+    return () => {
+      document.removeEventListener('touchmove', preventDefault);
+      window.removeEventListener('scroll', lockScroll);
+    };
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => setShowIntro(false), 2000);
     return () => clearTimeout(timer);
   }, []);
