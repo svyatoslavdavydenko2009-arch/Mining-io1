@@ -368,6 +368,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
   // Create mock user data for background mode if no user provided
   const initialX = user?.x ?? 100;
   const initialY = user?.y ?? 100;
+  const pickaxeLevel = user?.pickaxeLevel ?? 1;
 
   const [localPos, setLocalPos] = useState({ x: initialX, y: initialY });
   const [lookDir, setLookDir] = useState({ dx: 1, dy: 0 }); 
@@ -750,7 +751,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       move.mutate({ x: Math.round(localPos.x), y: Math.round(localPos.y) });
       setLastServerUpdate(now);
     }
-  }, [localPos, user?.x, user?.y, move]);
+  }, [localPos, user, move]);
 
   const createParticles = (x: number, y: number, color: string) => {
     const newParticles: Particle[] = [];
@@ -767,7 +768,6 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
   };
 
   const performMining = (targetX: number, targetY: number) => {
-    const pickaxeLevel = user?.pickaxeLevel || 1;
     const cooldown = MINING_COOLDOWNS[pickaxeLevel] || 1500;
     if (isMining || Date.now() - lastMineTime.current < cooldown) return;
     
@@ -1600,8 +1600,8 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       const handBob = smoothHandBob.current;
 
       // Draw Pickaxe
-      const pickaxeLevel = user?.pickaxeLevel || 1;
-      const pickaxeColor = PICKAXE_COLORS[pickaxeLevel] || "#8B4513";
+      const currentPickaxeLevel = pickaxeLevel;
+      const pickaxeColor = PICKAXE_COLORS[currentPickaxeLevel] || "#8B4513";
       ctx.save(); 
       ctx.rotate(miningBaseRot);
       
@@ -1807,7 +1807,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
     };
     frameId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(frameId);
-  }, [localPos, user?.pickaxeLevel, tileHealth, minedTiles, particles, miningAnimation, lookDir]);
+  }, [localPos, pickaxeLevel, tileHealth, minedTiles, particles, miningAnimation, lookDir]);
 
   return (
     <div ref={containerRef} className={`relative bg-black overflow-hidden shadow-2xl transition-all ${isFullscreen ? 'fixed inset-0 w-screen h-screen border-0 rounded-none z-50' : 'w-full h-[60vh] sm:h-[70vh] border-4 border-secondary rounded-lg'}`}>
@@ -1859,7 +1859,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       {!isBackgroundOnly && (
         <div className="absolute bottom-12 right-12 z-50 pointer-events-auto">
           {(() => {
-            const cooldown = MINING_COOLDOWNS[user?.pickaxeLevel || 1] || 1500;
+            const cooldown = MINING_COOLDOWNS[pickaxeLevel] || 1500;
             const timeSinceLastMine = Date.now() - lastMineTimeState;
             const isOnCooldown = timeSinceLastMine < cooldown;
             return (
