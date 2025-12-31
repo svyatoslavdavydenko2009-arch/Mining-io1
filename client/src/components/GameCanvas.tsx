@@ -1802,7 +1802,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       }
 
       const grad = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
-      particles.forEach(p => { const sx = cx + (p.x - displayPos.x) * TILE_SIZE; const sy = cy + (p.y - displayPos.y) * TILE_SIZE; ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(sx - 2, sy - 2, 4, 4); ctx.globalAlpha = 1; });
+      particles.forEach((p: { x: number; y: number; color: string; life: number }) => {
+        const sx = cx + (p.x - displayPos.x) * TILE_SIZE;
+        const sy = cy + (p.y - displayPos.y) * TILE_SIZE;
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.life;
+        ctx.fillRect(sx - 2, sy - 2, 4, 4);
+        ctx.globalAlpha = 1;
+      });
       frameId = requestAnimationFrame(render);
     };
     frameId = requestAnimationFrame(render);
