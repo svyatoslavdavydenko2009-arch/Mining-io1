@@ -14,7 +14,8 @@ import "./index.css";
     
     if (heightDiff > 50) {
       // Keyboard is open or view changed significantly
-      offsetY = heightDiff;
+      // When keyboard opens, content shifts UP, so we shift it back DOWN by applying negative offset
+      offsetY = -heightDiff;
       document.documentElement.style.transform = `translateY(${offsetY}px)`;
     } else {
       // Keyboard closed, reset
