@@ -23,28 +23,23 @@ export default function Game() {
   const [showIntro, setShowIntro] = useState(true);
 
   useEffect(() => {
-    // Prevent scroll and prevent mobile keyboard from pushing content
-    const preventDefault = (e: Event) => {
-      if ((e.target as HTMLElement).tagName !== 'INPUT' && 
-          (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+    // Keep scroll at top
+    window.scrollTo(0, 0);
+    
+    // Prevent any scrolling
+    const preventScroll = (e: Event) => {
+      if ((e.target as HTMLElement)?.tagName !== 'INPUT' && 
+          (e.target as HTMLElement)?.tagName !== 'TEXTAREA') {
         e.preventDefault();
       }
     };
 
-    document.addEventListener('touchmove', preventDefault, { passive: false });
-    
-    // Lock scroll position
-    const lockScroll = () => {
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.overflow = 'hidden';
-    };
-    
-    lockScroll();
-    window.addEventListener('scroll', lockScroll);
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+    document.addEventListener('wheel', preventScroll, { passive: false });
     
     return () => {
-      document.removeEventListener('touchmove', preventDefault);
-      window.removeEventListener('scroll', lockScroll);
+      document.removeEventListener('touchmove', preventScroll);
+      document.removeEventListener('wheel', preventScroll);
     };
   }, []);
 
