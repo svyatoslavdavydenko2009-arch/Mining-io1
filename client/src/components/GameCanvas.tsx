@@ -1161,16 +1161,47 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         const tileKey = `${wx},${wy}`;
 
         if (type === 'resource' && resType) {
-          // Draw shadow under resource (before the main resource rendering)
-          const shadowSizeSeed = pseudoRandom(wx + 3000, wy + 3000);
-          const shadowBaseScale = resType === "wood" ? 1.1 : 0.7;
-          const shadowRockScale = shadowBaseScale + shadowSizeSeed * 1.5;
-          const shadowSize = (TILE_SIZE / 2 - 4) * shadowRockScale;
+          // Draw shadow under resource (shape matches the resource)
+          const sizeSeed = pseudoRandom(wx + 3000, wy + 3000);
+          const baseScale = resType === "wood" ? 1.1 : 0.7;
+          const rockScale = baseScale + sizeSeed * 1.5;
           
           ctx.save();
-          ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
-          ctx.beginPath();
-          ctx.ellipse(sx + TILE_SIZE / 2, sy + TILE_SIZE - 6, shadowSize * 0.7, 3, 0, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+          ctx.globalAlpha = 0.3;
+          
+          // Shadow position (offset below the object)
+          const shadowOffsetX = (pseudoRandom(wx + 1000, wy + 1000) - 0.5) * 12;
+          const shadowOffsetY = (pseudoRandom(wx + 2000, wy + 2000) - 0.5) * 12;
+          const shadowX = sx + shadowOffsetX + TILE_SIZE / 2;
+          const shadowY = sy + shadowOffsetY + TILE_SIZE / 2 + 8; // Below the object
+
+          ctx.translate(shadowX, shadowY);
+          ctx.scale(rockScale * 0.95, rockScale * 0.2); // Flatten vertically
+          
+          if (resType === "stone") {
+            // Stone shadow - pentagon shape (matches stone)
+            ctx.beginPath();
+            const radius = (TILE_SIZE - 8) / 2;
+            const randomRotation = pseudoRandom(wx + 4000, wy + 4000) * Math.PI * 2;
+            for (let i = 0; i < 5; i++) {
+              const angle = (i * 2 * Math.PI / 5) - Math.PI / 2 + randomRotation;
+              const x = radius * Math.cos(angle);
+              const y = radius * Math.sin(angle);
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+          } else if (resType === "wood") {
+            // Tree shadow - rounded rectangle
+            ctx.beginPath();
+            ctx.roundRect(-((TILE_SIZE - 12) / 2), -((TILE_SIZE - 12) / 2), TILE_SIZE - 12, TILE_SIZE - 12, 8);
+          } else {
+            // Ore shadow - rectangle
+            ctx.beginPath();
+            ctx.roundRect(-((TILE_SIZE - 8) / 2), -((TILE_SIZE - 8) / 2), TILE_SIZE - 8, TILE_SIZE - 8, 4);
+          }
+          
           ctx.fill();
           ctx.restore();
           const res = RESOURCES[resType as keyof typeof RESOURCES]; 
