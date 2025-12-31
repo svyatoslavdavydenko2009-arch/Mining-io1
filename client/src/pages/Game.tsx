@@ -68,14 +68,17 @@ export default function Game() {
             className="border-2 border-secondary p-2 min-w-[200px] overflow-hidden"
             style={{
               position: 'fixed',
+              top: 'auto',
+              right: '1rem',
               backgroundColor: '#3f2817',
               background: `
                 linear-gradient(135deg, rgba(80, 50, 30, 0.4) 0%, transparent 50%),
                 linear-gradient(225deg, rgba(60, 40, 25, 0.3) 0%, transparent 50%),
                 #3f2817
               `,
-              backgroundAttachment: 'fixed'
-            }}
+              backgroundAttachment: 'fixed',
+              pointerEvents: 'auto'
+            } as React.CSSProperties}
           >
             <div className="px-2 py-1.5 mb-2 border-b border-secondary/30">
               <p className="text-[12px] font-pixel text-white/90 uppercase font-bold">Settings</p>

@@ -76,4 +76,10 @@
       4px 100%, 4px calc(100% - 4px), 0px calc(100% - 4px)
     );
   }
+
+  html {
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+  }
 }
