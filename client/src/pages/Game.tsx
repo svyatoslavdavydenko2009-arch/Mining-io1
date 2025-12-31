@@ -30,7 +30,7 @@ export default function Game() {
   if (!user) return null;
 
   return (
-    <div className="w-screen h-screen overflow-hidden bg-black relative">
+    <div className="w-screen overflow-hidden bg-black fixed inset-0" style={{ height: '100dvh' }}>
       <AnimatePresence>
         {showIntro && (
           <motion.div
