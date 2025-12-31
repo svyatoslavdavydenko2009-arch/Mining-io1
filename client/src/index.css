@@ -32,9 +32,13 @@
 }
 
 @layer base {
+  :root {
+    --visual-vh: 100vh;
+  }
+
   html {
     width: 100%;
-    height: 100%;
+    height: var(--visual-vh);
     margin: 0;
     padding: 0;
     border: 0;
@@ -51,7 +55,7 @@
     font-size: 1.25rem;
     image-rendering: pixelated; /* Critical for pixel art look */
     width: 100%;
-    height: 100%;
+    height: var(--visual-vh);
     margin: 0;
     padding: 0;
     border: 0;
