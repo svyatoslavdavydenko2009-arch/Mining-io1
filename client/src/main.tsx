@@ -2,23 +2,39 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// Real-time viewport height tracking for instant keyboard response
+// Store reference to root element for height updates
+let rootElement: HTMLElement | null = null;
+
+// Real-time viewport height tracking with requestAnimationFrame for instant response
 const updateViewportHeight = () => {
-  // Use visualViewport if available (most accurate for mobile)
   const height = window.visualViewport?.height ?? window.innerHeight;
+  
+  // Update CSS variable on document
   document.documentElement.style.setProperty('--visual-vh', `${height}px`);
+  
+  // Also update root element directly if available
+  if (rootElement) {
+    rootElement.style.height = `${height}px`;
+  }
 };
 
-// Update on resize (catches keyboard appearance/disappearance)
-window.addEventListener('resize', updateViewportHeight);
+// Continuous monitoring with RAF for instant response
+let rafId: number | null = null;
+const startMonitoring = () => {
+  const monitor = () => {
+    updateViewportHeight();
+    rafId = requestAnimationFrame(monitor);
+  };
+  monitor();
+};
 
-// Also listen to visualViewport changes for faster response on supported browsers
+// Update on resize
+window.addEventListener('resize', updateViewportHeight, { passive: true });
+
+// Also listen to visualViewport changes
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', updateViewportHeight);
+  window.visualViewport.addEventListener('resize', updateViewportHeight, { passive: true });
 }
-
-// Initial update
-updateViewportHeight();
 
 // Prevent any scrolling
 document.addEventListener('touchmove', (e) => {
@@ -31,4 +47,13 @@ window.addEventListener('scroll', () => {
   window.scrollTo(0, 0);
 });
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Initial update
+updateViewportHeight();
+
+// Create app
+const container = document.getElementById("root")!;
+rootElement = container;
+createRoot(container).render(<App />);
+
+// Start continuous monitoring
+startMonitoring();

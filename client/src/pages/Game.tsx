@@ -51,7 +51,14 @@ export default function Game() {
   if (!user) return null;
 
   return (
-    <div className="w-screen overflow-hidden bg-black fixed inset-0" style={{ height: 'var(--visual-vh, 100dvh)' }}>
+    <div 
+      id="game-container"
+      className="w-screen overflow-hidden bg-black fixed inset-0" 
+      style={{ 
+        height: 'var(--visual-vh, 100dvh)',
+        width: '100vw'
+      }}
+    >
       <AnimatePresence>
         {showIntro && (
           <motion.div
