@@ -1161,6 +1161,18 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         const tileKey = `${wx},${wy}`;
 
         if (type === 'resource' && resType) {
+          // Draw shadow under resource (before the main resource rendering)
+          const shadowSizeSeed = pseudoRandom(wx + 3000, wy + 3000);
+          const shadowBaseScale = resType === "wood" ? 1.1 : 0.7;
+          const shadowRockScale = shadowBaseScale + shadowSizeSeed * 1.5;
+          const shadowSize = (TILE_SIZE / 2 - 4) * shadowRockScale;
+          
+          ctx.save();
+          ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+          ctx.beginPath();
+          ctx.ellipse(sx + TILE_SIZE / 2, sy + TILE_SIZE - 6, shadowSize * 0.7, 3, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
           const res = RESOURCES[resType as keyof typeof RESOURCES]; 
           let shake = { x: 0, y: 0 };
           const shakeStartTime = shakingTilesStartTime.current[tileKey];
@@ -1469,6 +1481,14 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
       const px = cx + (playerPos.x - displayPos.x) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const py = cy + (playerPos.y - displayPos.y) * TILE_SIZE - TILE_SIZE / 2 + 8;
       const pSize = TILE_SIZE - 16;
+
+      // Draw player shadow
+      ctx.save();
+      ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + pSize / 2 + 6, pSize / 2 - 2, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
 
       // Visualize player collision circle when HITBOX is enabled
       if (hitboxEnabled && !isBackgroundOnly) {
