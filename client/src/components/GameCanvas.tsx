@@ -1132,23 +1132,16 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
         // Determine biome at footstep location for color
         const isRocky = isRockyBiome(Math.round(f.x), Math.round(f.y));
         
-        // Footstep colors based on biome
-        let footstepColor;
-        if (isRocky) {
-          // Dark grey/dark brown for rocky biome
-          footstepColor = "rgb(60, 50, 40)"; // Dark brown for rocky areas
-        } else {
-          // Brown for plains biome (lighter)
-          footstepColor = "rgb(130, 90, 50)"; // Lighter brown color for plains
-        }
-        
-        // Realistic fade-out using separate size and opacity
-        // Both size and color opacity fade linearly for fully visible traces
+        // Footstep colors based on biome with opacity
         const sizeOpacity = f.life;
         const colorOpacity = f.life;
         
         // Draw footsteps 30% smaller (5.76px instead of 8px)
-        ctx.fillStyle = footstepColor.replace('rgb', 'rgba').replace(')', `, ${colorOpacity})`);
+        if (isRocky) {
+          ctx.fillStyle = "rgba(60, 50, 40, " + colorOpacity + ")";
+        } else {
+          ctx.fillStyle = "rgba(130, 90, 50, " + colorOpacity + ")";
+        }
         ctx.beginPath();
         const footstepRadius = 5.76 * sizeOpacity; // Size fades linearly
         ctx.arc(screenX, screenY, footstepRadius, 0, Math.PI * 2); 
@@ -1800,6 +1793,7 @@ export function GameCanvas({ user, isFullscreen = false, onFullscreenChange, hit
           hitDisplayStartTime.current = null;
         }
       }
+      } // End of if (!isBackgroundOnly)
 
       const grad = ctx.createRadialGradient(cx, cy, TILE_SIZE, cx, cy, TILE_SIZE * 5);
       particles.forEach((p: { x: number; y: number; color: string; life: number }) => {
