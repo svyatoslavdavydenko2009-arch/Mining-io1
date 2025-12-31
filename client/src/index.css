@@ -32,33 +32,17 @@
 }
 
 @layer base {
-  :root {
-    --vh: 1vh;
-  }
-
-  html, body {
+  html {
     width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
-    border: none;
+    border: 0;
     overflow: hidden !important;
-  }
-
-  html {
-    background: black;
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-user-zoom: fixed;
-    touch-action: none;
+    background: black;
   }
 
   body {
@@ -66,16 +50,16 @@
     font-family: 'VT323', monospace;
     font-size: 1.25rem;
     image-rendering: pixelated; /* Critical for pixel art look */
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden !important;
     position: fixed;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
     touch-action: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
   }
 
   h1, h2, h3, h4, h5, h6 {
